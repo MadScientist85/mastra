@@ -1,10 +1,10 @@
 const meta = {
   overview: "Overview",
-  server: "With a Server",
-  middleware: "Middleware",
-  "custom-api-routes": "Custom API Routes",
-  deployment: "Serverless Platforms",
-  client: "Mastra Client SDK",
+  "server-deployment": "Server deployment",
+  monorepo: "With a Monorepo",
+  "web-framework": "With a Web Framework",
+  "serverless-platforms": "Serverless Platforms",
+  "cloud-providers": "Cloud Providers",
 };
 
 export default meta;

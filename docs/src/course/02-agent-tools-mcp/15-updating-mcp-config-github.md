@@ -3,13 +3,13 @@
 Now, let's update your MCP configuration in `src/mastra/agents/index.ts` to include the GitHub server:
 
 ```typescript
-const mcp = new MCPConfiguration({
+const mcp = new MCPClient({
   servers: {
     zapier: {
       url: new URL(process.env.ZAPIER_MCP_URL || ""),
     },
     github: {
-      url: new URL(process.env.COMPOSIO_MCP_GITHUB || ""),
+      url: smitheryGithubMCPServerUrl,
     },
   },
 });

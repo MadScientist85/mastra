@@ -14,6 +14,7 @@ import { useState } from "react";
 import { CustomSearch } from "./custom-search";
 import { getSearchPlaceholder } from "./search-placeholder";
 import { Button } from "./ui/button";
+import { ThemeSwitcher } from "./theme-switcher";
 
 export const Logo = () => {
   return (
@@ -87,6 +88,7 @@ export const Nav = ({ stars, locale }: { stars: number; locale: string }) => {
       >
         Docs
       </Link>
+      <ThemeSwitcher />
       <SearchWrapperMobile locale={locale} />
     </Navbar>
   );
@@ -111,6 +113,17 @@ export const SearchWrapperMobile = ({ locale }: { locale: string }) => {
     setSearchQuery(searchQuery);
   }
 
+  // Configure Algolia search options
+  const searchOptions = {
+    indexName: "crawler_mastra crawler",
+    hitsPerPage: 20,
+    attributesToRetrieve: ["title", "content", "url", "hierarchy"],
+    attributesToHighlight: ["title", "content"],
+    attributesToSnippet: ["content:15"],
+    filters: `locale:${locale}`,
+    snippetEllipsisText: "…",
+  };
+
   return (
     <>
       <Button
@@ -128,7 +141,7 @@ export const SearchWrapperMobile = ({ locale }: { locale: string }) => {
         onClose={close}
         unmount={true}
       >
-        <DialogBackdrop className="fixed inset-0 transition duration-300 data-closed:opacity-0 ease-out bg-black/50 backdrop-blur-md" />
+        <DialogBackdrop className="fixed inset-0 transition duration-300 ease-out data-closed:opacity-0 bg-black/50 backdrop-blur-md" />
         <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
           <div className="flex items-center md:pt-[200px] justify-center min-h-full p-4">
             <DialogPanel
@@ -148,6 +161,7 @@ export const SearchWrapperMobile = ({ locale }: { locale: string }) => {
                   <div className="p-2.5">
                     <CustomSearch
                       placeholder={getSearchPlaceholder(locale)}
+                      searchOptions={searchOptions}
                       onUseAgent={handleUseAgent}
                       closeModal={close}
                     />

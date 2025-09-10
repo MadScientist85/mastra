@@ -1,5 +1,911 @@
 # @mastra/pg
 
+## 0.15.1
+
+### Patch Changes
+
+- Fix PgVector listIndexes() to only return Mastra-managed tables instead of all tables with vector columns. This prevents initialization failures when other pgvector tables exist in the database. ([#7539](https://github.com/mastra-ai/mastra/pull/7539))
+
+- Updated dependencies [[`47b6dc9`](https://github.com/mastra-ai/mastra/commit/47b6dc94f4976d4f3d3882e8f19eb365bbc5976c), [`827d876`](https://github.com/mastra-ai/mastra/commit/827d8766f36a900afcaf64a040f7ba76249009b3), [`0662d02`](https://github.com/mastra-ai/mastra/commit/0662d02ef16916e67531890639fcd72c69cfb6e2), [`565d65f`](https://github.com/mastra-ai/mastra/commit/565d65fc16314a99f081975ec92f2636dff0c86d), [`6189844`](https://github.com/mastra-ai/mastra/commit/61898448e65bda02bb814fb15801a89dc6476938), [`4da3d68`](https://github.com/mastra-ai/mastra/commit/4da3d68a778e5c4d5a17351ef223289fe2f45a45), [`fd9bbfe`](https://github.com/mastra-ai/mastra/commit/fd9bbfee22484f8493582325f53e8171bf8e682b), [`7eaf1d1`](https://github.com/mastra-ai/mastra/commit/7eaf1d1cec7e828d7a98efc2a748ac395bbdba3b), [`6f046b5`](https://github.com/mastra-ai/mastra/commit/6f046b5ccc5c8721302a9a61d5d16c12374cc8d7), [`d7a8f59`](https://github.com/mastra-ai/mastra/commit/d7a8f59154b0621aec4f41a6b2ea2b3882f03cb7), [`0b0bbb2`](https://github.com/mastra-ai/mastra/commit/0b0bbb24f4198ead69792e92b68a350f52b45cf3), [`d951f41`](https://github.com/mastra-ai/mastra/commit/d951f41771e4e5da8da4b9f870949f9509e38756), [`4dda259`](https://github.com/mastra-ai/mastra/commit/4dda2593b6343f9258671de5fb237aeba3ef6bb7), [`8049e2e`](https://github.com/mastra-ai/mastra/commit/8049e2e8cce80a00353c64894c62b695ac34e35e), [`f3427cd`](https://github.com/mastra-ai/mastra/commit/f3427cdaf9eecd63360dfc897a4acbf5f4143a4e), [`defed1c`](https://github.com/mastra-ai/mastra/commit/defed1ca8040cc8d42e645c5a50a1bc52a4918d7), [`6991ced`](https://github.com/mastra-ai/mastra/commit/6991cedcb5a44a49d9fe58ef67926e1f96ba55b1), [`9cb9c42`](https://github.com/mastra-ai/mastra/commit/9cb9c422854ee81074989dd2d8dccc0500ba8d3e), [`8334859`](https://github.com/mastra-ai/mastra/commit/83348594d4f37b311ba4a94d679c5f8721d796d4), [`05f13b8`](https://github.com/mastra-ai/mastra/commit/05f13b8fb269ccfc4de98e9db58dbe16eae55a5e)]:
+  - @mastra/core@0.16.1
+
+## 0.15.1-alpha.0
+
+### Patch Changes
+
+- Fix PgVector listIndexes() to only return Mastra-managed tables instead of all tables with vector columns. This prevents initialization failures when other pgvector tables exist in the database. ([#7539](https://github.com/mastra-ai/mastra/pull/7539))
+
+- Updated dependencies [[`0662d02`](https://github.com/mastra-ai/mastra/commit/0662d02ef16916e67531890639fcd72c69cfb6e2), [`6189844`](https://github.com/mastra-ai/mastra/commit/61898448e65bda02bb814fb15801a89dc6476938), [`d7a8f59`](https://github.com/mastra-ai/mastra/commit/d7a8f59154b0621aec4f41a6b2ea2b3882f03cb7), [`4dda259`](https://github.com/mastra-ai/mastra/commit/4dda2593b6343f9258671de5fb237aeba3ef6bb7), [`defed1c`](https://github.com/mastra-ai/mastra/commit/defed1ca8040cc8d42e645c5a50a1bc52a4918d7), [`6991ced`](https://github.com/mastra-ai/mastra/commit/6991cedcb5a44a49d9fe58ef67926e1f96ba55b1), [`9cb9c42`](https://github.com/mastra-ai/mastra/commit/9cb9c422854ee81074989dd2d8dccc0500ba8d3e), [`8334859`](https://github.com/mastra-ai/mastra/commit/83348594d4f37b311ba4a94d679c5f8721d796d4)]:
+  - @mastra/core@0.16.1-alpha.0
+
+## 0.15.0
+
+### Minor Changes
+
+- 376913a: Update peerdeps of @mastra/core
+
+### Patch Changes
+
+- 6f5eb7a: Throw if an empty or whitespace-only threadId is passed when getting messages
+- Updated dependencies [8fbf79e]
+- Updated dependencies [fd83526]
+- Updated dependencies [d0b90ab]
+- Updated dependencies [6f5eb7a]
+- Updated dependencies [a01cf14]
+- Updated dependencies [a9e50ee]
+- Updated dependencies [5397eb4]
+- Updated dependencies [c9f4e4a]
+- Updated dependencies [0acbc80]
+  - @mastra/core@0.16.0
+
+## 0.15.0-alpha.1
+
+### Minor Changes
+
+- 376913a: Update peerdeps of @mastra/core
+
+### Patch Changes
+
+- Updated dependencies [8fbf79e]
+  - @mastra/core@0.16.0-alpha.1
+
+## 0.14.7-alpha.0
+
+### Patch Changes
+
+- 6f5eb7a: Throw if an empty or whitespace-only threadId is passed when getting messages
+- Updated dependencies [fd83526]
+- Updated dependencies [d0b90ab]
+- Updated dependencies [6f5eb7a]
+- Updated dependencies [a01cf14]
+- Updated dependencies [a9e50ee]
+- Updated dependencies [5397eb4]
+- Updated dependencies [c9f4e4a]
+- Updated dependencies [0acbc80]
+  - @mastra/core@0.16.0-alpha.0
+
+## 0.14.6
+
+### Patch Changes
+
+- de3cbc6: Update the `package.json` file to include additional fields like `repository`, `homepage` or `files`.
+- f0dfcac: updated core peerdep
+- 3c236f6: PostgresStore fix to not try to recreate existing index
+- Updated dependencies [ab48c97]
+- Updated dependencies [85ef90b]
+- Updated dependencies [aedbbfa]
+- Updated dependencies [ff89505]
+- Updated dependencies [637f323]
+- Updated dependencies [de3cbc6]
+- Updated dependencies [c19bcf7]
+- Updated dependencies [4474d04]
+- Updated dependencies [183dc95]
+- Updated dependencies [a1111e2]
+- Updated dependencies [b42a961]
+- Updated dependencies [61debef]
+- Updated dependencies [9beaeff]
+- Updated dependencies [29de0e1]
+- Updated dependencies [f643c65]
+- Updated dependencies [00c74e7]
+- Updated dependencies [fef7375]
+- Updated dependencies [e3d8fea]
+- Updated dependencies [45e4d39]
+- Updated dependencies [9eee594]
+- Updated dependencies [7149d8d]
+- Updated dependencies [822c2e8]
+- Updated dependencies [979912c]
+- Updated dependencies [7dcf4c0]
+- Updated dependencies [4106a58]
+- Updated dependencies [ad78bfc]
+- Updated dependencies [0302f50]
+- Updated dependencies [6ac697e]
+- Updated dependencies [74db265]
+- Updated dependencies [0ce418a]
+- Updated dependencies [af90672]
+- Updated dependencies [8387952]
+- Updated dependencies [7f3b8da]
+- Updated dependencies [905352b]
+- Updated dependencies [599d04c]
+- Updated dependencies [56041d0]
+- Updated dependencies [3412597]
+- Updated dependencies [5eca5d2]
+- Updated dependencies [f2cda47]
+- Updated dependencies [5de1555]
+- Updated dependencies [cfd377a]
+- Updated dependencies [1ed5a3e]
+  - @mastra/core@0.15.3
+
+## 0.14.6-alpha.2
+
+### Patch Changes
+
+- [#7394](https://github.com/mastra-ai/mastra/pull/7394) [`f0dfcac`](https://github.com/mastra-ai/mastra/commit/f0dfcac4458bdf789b975e2d63e984f5d1e7c4d3) Thanks [@NikAiyer](https://github.com/NikAiyer)! - updated core peerdep
+
+- Updated dependencies [[`7149d8d`](https://github.com/mastra-ai/mastra/commit/7149d8d4bdc1edf0008e0ca9b7925eb0b8b60dbe)]:
+  - @mastra/core@0.15.3-alpha.7
+
+## 0.14.6-alpha.1
+
+### Patch Changes
+
+- [#7343](https://github.com/mastra-ai/mastra/pull/7343) [`de3cbc6`](https://github.com/mastra-ai/mastra/commit/de3cbc61079211431bd30487982ea3653517278e) Thanks [@LekoArts](https://github.com/LekoArts)! - Update the `package.json` file to include additional fields like `repository`, `homepage` or `files`.
+
+- Updated dependencies [[`85ef90b`](https://github.com/mastra-ai/mastra/commit/85ef90bb2cd4ae4df855c7ac175f7d392c55c1bf), [`de3cbc6`](https://github.com/mastra-ai/mastra/commit/de3cbc61079211431bd30487982ea3653517278e)]:
+  - @mastra/core@0.15.3-alpha.5
+
+## 0.14.6-alpha.0
+
+### Patch Changes
+
+- [#7326](https://github.com/mastra-ai/mastra/pull/7326) [`3c236f6`](https://github.com/mastra-ai/mastra/commit/3c236f604c72a7f01ba93aefe3f05921a064d59a) Thanks [@DanielSLew](https://github.com/DanielSLew)! - PostgresStore fix to not try to recreate existing index
+
+- Updated dependencies [[`ab48c97`](https://github.com/mastra-ai/mastra/commit/ab48c979098ea571faf998a55d3a00e7acd7a715), [`ff89505`](https://github.com/mastra-ai/mastra/commit/ff895057c8c7e91a5535faef46c5e5391085ddfa), [`183dc95`](https://github.com/mastra-ai/mastra/commit/183dc95596f391b977bd1a2c050b8498dac74891), [`a1111e2`](https://github.com/mastra-ai/mastra/commit/a1111e24e705488adfe5e0a6f20c53bddf26cb22), [`61debef`](https://github.com/mastra-ai/mastra/commit/61debefd80ad3a7ed5737e19df6a23d40091689a), [`9beaeff`](https://github.com/mastra-ai/mastra/commit/9beaeffa4a97b1d5fd01a7f8af8708b16067f67c), [`9eee594`](https://github.com/mastra-ai/mastra/commit/9eee594e35e0ca2a650fcc33fa82009a142b9ed0), [`979912c`](https://github.com/mastra-ai/mastra/commit/979912cfd180aad53287cda08af771df26454e2c), [`7dcf4c0`](https://github.com/mastra-ai/mastra/commit/7dcf4c04f44d9345b1f8bc5d41eae3f11ac61611), [`ad78bfc`](https://github.com/mastra-ai/mastra/commit/ad78bfc4ea6a1fff140432bf4f638e01af7af668), [`0ce418a`](https://github.com/mastra-ai/mastra/commit/0ce418a1ccaa5e125d4483a9651b635046152569), [`8387952`](https://github.com/mastra-ai/mastra/commit/838795227b4edf758c84a2adf6f7fba206c27719), [`5eca5d2`](https://github.com/mastra-ai/mastra/commit/5eca5d2655788863ea0442a46c9ef5d3c6dbe0a8)]:
+  - @mastra/core@0.15.3-alpha.4
+
+## 0.14.5
+
+### Patch Changes
+
+- [`c6113ed`](https://github.com/mastra-ai/mastra/commit/c6113ed7f9df297e130d94436ceee310273d6430) Thanks [@wardpeet](https://github.com/wardpeet)! - Fix peerdpes for @mastra/core
+
+- Updated dependencies []:
+  - @mastra/core@0.15.2
+
+## 0.14.4
+
+### Patch Changes
+
+- [`95b2aa9`](https://github.com/mastra-ai/mastra/commit/95b2aa908230919e67efcac0d69005a2d5745298) Thanks [@wardpeet](https://github.com/wardpeet)! - Fix peerdeps @mastra/core
+
+- Updated dependencies []:
+  - @mastra/core@0.15.1
+
+## 0.14.3
+
+### Patch Changes
+
+- [#6994](https://github.com/mastra-ai/mastra/pull/6994) [`0594a70`](https://github.com/mastra-ai/mastra/commit/0594a70ac948d306c7f38765b171c9535e6c78d4) Thanks [@wardpeet](https://github.com/wardpeet)! - Improve type resolving for storage adapters
+
+- Updated dependencies [[`0778757`](https://github.com/mastra-ai/mastra/commit/07787570e4addbd501522037bd2542c3d9e26822), [`943a7f3`](https://github.com/mastra-ai/mastra/commit/943a7f3dbc6a8ab3f9b7bc7c8a1c5b319c3d7f56), [`bf504a8`](https://github.com/mastra-ai/mastra/commit/bf504a833051f6f321d832cc7d631f3cb86d657b), [`be49354`](https://github.com/mastra-ai/mastra/commit/be493546dca540101923ec700feb31f9a13939f2), [`d591ab3`](https://github.com/mastra-ai/mastra/commit/d591ab3ecc985c1870c0db347f8d7a20f7360536), [`ba82abe`](https://github.com/mastra-ai/mastra/commit/ba82abe76e869316bb5a9c95e8ea3946f3436fae), [`727f7e5`](https://github.com/mastra-ai/mastra/commit/727f7e5086e62e0dfe3356fb6dcd8bcb420af246), [`e6f5046`](https://github.com/mastra-ai/mastra/commit/e6f50467aff317e67e8bd74c485c3fbe2a5a6db1), [`82d9f64`](https://github.com/mastra-ai/mastra/commit/82d9f647fbe4f0177320e7c05073fce88599aa95), [`2e58325`](https://github.com/mastra-ai/mastra/commit/2e58325beb170f5b92f856e27d915cd26917e5e6), [`1191ce9`](https://github.com/mastra-ai/mastra/commit/1191ce946b40ed291e7877a349f8388e3cff7e5c), [`4189486`](https://github.com/mastra-ai/mastra/commit/4189486c6718fda78347bdf4ce4d3fc33b2236e1), [`ca8ec2f`](https://github.com/mastra-ai/mastra/commit/ca8ec2f61884b9dfec5fc0d5f4f29d281ad13c01), [`9613558`](https://github.com/mastra-ai/mastra/commit/9613558e6475f4710e05d1be7553a32ee7bddc20)]:
+  - @mastra/core@0.15.0
+
+## 0.14.3-alpha.0
+
+### Patch Changes
+
+- [#6994](https://github.com/mastra-ai/mastra/pull/6994) [`0594a70`](https://github.com/mastra-ai/mastra/commit/0594a70ac948d306c7f38765b171c9535e6c78d4) Thanks [@wardpeet](https://github.com/wardpeet)! - Improve type resolving for storage adapters
+
+- Updated dependencies [[`943a7f3`](https://github.com/mastra-ai/mastra/commit/943a7f3dbc6a8ab3f9b7bc7c8a1c5b319c3d7f56), [`be49354`](https://github.com/mastra-ai/mastra/commit/be493546dca540101923ec700feb31f9a13939f2), [`d591ab3`](https://github.com/mastra-ai/mastra/commit/d591ab3ecc985c1870c0db347f8d7a20f7360536), [`ba82abe`](https://github.com/mastra-ai/mastra/commit/ba82abe76e869316bb5a9c95e8ea3946f3436fae), [`727f7e5`](https://github.com/mastra-ai/mastra/commit/727f7e5086e62e0dfe3356fb6dcd8bcb420af246), [`82d9f64`](https://github.com/mastra-ai/mastra/commit/82d9f647fbe4f0177320e7c05073fce88599aa95), [`4189486`](https://github.com/mastra-ai/mastra/commit/4189486c6718fda78347bdf4ce4d3fc33b2236e1), [`ca8ec2f`](https://github.com/mastra-ai/mastra/commit/ca8ec2f61884b9dfec5fc0d5f4f29d281ad13c01)]:
+  - @mastra/core@0.14.2-alpha.1
+
+## 0.14.2
+
+### Patch Changes
+
+- [#6700](https://github.com/mastra-ai/mastra/pull/6700) [`a5a23d9`](https://github.com/mastra-ai/mastra/commit/a5a23d981920d458dc6078919992a5338931ef02) Thanks [@gpanakkal](https://github.com/gpanakkal)! - Add `getMessagesById` method to `MastraStorage` adapters
+
+- Updated dependencies [[`6e7e120`](https://github.com/mastra-ai/mastra/commit/6e7e1207d6e8d8b838f9024f90bd10df1181ba27), [`0f00e17`](https://github.com/mastra-ai/mastra/commit/0f00e172953ccdccadb35ed3d70f5e4d89115869), [`217cd7a`](https://github.com/mastra-ai/mastra/commit/217cd7a4ce171e9a575c41bb8c83300f4db03236), [`a5a23d9`](https://github.com/mastra-ai/mastra/commit/a5a23d981920d458dc6078919992a5338931ef02)]:
+  - @mastra/core@0.14.1
+
+## 0.14.2-alpha.0
+
+### Patch Changes
+
+- [#6700](https://github.com/mastra-ai/mastra/pull/6700) [`a5a23d9`](https://github.com/mastra-ai/mastra/commit/a5a23d981920d458dc6078919992a5338931ef02) Thanks [@gpanakkal](https://github.com/gpanakkal)! - Add `getMessagesById` method to `MastraStorage` adapters
+
+- Updated dependencies [[`6e7e120`](https://github.com/mastra-ai/mastra/commit/6e7e1207d6e8d8b838f9024f90bd10df1181ba27), [`a5a23d9`](https://github.com/mastra-ai/mastra/commit/a5a23d981920d458dc6078919992a5338931ef02)]:
+  - @mastra/core@0.14.1-alpha.0
+
+## 0.14.1
+
+### Patch Changes
+
+- 03997ae: Update peerdeps
+- d6e39da: Load most recent snapshot from storage
+- Updated dependencies [227c7e6]
+- Updated dependencies [12cae67]
+- Updated dependencies [fd3a3eb]
+- Updated dependencies [6faaee5]
+- Updated dependencies [4232b14]
+- Updated dependencies [a89de7e]
+- Updated dependencies [5a37d0c]
+- Updated dependencies [4bde0cb]
+- Updated dependencies [cf4f357]
+- Updated dependencies [ad888a2]
+- Updated dependencies [481751d]
+- Updated dependencies [2454423]
+- Updated dependencies [194e395]
+- Updated dependencies [a722c0b]
+- Updated dependencies [c30bca8]
+- Updated dependencies [3b5fec7]
+- Updated dependencies [a8f129d]
+  - @mastra/core@0.14.0
+
+## 0.14.1-alpha.1
+
+### Patch Changes
+
+- 03997ae: Update peerdeps
+  - @mastra/core@0.14.0-alpha.7
+
+## 0.14.1-alpha.0
+
+### Patch Changes
+
+- d6e39da: Load most recent snapshot from storage
+- Updated dependencies [6faaee5]
+- Updated dependencies [4232b14]
+- Updated dependencies [a89de7e]
+- Updated dependencies [cf4f357]
+- Updated dependencies [a722c0b]
+- Updated dependencies [3b5fec7]
+  - @mastra/core@0.14.0-alpha.1
+
+## 0.14.0
+
+### Minor Changes
+
+- 79d34ce: improve cloudflare workers compatibility
+
+### Patch Changes
+
+- b32c50d: Filter scores by source
+- Updated dependencies [d5330bf]
+- Updated dependencies [2e74797]
+- Updated dependencies [8388649]
+- Updated dependencies [a239d41]
+- Updated dependencies [dd94a26]
+- Updated dependencies [3ba6772]
+- Updated dependencies [b5cf2a3]
+- Updated dependencies [2fff911]
+- Updated dependencies [b32c50d]
+- Updated dependencies [63449d0]
+- Updated dependencies [121a3f8]
+- Updated dependencies [ec510e7]
+  - @mastra/core@0.13.2
+
+## 0.14.0-alpha.0
+
+### Minor Changes
+
+- 79d34ce: improve cloudflare workers compatibility
+
+### Patch Changes
+
+- b32c50d: Filter scores by source
+- Updated dependencies [d5330bf]
+- Updated dependencies [a239d41]
+- Updated dependencies [b32c50d]
+- Updated dependencies [121a3f8]
+- Updated dependencies [ec510e7]
+  - @mastra/core@0.13.2-alpha.2
+
+## 0.13.3
+
+### Patch Changes
+
+- 3e49b7a: Fix PostgreSQL vector metadata filtering for Memory system - changed default minScore to -1 to include all similarity results and added comprehensive metadata filtering tests
+- Updated dependencies [cd0042e]
+  - @mastra/core@0.13.1
+
+## 0.13.3-alpha.0
+
+### Patch Changes
+
+- 3e49b7a: Fix PostgreSQL vector metadata filtering for Memory system - changed default minScore to -1 to include all similarity results and added comprehensive metadata filtering tests
+- Updated dependencies [cd0042e]
+  - @mastra/core@0.13.1-alpha.0
+
+## 0.13.2
+
+### Patch Changes
+
+- a780fcd: ensure score id is generated for postgres store
+- 2871020: update safelyParseJSON to check for value of param when handling parse
+- 4a406ec: fixes TypeScript declaration file imports to ensure proper ESM compatibility
+- Updated dependencies [cb36de0]
+- Updated dependencies [d0496e6]
+- Updated dependencies [a82b851]
+- Updated dependencies [ea0c5f2]
+- Updated dependencies [41a0a0e]
+- Updated dependencies [2871020]
+- Updated dependencies [94f4812]
+- Updated dependencies [e202b82]
+- Updated dependencies [e00f6a0]
+- Updated dependencies [4a406ec]
+- Updated dependencies [b0e43c1]
+- Updated dependencies [5d377e5]
+- Updated dependencies [1fb812e]
+- Updated dependencies [35c5798]
+  - @mastra/core@0.13.0
+
+## 0.13.2-alpha.1
+
+### Patch Changes
+
+- 2871020: update safelyParseJSON to check for value of param when handling parse
+- 4a406ec: fixes TypeScript declaration file imports to ensure proper ESM compatibility
+- Updated dependencies [cb36de0]
+- Updated dependencies [a82b851]
+- Updated dependencies [41a0a0e]
+- Updated dependencies [2871020]
+- Updated dependencies [4a406ec]
+- Updated dependencies [5d377e5]
+  - @mastra/core@0.13.0-alpha.2
+
+## 0.13.2-alpha.0
+
+### Patch Changes
+
+- a780fcd: ensure score id is generated for postgres store
+- Updated dependencies [94f4812]
+- Updated dependencies [e202b82]
+- Updated dependencies [e00f6a0]
+  - @mastra/core@0.12.2-alpha.0
+
+## 0.13.1
+
+### Patch Changes
+
+- bf6c955: fix: Fix schema support to PostgreSQL scores and workflows storage
+- Updated dependencies [33dcb07]
+- Updated dependencies [d0d9500]
+- Updated dependencies [d30b1a0]
+- Updated dependencies [bff87f7]
+- Updated dependencies [b4a8df0]
+  - @mastra/core@0.12.1
+
+## 0.13.1-alpha.0
+
+### Patch Changes
+
+- bf6c955: fix: Fix schema support to PostgreSQL scores and workflows storage
+- Updated dependencies [33dcb07]
+- Updated dependencies [d30b1a0]
+- Updated dependencies [bff87f7]
+- Updated dependencies [b4a8df0]
+  - @mastra/core@0.12.1-alpha.0
+
+## 0.13.0
+
+### Minor Changes
+
+- f42c4c2: update peer deps for packages to latest core range
+
+### Patch Changes
+
+- ff9c125: enhance thread retrieval with sorting options in libsql and pg
+- b8efbb9: feat: add flexible deleteMessages method to memory API
+  - Added `memory.deleteMessages(input)` method that accepts multiple input types:
+    - Single message ID as string: `deleteMessages('msg-123')`
+    - Array of message IDs: `deleteMessages(['msg-1', 'msg-2'])`
+    - Message object with id property: `deleteMessages({ id: 'msg-123' })`
+    - Array of message objects: `deleteMessages([{ id: 'msg-1' }, { id: 'msg-2' }])`
+  - Implemented in all storage adapters (LibSQL, PostgreSQL, Upstash, InMemory)
+  - Added REST API endpoint: `POST /api/memory/messages/delete`
+  - Updated client SDK: `thread.deleteMessages()` accepts all input types
+  - Updates thread timestamps when messages are deleted
+  - Added comprehensive test coverage and documentation
+
+- Updated dependencies [510e2c8]
+- Updated dependencies [2f72fb2]
+- Updated dependencies [27cc97a]
+- Updated dependencies [3f89307]
+- Updated dependencies [9eda7d4]
+- Updated dependencies [9d49408]
+- Updated dependencies [41daa63]
+- Updated dependencies [ad0a58b]
+- Updated dependencies [254a36b]
+- Updated dependencies [2ecf658]
+- Updated dependencies [7a7754f]
+- Updated dependencies [fc92d80]
+- Updated dependencies [e0f73c6]
+- Updated dependencies [0b89602]
+- Updated dependencies [4d37822]
+- Updated dependencies [23a6a7c]
+- Updated dependencies [cda801d]
+- Updated dependencies [a77c823]
+- Updated dependencies [ff9c125]
+- Updated dependencies [09bca64]
+- Updated dependencies [b8efbb9]
+- Updated dependencies [71466e7]
+- Updated dependencies [0c99fbe]
+  - @mastra/core@0.12.0
+
+## 0.13.0-alpha.1
+
+### Minor Changes
+
+- f42c4c2: update peer deps for packages to latest core range
+
+### Patch Changes
+
+- @mastra/core@0.12.0-alpha.5
+
+## 0.12.6-alpha.0
+
+### Patch Changes
+
+- ff9c125: enhance thread retrieval with sorting options in libsql and pg
+- b8efbb9: feat: add flexible deleteMessages method to memory API
+  - Added `memory.deleteMessages(input)` method that accepts multiple input types:
+    - Single message ID as string: `deleteMessages('msg-123')`
+    - Array of message IDs: `deleteMessages(['msg-1', 'msg-2'])`
+    - Message object with id property: `deleteMessages({ id: 'msg-123' })`
+    - Array of message objects: `deleteMessages([{ id: 'msg-1' }, { id: 'msg-2' }])`
+  - Implemented in all storage adapters (LibSQL, PostgreSQL, Upstash, InMemory)
+  - Added REST API endpoint: `POST /api/memory/messages/delete`
+  - Updated client SDK: `thread.deleteMessages()` accepts all input types
+  - Updates thread timestamps when messages are deleted
+  - Added comprehensive test coverage and documentation
+
+- Updated dependencies [27cc97a]
+- Updated dependencies [41daa63]
+- Updated dependencies [254a36b]
+- Updated dependencies [0b89602]
+- Updated dependencies [4d37822]
+- Updated dependencies [ff9c125]
+- Updated dependencies [b8efbb9]
+- Updated dependencies [71466e7]
+- Updated dependencies [0c99fbe]
+  - @mastra/core@0.12.0-alpha.2
+
+## 0.12.5
+
+### Patch Changes
+
+- ce088f5: Update all peerdeps to latest core
+  - @mastra/core@0.11.1
+
+## 0.12.4
+
+### Patch Changes
+
+- 7ba91fa: Throw mastra errors methods not implemented yet
+- a74b8e3: Wrapped the query method logic inside of a transaction to ensure `SET LOCAL` works as expected -- properly sets the `hnsw.ef_search` value
+- Updated dependencies [f248d53]
+- Updated dependencies [2affc57]
+- Updated dependencies [66e13e3]
+- Updated dependencies [edd9482]
+- Updated dependencies [18344d7]
+- Updated dependencies [9d372c2]
+- Updated dependencies [40c2525]
+- Updated dependencies [e473f27]
+- Updated dependencies [032cb66]
+- Updated dependencies [703ac71]
+- Updated dependencies [a723d69]
+- Updated dependencies [7827943]
+- Updated dependencies [5889a31]
+- Updated dependencies [bf1e7e7]
+- Updated dependencies [65e3395]
+- Updated dependencies [4933192]
+- Updated dependencies [d1c77a4]
+- Updated dependencies [bea9dd1]
+- Updated dependencies [dcd4802]
+- Updated dependencies [cbddd18]
+- Updated dependencies [7ba91fa]
+  - @mastra/core@0.11.0
+
+## 0.12.4-alpha.0
+
+### Patch Changes
+
+- 7ba91fa: Throw mastra errors methods not implemented yet
+- a74b8e3: Wrapped the query method logic inside of a transaction to ensure `SET LOCAL` works as expected -- properly sets the `hnsw.ef_search` value
+- Updated dependencies [f248d53]
+- Updated dependencies [2affc57]
+- Updated dependencies [66e13e3]
+- Updated dependencies [edd9482]
+- Updated dependencies [18344d7]
+- Updated dependencies [9d372c2]
+- Updated dependencies [40c2525]
+- Updated dependencies [e473f27]
+- Updated dependencies [032cb66]
+- Updated dependencies [703ac71]
+- Updated dependencies [a723d69]
+- Updated dependencies [5889a31]
+- Updated dependencies [65e3395]
+- Updated dependencies [4933192]
+- Updated dependencies [d1c77a4]
+- Updated dependencies [bea9dd1]
+- Updated dependencies [dcd4802]
+- Updated dependencies [7ba91fa]
+  - @mastra/core@0.11.0-alpha.2
+
+## 0.12.3
+
+### Patch Changes
+
+- ca52f88: dependencies updates:
+  - Updated dependency [`pg-promise@^11.15.0` ↗︎](https://www.npmjs.com/package/pg-promise/v/11.15.0) (from `^11.14.0`, in `dependencies`)
+- 00c57ff: fix: pg storage should select resourceId when getMessages
+- Updated dependencies [0b56518]
+- Updated dependencies [db5cc15]
+- Updated dependencies [2ba5b76]
+- Updated dependencies [5237998]
+- Updated dependencies [c3a30de]
+- Updated dependencies [37c1acd]
+- Updated dependencies [1aa60b1]
+- Updated dependencies [89ec9d4]
+- Updated dependencies [cf3a184]
+- Updated dependencies [d6bfd60]
+- Updated dependencies [626b0f4]
+- Updated dependencies [c22a91f]
+- Updated dependencies [f7403ab]
+- Updated dependencies [6c89d7f]
+  - @mastra/core@0.10.15
+
+## 0.12.3-alpha.0
+
+### Patch Changes
+
+- ca52f88: dependencies updates:
+  - Updated dependency [`pg-promise@^11.15.0` ↗︎](https://www.npmjs.com/package/pg-promise/v/11.15.0) (from `^11.14.0`, in `dependencies`)
+- 00c57ff: fix: pg storage should select resourceId when getMessages
+- Updated dependencies [db5cc15]
+- Updated dependencies [5237998]
+- Updated dependencies [37c1acd]
+- Updated dependencies [1aa60b1]
+- Updated dependencies [89ec9d4]
+- Updated dependencies [626b0f4]
+- Updated dependencies [c22a91f]
+- Updated dependencies [f7403ab]
+- Updated dependencies [6c89d7f]
+  - @mastra/core@0.10.15-alpha.0
+
+## 0.12.2
+
+### Patch Changes
+
+- fb2a1b9: dependencies updates:
+  - Updated dependency [`pg@^8.16.3` ↗︎](https://www.npmjs.com/package/pg/v/8.16.3) (from `^8.16.0`, in `dependencies`)
+- Updated dependencies [2873c7f]
+- Updated dependencies [1c1c6a1]
+- Updated dependencies [f8ce2cc]
+- Updated dependencies [8c846b6]
+- Updated dependencies [c7bbf1e]
+- Updated dependencies [8722d53]
+- Updated dependencies [565cc0c]
+- Updated dependencies [b790fd1]
+- Updated dependencies [132027f]
+- Updated dependencies [0c85311]
+- Updated dependencies [d7ed04d]
+- Updated dependencies [cb16baf]
+- Updated dependencies [f36e4f1]
+- Updated dependencies [7f6e403]
+  - @mastra/core@0.10.11
+
+## 0.12.2-alpha.0
+
+### Patch Changes
+
+- fb2a1b9: dependencies updates:
+  - Updated dependency [`pg@^8.16.3` ↗︎](https://www.npmjs.com/package/pg/v/8.16.3) (from `^8.16.0`, in `dependencies`)
+- Updated dependencies [f8ce2cc]
+- Updated dependencies [8c846b6]
+- Updated dependencies [b790fd1]
+- Updated dependencies [d7ed04d]
+- Updated dependencies [f36e4f1]
+  - @mastra/core@0.10.11-alpha.0
+
+## 0.12.1
+
+### Patch Changes
+
+- e0ad8e3: Exposes database connection objects as public fields in PostgresStore and PgVector classes to enable direct database operations and connection monitoring.
+- Updated dependencies [9dda1ac]
+- Updated dependencies [c984582]
+- Updated dependencies [7e801dd]
+- Updated dependencies [a606c75]
+- Updated dependencies [7aa70a4]
+- Updated dependencies [764f86a]
+- Updated dependencies [1760a1c]
+- Updated dependencies [038e5ae]
+- Updated dependencies [7dda16a]
+- Updated dependencies [5ebfcdd]
+- Updated dependencies [b2d0c91]
+- Updated dependencies [4e809ad]
+- Updated dependencies [57929df]
+- Updated dependencies [b7852ed]
+- Updated dependencies [6320a61]
+  - @mastra/core@0.10.9
+
+## 0.12.1-alpha.0
+
+### Patch Changes
+
+- e0ad8e3: Exposes database connection objects as public fields in PostgresStore and PgVector classes to enable direct database operations and connection monitoring.
+- Updated dependencies [9dda1ac]
+- Updated dependencies [c984582]
+- Updated dependencies [7e801dd]
+- Updated dependencies [a606c75]
+- Updated dependencies [7aa70a4]
+- Updated dependencies [764f86a]
+- Updated dependencies [1760a1c]
+- Updated dependencies [038e5ae]
+- Updated dependencies [7dda16a]
+- Updated dependencies [5ebfcdd]
+- Updated dependencies [b2d0c91]
+- Updated dependencies [4e809ad]
+- Updated dependencies [57929df]
+- Updated dependencies [b7852ed]
+- Updated dependencies [6320a61]
+  - @mastra/core@0.10.9-alpha.0
+
+## 0.12.0
+
+### Minor Changes
+
+- 8a3bfd2: Update peerdeps to latest core
+
+### Patch Changes
+
+- 15e9d26: Added per-resource working memory for LibSQL, Upstash, and PG
+- d8f2d19: Add updateMessages API to storage classes (only support for PG and LibSQL for now) and to memory class. Additionally allow for metadata to be saved in the content field of a message.
+- 0fb9d64: [MASTRA-4018] Update saveMessages in storage adapters to upsert messages
+- 2097952: [MASTRA-4021] Fix PG getMessages and update messageLimit for all storage adapters
+- 144eb0b: [MASTRA-3669] Metadata Filter Types
+- f0150c4: Fix LibSQLStore and PgStore getMessagesPaginated implementation
+- 0e17048: Throw mastra errors in storage packages
+- Updated dependencies [15e9d26]
+- Updated dependencies [d1baedb]
+- Updated dependencies [d8f2d19]
+- Updated dependencies [4d21bf2]
+- Updated dependencies [07d6d88]
+- Updated dependencies [9d52b17]
+- Updated dependencies [2097952]
+- Updated dependencies [792c4c0]
+- Updated dependencies [5d74aab]
+- Updated dependencies [a8b194f]
+- Updated dependencies [4fb0cc2]
+- Updated dependencies [d2a7a31]
+- Updated dependencies [502fe05]
+- Updated dependencies [144eb0b]
+- Updated dependencies [8ba1b51]
+- Updated dependencies [4efcfa0]
+- Updated dependencies [0e17048]
+  - @mastra/core@0.10.7
+
+## 0.12.0-alpha.3
+
+### Minor Changes
+
+- 8a3bfd2: Update peerdeps to latest core
+
+### Patch Changes
+
+- Updated dependencies [792c4c0]
+- Updated dependencies [502fe05]
+- Updated dependencies [4efcfa0]
+  - @mastra/core@0.10.7-alpha.3
+
+## 0.11.1-alpha.2
+
+### Patch Changes
+
+- 15e9d26: Added per-resource working memory for LibSQL, Upstash, and PG
+- 0fb9d64: [MASTRA-4018] Update saveMessages in storage adapters to upsert messages
+- 144eb0b: [MASTRA-3669] Metadata Filter Types
+- f0150c4: Fix LibSQLStore and PgStore getMessagesPaginated implementation
+- Updated dependencies [15e9d26]
+- Updated dependencies [07d6d88]
+- Updated dependencies [5d74aab]
+- Updated dependencies [144eb0b]
+  - @mastra/core@0.10.7-alpha.2
+
+## 0.11.1-alpha.1
+
+### Patch Changes
+
+- 2097952: [MASTRA-4021] Fix PG getMessages and update messageLimit for all storage adapters
+- 0e17048: Throw mastra errors in storage packages
+- Updated dependencies [d1baedb]
+- Updated dependencies [4d21bf2]
+- Updated dependencies [2097952]
+- Updated dependencies [4fb0cc2]
+- Updated dependencies [d2a7a31]
+- Updated dependencies [0e17048]
+  - @mastra/core@0.10.7-alpha.1
+
+## 0.11.1-alpha.0
+
+### Patch Changes
+
+- d8f2d19: Add updateMessages API to storage classes (only support for PG and LibSQL for now) and to memory class. Additionally allow for metadata to be saved in the content field of a message.
+- Updated dependencies [d8f2d19]
+- Updated dependencies [9d52b17]
+- Updated dependencies [8ba1b51]
+  - @mastra/core@0.10.7-alpha.0
+
+## 0.11.0
+
+### Minor Changes
+
+- 704d1ca: Thread Timestamp Auto-Update Enhancement
+  Added automatic thread updatedAt timestamp updates when messages are saved across all storage providers
+  Enhanced user experience: Threads now accurately reflect their latest activity with automatic timestamp updates when new messages are added
+  Universal implementation: Consistent behavior across all 7 storage backends (ClickHouse, Cloudflare D1, DynamoDB, MongoDB, PostgreSQL, Upstash, LibSQL)
+  Performance optimized: Updates execute in parallel with message saving operations for minimal performance impact
+  Backwards compatible: No breaking changes - existing code continues to work unchanged
+  Improved conversation ordering: Chat interfaces can now properly sort threads by actual last activity
+  This enhancement resolves the issue where active conversations appeared stale due to outdated thread timestamps, providing better conversation management and user experience in chat applications.
+
+### Patch Changes
+
+- 63f6b7d: dependencies updates:
+  - Updated dependency [`pg-promise@^11.14.0` ↗︎](https://www.npmjs.com/package/pg-promise/v/11.14.0) (from `^11.13.0`, in `dependencies`)
+- eed55d7: quotes table and schema names for vector and storage to allow for camelcase
+- 6c23252: [MASTRA-3982] Fix Memory Retrieval for PG when scope is resource
+- Updated dependencies [63f6b7d]
+- Updated dependencies [12a95fc]
+- Updated dependencies [4b0f8a6]
+- Updated dependencies [51264a5]
+- Updated dependencies [8e6f677]
+- Updated dependencies [d70c420]
+- Updated dependencies [ee9af57]
+- Updated dependencies [36f1c36]
+- Updated dependencies [2a16996]
+- Updated dependencies [10d352e]
+- Updated dependencies [9589624]
+- Updated dependencies [53d3c37]
+- Updated dependencies [751c894]
+- Updated dependencies [577ce3a]
+- Updated dependencies [9260b3a]
+  - @mastra/core@0.10.6
+
+## 0.11.0-alpha.3
+
+### Patch Changes
+
+- 6c23252: [MASTRA-3982] Fix Memory Retrieval for PG when scope is resource
+- Updated dependencies [9589624]
+  - @mastra/core@0.10.6-alpha.4
+
+## 0.11.0-alpha.2
+
+### Patch Changes
+
+- eed55d7: quotes table and schema names for vector and storage to allow for camelcase
+- Updated dependencies [d70c420]
+- Updated dependencies [2a16996]
+  - @mastra/core@0.10.6-alpha.3
+
+## 0.11.0-alpha.1
+
+### Minor Changes
+
+- 704d1ca: Thread Timestamp Auto-Update Enhancement
+  Added automatic thread updatedAt timestamp updates when messages are saved across all storage providers
+  Enhanced user experience: Threads now accurately reflect their latest activity with automatic timestamp updates when new messages are added
+  Universal implementation: Consistent behavior across all 7 storage backends (ClickHouse, Cloudflare D1, DynamoDB, MongoDB, PostgreSQL, Upstash, LibSQL)
+  Performance optimized: Updates execute in parallel with message saving operations for minimal performance impact
+  Backwards compatible: No breaking changes - existing code continues to work unchanged
+  Improved conversation ordering: Chat interfaces can now properly sort threads by actual last activity
+  This enhancement resolves the issue where active conversations appeared stale due to outdated thread timestamps, providing better conversation management and user experience in chat applications.
+
+## 0.10.4-alpha.0
+
+### Patch Changes
+
+- 63f6b7d: dependencies updates:
+  - Updated dependency [`pg-promise@^11.14.0` ↗︎](https://www.npmjs.com/package/pg-promise/v/11.14.0) (from `^11.13.0`, in `dependencies`)
+- Updated dependencies [63f6b7d]
+- Updated dependencies [36f1c36]
+- Updated dependencies [10d352e]
+- Updated dependencies [53d3c37]
+  - @mastra/core@0.10.6-alpha.0
+
+## 0.10.3
+
+### Patch Changes
+
+- 3c77c0a: fix(pg): allow dotted attribute keys in `getTraces` by using `parseFieldKey` instead of `parseSqlIdentifier`
+- Updated dependencies [13c97f9]
+  - @mastra/core@0.10.5
+
+## 0.10.2
+
+### Patch Changes
+
+- e95cb69: dependencies updates:
+  - Updated dependency [`pg@^8.16.0` ↗︎](https://www.npmjs.com/package/pg/v/8.16.0) (from `^8.13.3`, in `dependencies`)
+  - Updated dependency [`pg-promise@^11.13.0` ↗︎](https://www.npmjs.com/package/pg-promise/v/11.13.0) (from `^11.11.0`, in `dependencies`)
+- 0db1e1e: Fix PostgresStore paginated APIs
+- dffb67b: updated stores to add alter table and change tests
+- e0f9201: change how dedupe works for libsql and pg
+- 48eddb9: update filter logic in Memory class to support semantic recall search scope
+- 66f4424: Update peerdeps
+- Updated dependencies [d1ed912]
+- Updated dependencies [f6fd25f]
+- Updated dependencies [dffb67b]
+- Updated dependencies [f1f1f1b]
+- Updated dependencies [925ab94]
+- Updated dependencies [f9816ae]
+- Updated dependencies [82090c1]
+- Updated dependencies [1b443fd]
+- Updated dependencies [ce97900]
+- Updated dependencies [f1309d3]
+- Updated dependencies [14a2566]
+- Updated dependencies [f7f8293]
+- Updated dependencies [48eddb9]
+  - @mastra/core@0.10.4
+
+## 0.10.2-alpha.4
+
+### Patch Changes
+
+- 66f4424: Update peerdeps
+
+## 0.10.2-alpha.3
+
+### Patch Changes
+
+- e0f9201: change how dedupe works for libsql and pg
+- Updated dependencies [925ab94]
+  - @mastra/core@0.10.4-alpha.3
+
+## 0.10.2-alpha.2
+
+### Patch Changes
+
+- 48eddb9: update filter logic in Memory class to support semantic recall search scope
+- Updated dependencies [48eddb9]
+  - @mastra/core@0.10.4-alpha.2
+
+## 0.10.2-alpha.1
+
+### Patch Changes
+
+- 0db1e1e: Fix PostgresStore paginated APIs
+- dffb67b: updated stores to add alter table and change tests
+- Updated dependencies [f6fd25f]
+- Updated dependencies [dffb67b]
+- Updated dependencies [f1309d3]
+- Updated dependencies [f7f8293]
+  - @mastra/core@0.10.4-alpha.1
+
+## 0.10.2-alpha.0
+
+### Patch Changes
+
+- e95cb69: dependencies updates:
+  - Updated dependency [`pg@^8.16.0` ↗︎](https://www.npmjs.com/package/pg/v/8.16.0) (from `^8.13.3`, in `dependencies`)
+  - Updated dependency [`pg-promise@^11.13.0` ↗︎](https://www.npmjs.com/package/pg-promise/v/11.13.0) (from `^11.11.0`, in `dependencies`)
+- Updated dependencies [d1ed912]
+- Updated dependencies [f1f1f1b]
+- Updated dependencies [f9816ae]
+- Updated dependencies [82090c1]
+- Updated dependencies [1b443fd]
+- Updated dependencies [ce97900]
+- Updated dependencies [14a2566]
+  - @mastra/core@0.10.4-alpha.0
+
+## 0.10.1
+
+### Patch Changes
+
+- e5dc18d: Added a backwards compatible layer to begin storing/retrieving UIMessages in storage instead of CoreMessages
+- c5bf1ce: Add backwards compat code for new MessageList in storage
+- f0d559f: Fix peerdeps for alpha channel
+- Updated dependencies [ee77e78]
+- Updated dependencies [592a2db]
+- Updated dependencies [e5dc18d]
+- Updated dependencies [ab5adbe]
+- Updated dependencies [1e8bb40]
+- Updated dependencies [1b5fc55]
+- Updated dependencies [195c428]
+- Updated dependencies [f73e11b]
+- Updated dependencies [37643b8]
+- Updated dependencies [99fd6cf]
+- Updated dependencies [c5bf1ce]
+- Updated dependencies [add596e]
+- Updated dependencies [8dc94d8]
+- Updated dependencies [ecebbeb]
+- Updated dependencies [79d5145]
+- Updated dependencies [12b7002]
+- Updated dependencies [2901125]
+  - @mastra/core@0.10.2
+
 ## 0.10.1-alpha.2
 
 ### Patch Changes
@@ -1303,7 +2209,6 @@
 ### Minor Changes
 
 - c87eb4e: Combine PostgreSQL packages into `@mastra/pg`.
-
   - Move and combine packages to `stores/pg`
   - Reorganize source files into `src/vector` and `src/store`
   - Add deprecation notices to old packages
@@ -1637,7 +2542,6 @@
 ### Minor Changes
 
 - c87eb4e: Combine PostgreSQL packages into `@mastra/pg`.
-
   - Move and combine packages to `stores/pg`
   - Reorganize source files into `src/vector` and `src/store`
   - Add deprecation notices to old packages

@@ -1,17 +1,87 @@
+import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
+import { ExportResultCode } from '@opentelemetry/core';
+import { OTLPTraceExporter as OTLPGrpcExporter } from '@opentelemetry/exporter-trace-otlp-grpc';
+import { OTLPTraceExporter as OTLPHttpExporter } from '@opentelemetry/exporter-trace-otlp-http';
+import { resourceFromAttributes } from '@opentelemetry/resources';
+import { NodeSDK } from '@opentelemetry/sdk-node';
 import {
-  NodeSDK,
-  getNodeAutoInstrumentations,
-  ATTR_SERVICE_NAME,
   ParentBasedSampler,
   TraceIdRatioBasedSampler,
   AlwaysOnSampler,
   AlwaysOffSampler,
-  OTLPHttpExporter,
-  OTLPGrpcExporter,
-  CompositeExporter,
-  resourceFromAttributes,
-} from '@mastra/core/telemetry/otel-vendor';
+} from '@opentelemetry/sdk-trace-base';
+import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
 import { telemetry } from './telemetry-config.mjs';
+
+globalThis.___MASTRA_TELEMETRY___ = true;
+
+function parseHeaders(headerString) {
+  const headers = {}
+  if (!headerString) return headers;
+
+  const headersStringPairs = headerString.split(',');
+  for (const pair of headersStringPairs) {
+    const [key, value] = pair.split('=').map(s => s.trim());
+    if (key && value) headers[key] = value;
+  }
+
+  return headers;
+}
+
+class CompositeExporter {
+  constructor(exporters) {
+    this.exporters = exporters;
+  }
+  export(spans, resultCallback) {
+    const telemetryTraceIds = new Set(
+      spans.filter((span) => {
+        const attrs = span.attributes || {};
+        const httpTarget = attrs["http.target"];
+        return httpTarget === "/api/telemetry";
+      }).map((span) => span.spanContext().traceId)
+    );
+
+    const filteredSpans = spans.filter((span) => {
+      // instrumentation-http spans are the root spans for a trace.
+      // Other @opentelemetry spans are noisy and we do not display them.
+      // At the storage layer, we remove the HTTP instrumentation spans entirely.
+      // And promote their direct children to root spans.
+      return !(span.instrumentationScope?.name?.startsWith('@opentelemetry') &&
+      span.instrumentationScope?.name !== '@opentelemetry/instrumentation-http') &&
+       !telemetryTraceIds.has(span.spanContext().traceId)
+    });
+
+    if (filteredSpans.length === 0) {
+      resultCallback({ code: ExportResultCode.SUCCESS });
+      return;
+    }
+    void Promise.all(
+      this.exporters.map(
+        (exporter) => new Promise((resolve) => {
+          if (exporter.export) {
+            exporter.export(filteredSpans, resolve);
+          } else {
+            resolve({ code: ExportResultCode.FAILED });
+          }
+        })
+      )
+    ).then((results) => {
+      const hasError = results.some((r) => r.code === ExportResultCode.FAILED);
+      resultCallback({
+        code: hasError ? ExportResultCode.FAILED : ExportResultCode.SUCCESS
+      });
+    }).catch((error) => {
+      console.error("[CompositeExporter] Export error:", error);
+      resultCallback({ code: ExportResultCode.FAILED, error });
+    });
+  }
+  shutdown() {
+    return Promise.all(this.exporters.map((e) => e.shutdown?.() ?? Promise.resolve())).then(() => void 0);
+  }
+  forceFlush() {
+    return Promise.all(this.exporters.map((e) => e.forceFlush?.() ?? Promise.resolve())).then(() => void 0);
+  }
+};
 
 function getSampler(config) {
   if (!config.sampling) {
@@ -57,9 +127,15 @@ async function getExporters(config) {
         headers: config.export.headers,
       }));
     } else {
+      const exporterEndpoint = config.export.endpoint ?? process.env.OTEL_EXPORTER_OTLP_ENDPOINT
+      let exporterHeaders = config.export.headers
+      if (!exporterHeaders) {
+        exporterHeaders = parseHeaders(process.env.OTEL_EXPORTER_OTLP_HEADERS)
+      }
+
       exporters.push(new OTLPHttpExporter({
-        url: config.export.endpoint,
-        headers: config.export.headers,
+        url: exporterEndpoint,
+        headers: exporterHeaders,
       }));
     }
   } else if (config.export?.type === 'custom') {
@@ -82,11 +158,15 @@ const sdk = new NodeSDK({
   instrumentations: [getNodeAutoInstrumentations()],
 });
 
-sdk.start();
+if (telemetry.enabled !== false) {
+  sdk.start();
 
-// gracefully shut down the SDK on process exit
-process.on('SIGTERM', () => {
-  sdk.shutdown().catch(() => {
-    // do nothing
+  // gracefully shut down the SDK on process exit
+  process.on('SIGTERM', () => {
+    sdk.shutdown().catch(() => {
+      // do nothing
+    });
   });
-});
+}
+
+

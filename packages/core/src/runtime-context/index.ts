@@ -30,8 +30,8 @@ export class RuntimeContext<Values extends Record<string, any> | unknown = unkno
   public get<
     K extends Values extends Record<string, any> ? keyof Values : string,
     R = Values extends Record<string, any> ? (K extends keyof Values ? Values[K] : never) : unknown,
-  >(key: string): R {
-    return this.registry.get(key) as R;
+  >(key: K): R {
+    return this.registry.get(key as string) as R;
   }
 
   /**
@@ -90,5 +90,13 @@ export class RuntimeContext<Values extends Record<string, any> | unknown = unkno
    */
   public forEach<T = any>(callbackfn: (value: T, key: string, map: Map<string, any>) => void): void {
     this.registry.forEach(callbackfn as any);
+  }
+
+  /**
+   * Custom JSON serialization method
+   * Converts the internal Map to a plain object for proper JSON serialization
+   */
+  public toJSON(): Record<string, any> {
+    return Object.fromEntries(this.registry);
   }
 }

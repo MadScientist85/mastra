@@ -1,8 +1,9 @@
 import { randomUUID } from 'crypto';
-import type { QueryResult } from '@mastra/core';
+import type { QueryResult } from '@mastra/core/vector';
 import dotenv from 'dotenv';
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi, afterEach } from 'vitest';
 
+import type { VectorizeVectorFilter } from './filter';
 import { CloudflareVector } from './';
 
 dotenv.config();
@@ -261,7 +262,7 @@ describe('CloudflareVector', () => {
 
   describe('Index Operations', () => {
     const tempIndexName = 'test_temp_index';
-    const tempIndexNameCreateDescribeDelete = `create-describe-delete`;
+    const tempIndexNameCreateDescribeDelete = `create-describe-delete-${randomUUID().slice(0, 8)}`;
 
     beforeEach(async () => {
       // Cleanup any existing index before each test
@@ -595,7 +596,7 @@ describe('CloudflareVector', () => {
 
     it('rejects queries with filter keys longer than 512 characters', async () => {
       const longKey = 'a'.repeat(513);
-      const filter = { [longKey]: 'value' };
+      const filter: VectorizeVectorFilter = { [longKey]: 'value' };
 
       await expect(
         vectorDB.query({ indexName: testIndexName, queryVector: createVector(0, 0.9), topK: 10, filter }),
@@ -654,7 +655,7 @@ describe('CloudflareVector', () => {
           indexName: testIndexName,
           queryVector: createVector(0, 0.9),
           topK: 10,
-          filter: { field: { $gt: [] } },
+          filter: { field: { $gt: [] } } as any,
         }),
       ).rejects.toThrow();
 
@@ -663,7 +664,7 @@ describe('CloudflareVector', () => {
           indexName: testIndexName,
           queryVector: createVector(0, 0.9),
           topK: 10,
-          filter: { field: { $lt: [1, 2, 3] } },
+          filter: { field: { $lt: [1, 2, 3] } } as any,
         }),
       ).rejects.toThrow();
     });
@@ -1172,7 +1173,7 @@ describe('CloudflareVector', () => {
       it('handles filters approaching size limit', async () => {
         // Create a filter that's close to but under 2048 bytes
         const longString = 'a'.repeat(400);
-        const filter = {
+        const filter: VectorizeVectorFilter = {
           category: { $in: [longString, longString.slice(0, 100)] },
           price: { $gt: 0, $lt: 1000 },
           'nested.string': longString.slice(0, 200),

@@ -7,6 +7,10 @@ description: Learn how to create tools, add them to Mastra agents, and integrate
 
 Tools are typed functions that can be executed by agents or workflows. Each tool has a schema defining its inputs, an executor function implementing its logic, and optional access to configured integrations.
 
+Mastra supports two patterns for providing tools to agents:
+- **Direct assignment**: Static tools available at initialization
+- **Function-based**: Dynamic tools resolved based on runtime context  
+
 ## Creating Tools
 
 Here's a basic example of creating a tool:
@@ -75,8 +79,6 @@ Once you have a server you want to use with your agent, import the Mastra `MCPCl
 
 ```typescript filename="src/mastra/mcp.ts" {1,7-16}
 import { MCPClient } from "@mastra/mcp";
-import { Agent } from "@mastra/core/agent";
-import { openai } from "@ai-sdk/openai";
 
 // Configure MCPClient to connect to your server(s)
 export const mcp = new MCPClient({
@@ -96,13 +98,51 @@ export const mcp = new MCPClient({
 Then connect your agent to the server tools:
 
 ```typescript filename="src/mastra/agents/mcpAgent.ts" {7}
+import { Agent } from "@mastra/core/agent";
+import { openai } from "@ai-sdk/openai";
 import { mcp } from "../mcp";
+
 // Create an agent and add tools from the MCP client
 const agent = new Agent({
   name: "Agent with MCP Tools",
   instructions: "You can use tools from connected MCP servers.",
   model: openai("gpt-4o-mini"),
   tools: await mcp.getTools(),
+});
+```
+
+When creating agents that will consume an MCP server in the same repo they need to connect to, always use function based tools to prevent race conditions.
+
+```typescript filename="src/mastra/agents/selfReferencingAgent.ts"
+import { Agent } from "@mastra/core/agent";
+import { MCPServer } from "@mastra/mcp";
+import { MCPClient } from "@mastra/mcp";
+import { openai } from "@ai-sdk/openai";
+
+const myAgent = new Agent({
+  name: "My Agent",
+  description: "An agent that can use tools from an http MCP server", 
+  instructions: "You can use remote calculation tools.",
+  model: openai("gpt-4o-mini"),
+  tools: async () => {
+    // Tools resolve when needed, not during initialization
+    const mcpClient = new MCPClient({
+      servers: {
+        myServer: {
+          url: new URL("http://localhost:4111/api/mcp/mcpServer/mcp"),
+        },
+      },
+    });
+    return await mcpClient.getTools();
+  },
+});
+
+// This works because tools resolve after server startup
+export const mcpServer = new MCPServer({
+  name: "My MCP Server",
+  agents: {
+    myAgent
+  },
 });
 ```
 
@@ -128,6 +168,37 @@ if (resources.filesystem) {
 ```
 
 Each resource has a URI, name, description, and MIME type. The `getResources()` method handles errors gracefully - if a server fails or doesn't support resources, it will be omitted from the results.
+
+## Accessing MCP Prompts
+
+MCP servers can also expose prompts, which represent structured message templates or conversational context for agents.
+
+### Listing Prompts
+
+```typescript filename="src/mastra/prompts.ts"
+import { mcp } from "./mcp";
+
+// Get prompts from all connected MCP servers
+const prompts = await mcp.prompts.list();
+
+// Access prompts from a specific server
+if (prompts.weather) {
+  const prompt = prompts.weather.find(
+    (p) => p.name === "current"
+  );
+  console.log(`Prompt: ${prompt?.name}`);
+}
+```
+
+Each prompt has a name, description, and (optional) version.
+
+### Retrieving a Prompt and Its Messages
+
+```typescript filename="src/mastra/prompts.ts"
+const { prompt, messages } = await mcp.prompts.get({ serverName: "weather", name: "current" });
+console.log(prompt);    // { name: "current", version: "v1", ... }
+console.log(messages);  // [ { role: "assistant", content: { type: "text", text: "..." } }, ... ]
+```
 
 ## Exposing Agents as Tools via MCPServer
 

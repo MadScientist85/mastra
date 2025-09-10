@@ -1,6 +1,7 @@
 import { context as otlpContext, SpanStatusCode, trace, propagation, context } from '@opentelemetry/api';
 import type { Tracer, SpanOptions, Context, Span, BaggageEntry } from '@opentelemetry/api';
 
+import { MastraError, ErrorDomain, ErrorCategory } from '../error';
 import type { OtelConfig } from './types';
 import { getBaggageValues, hasActiveTelemetry } from './utility';
 
@@ -31,14 +32,22 @@ export class Telemetry {
    */
   static init(config: OtelConfig = {}): Telemetry {
     try {
-      if (!global.__TELEMETRY__) {
-        global.__TELEMETRY__ = new Telemetry(config);
+      if (!globalThis.__TELEMETRY__) {
+        globalThis.__TELEMETRY__ = new Telemetry(config);
       }
 
-      return global.__TELEMETRY__;
+      return globalThis.__TELEMETRY__;
     } catch (error) {
-      console.error('Failed to initialize telemetry:', error);
-      throw error;
+      const wrappedError = new MastraError(
+        {
+          id: 'TELEMETRY_INIT_FAILED',
+          text: 'Failed to initialize telemetry',
+          domain: ErrorDomain.MASTRA_TELEMETRY,
+          category: ErrorCategory.SYSTEM,
+        },
+        error,
+      );
+      throw wrappedError;
     }
   }
 
@@ -53,10 +62,15 @@ export class Telemetry {
    * @returns {Telemetry} The global telemetry instance
    */
   static get(): Telemetry {
-    if (!global.__TELEMETRY__) {
-      throw new Error('Telemetry not initialized');
+    if (!globalThis.__TELEMETRY__) {
+      throw new MastraError({
+        id: 'TELEMETRY_GETTER_FAILED_GLOBAL_TELEMETRY_NOT_INITIALIZED',
+        text: 'Telemetry not initialized',
+        domain: ErrorDomain.MASTRA_TELEMETRY,
+        category: ErrorCategory.USER,
+      });
     }
-    return global.__TELEMETRY__;
+    return globalThis.__TELEMETRY__;
   }
 
   /**
@@ -165,7 +179,7 @@ export class Telemetry {
         throw error;
       }
       try {
-        const { requestId, componentName, runId } = getBaggageValues(ctx);
+        const { requestId, componentName, runId, threadId, resourceId } = getBaggageValues(ctx);
 
         // Add all context attributes to span
         if (context.attributes) {
@@ -174,6 +188,14 @@ export class Telemetry {
 
         if (requestId) {
           span.setAttribute('http.request_id', requestId);
+        }
+
+        if (threadId) {
+          span.setAttribute('threadId', threadId);
+        }
+
+        if (resourceId) {
+          span.setAttribute('resourceId', resourceId);
         }
 
         if (context.attributes?.componentName) {
@@ -204,6 +226,10 @@ export class Telemetry {
                 runId: { value: this.runId },
                 // @ts-ignore
                 'http.request_id': { value: requestId },
+                // @ts-ignore
+                threadId: { value: threadId },
+                // @ts-ignore
+                resourceId: { value: resourceId },
               }),
             );
           }
@@ -261,13 +287,17 @@ class BaggageTracer implements Tracer {
   startSpan(name: string, options: SpanOptions = {}, ctx: Context) {
     ctx = ctx ?? otlpContext.active();
     const span = this._tracer.startSpan(name, options, ctx);
-    const { componentName, runId, requestId } = getBaggageValues(ctx);
+    const { componentName, runId, requestId, threadId, resourceId } = getBaggageValues(ctx);
     // @ts-ignore
     span.setAttribute('componentName', componentName);
     // @ts-ignore
     span.setAttribute('runId', runId);
     // @ts-ignore
     span.setAttribute('http.request_id', requestId);
+    // @ts-ignore
+    span.setAttribute('threadId', threadId);
+    // @ts-ignore
+    span.setAttribute('resourceId', resourceId);
 
     return span;
   }
@@ -288,13 +318,17 @@ class BaggageTracer implements Tracer {
   ): ReturnType<F> {
     if (typeof optionsOrFn === 'function') {
       const wrappedFn = (span: Span) => {
-        const { componentName, runId, requestId } = getBaggageValues(otlpContext.active());
+        const { componentName, runId, requestId, threadId, resourceId } = getBaggageValues(otlpContext.active());
         // @ts-ignore
         span.setAttribute('componentName', componentName);
         // @ts-ignore
         span.setAttribute('runId', runId);
         // @ts-ignore
         span.setAttribute('http.request_id', requestId);
+        // @ts-ignore
+        span.setAttribute('threadId', threadId);
+        // @ts-ignore
+        span.setAttribute('resourceId', resourceId);
 
         return optionsOrFn(span);
       };
@@ -302,26 +336,36 @@ class BaggageTracer implements Tracer {
     }
     if (typeof ctxOrFn === 'function') {
       const wrappedFn = (span: Span) => {
-        const { componentName, runId, requestId } = getBaggageValues(otlpContext.active());
+        const { componentName, runId, requestId, threadId, resourceId } = getBaggageValues(otlpContext.active());
         // @ts-ignore
         span.setAttribute('componentName', componentName);
         // @ts-ignore
         span.setAttribute('runId', runId);
         // @ts-ignore
         span.setAttribute('http.request_id', requestId);
+        // @ts-ignore
+        span.setAttribute('threadId', threadId);
+        // @ts-ignore
+        span.setAttribute('resourceId', resourceId);
 
         return ctxOrFn(span);
       };
       return this._tracer.startActiveSpan(name, optionsOrFn, context.active(), wrappedFn as F);
     }
     const wrappedFn = (span: Span) => {
-      const { componentName, runId, requestId } = getBaggageValues(ctxOrFn ?? otlpContext.active());
+      const { componentName, runId, requestId, threadId, resourceId } = getBaggageValues(
+        ctxOrFn ?? otlpContext.active(),
+      );
       // @ts-ignore
       span.setAttribute('componentName', componentName);
       // @ts-ignore
       span.setAttribute('runId', runId);
       // @ts-ignore
       span.setAttribute('http.request_id', requestId);
+      // @ts-ignore
+      span.setAttribute('threadId', threadId);
+      // @ts-ignore
+      span.setAttribute('resourceId', resourceId);
 
       return fn!(span);
     };

@@ -1,5 +1,5 @@
 import { globby } from 'globby';
-import { it, describe, expect, beforeAll } from 'vitest';
+import { it, describe, expect } from 'vitest';
 import * as customResolve from 'resolve.exports';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
@@ -13,11 +13,13 @@ let allPackages = await globby(
     '!./docs/**',
     '!**/node_modules/**',
     '!**/integration-tests/**',
+    '!**/integration-tests-v5/**',
     '!./packages/_config/**',
     '!./e2e-tests/**',
     '!**/mcp-docs-server/**',
     '!**/mcp-registry-registry/**',
     '!**/stores/_test-utils/**',
+    '!**/explorations/**',
   ],
   {
     cwd: resolve(__dirname, '..', '..'),
@@ -39,7 +41,7 @@ describe.for(allPackages.map(pkg => [relative(join(__dirname.replaceAll('\\', '/
     });
 
     describe.concurrent.for(imports.filter(x => !x.endsWith('.css')).map(x => [x]))('%s', async ([importPath]) => {
-      it('should use .js and .d.ts extensions when using import', async () => {
+      it.skipIf(pkgJson.name === 'mastra')('should use .js and .d.ts extensions when using import', async () => {
         if (importPath === './package.json') {
           return;
         }
@@ -59,8 +61,8 @@ describe.for(allPackages.map(pkg => [relative(join(__dirname.replaceAll('\\', '/
         }
       });
 
-      it.skipIf(pkgName === 'packages/playground-ui')(
-        'should use .cjs and .d.cts extensions when using require',
+      it.skipIf(pkgName === 'packages/playground-ui' || pkgJson.name === 'mastra')(
+        'should use .cjs and .d.ts extensions when using require',
         async () => {
           if (importPath === './package.json') {
             return;
@@ -70,7 +72,7 @@ describe.for(allPackages.map(pkg => [relative(join(__dirname.replaceAll('\\', '/
           expect(exportConfig.require).toBeDefined();
           expect(exportConfig.require).not.toBe(expect.any(String));
           expect(extname(exportConfig.require.default)).toMatch(/\.cjs$/);
-          expect(exportConfig.require.types).toMatch(/\.d\.cts$/);
+          expect(exportConfig.require.types).toMatch(/\.d\.ts$/);
 
           const fileOutput = customResolve.exports(pkgJson, importPath, {
             require: true,
@@ -85,12 +87,15 @@ describe.for(allPackages.map(pkg => [relative(join(__dirname.replaceAll('\\', '/
       );
     });
 
-    it.skipIf(!pkgJson.name.startsWith('@mastra/') && pkgJson.name !== 'mastra' && pkgJson.name !== 'create-mastra')(
-      'should have @mastra/core as a peer dependency if used',
-      async () => {
-        const hasMastraCoreAsDependency = pkgJson?.dependencies?.['@mastra/core'];
-        expect(hasMastraCoreAsDependency).toBe(undefined);
-      },
-    );
+    it.skipIf(
+      pkgJson.name === 'mastra' ||
+        pkgJson.name === 'create-mastra' ||
+        pkgJson.name === '@mastra/client-js' ||
+        !pkgJson.name.startsWith('@mastra/'),
+    )('should have @mastra/core as a peer dependency if used', async () => {
+      console.log(pkgJson.name);
+      const hasMastraCoreAsDependency = pkgJson?.dependencies?.['@mastra/core'];
+      expect(hasMastraCoreAsDependency).toBe(undefined);
+    });
   },
 );

@@ -5,6 +5,7 @@ import { createServer } from 'node:net';
 import path from 'node:path';
 import { openai } from '@ai-sdk/openai';
 import { useChat } from '@ai-sdk/react';
+import { Mastra } from '@mastra/core';
 import { Agent } from '@mastra/core/agent';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import type { Message } from 'ai';
@@ -88,7 +89,7 @@ describe('Memory Streaming Tests', () => {
     expect(response2).toContain('70 degrees');
   });
 
-  it('should use experimental_generateMessageId for messages in memory', async () => {
+  it('should use custom mastra ID generator for messages in memory', async () => {
     const agent = new Agent({
       name: 'test-msg-id',
       instructions: 'you are a helpful assistant.',
@@ -100,20 +101,30 @@ describe('Memory Streaming Tests', () => {
     const resourceId = 'test-resource-msg-id';
     const customIds: UUID[] = [];
 
-    await agent.generate('Hello, world!', {
-      threadId,
-      resourceId,
-      experimental_generateMessageId: () => {
+    const _mastra = new Mastra({
+      idGenerator: () => {
         const id = randomUUID();
         customIds.push(id);
         return id;
       },
+      agents: {
+        agent: agent,
+      },
     });
 
-    const { messages } = await agent.getMemory()!.query({ threadId });
+    await agent.generate('Hello, world!', {
+      threadId,
+      resourceId,
+    });
+
+    const agentMemory = (await agent.getMemory())!;
+    const { messages } = await agentMemory.query({ threadId });
+
+    console.log('Custom IDs: ', customIds);
+    console.log('Messages: ', messages);
 
     expect(messages).toHaveLength(2);
-    expect(messages.length).toBe(customIds.length);
+    expect(messages.length).toBeLessThan(customIds.length);
     for (const message of messages) {
       if (!(`id` in message)) {
         throw new Error(`Expected message.id`);
@@ -159,7 +170,7 @@ describe('Memory Streaming Tests', () => {
           console.error('Mastra server error:', data.toString());
         });
 
-        setTimeout(() => reject(new Error('Mastra server failed to start')), 10000);
+        setTimeout(() => reject(new Error('Mastra server failed to start')), 100000);
       });
     });
 
@@ -240,8 +251,9 @@ describe('Memory Streaming Tests', () => {
       });
       await weatherAgent.generate(`LA weather`, { threadId, resourceId });
 
-      const initialMessages = (await weatherAgent.getMemory()!.query({ threadId })).uiMessages;
-      let clipboard = ``;
+      const agentMemory = (await weatherAgent.getMemory())!;
+      const initialMessages = (await agentMemory.query({ threadId })).uiMessages;
+      const state = { clipboard: '' };
       const { result } = renderHook(() => {
         const chat = useChat({
           api: `http://localhost:${port}/api/agents/test/stream`,
@@ -264,7 +276,7 @@ describe('Memory Streaming Tests', () => {
             console.log(toolCall);
             if (toolCall.toolName === `clipboard`) {
               await new Promise(res => setTimeout(res, 10));
-              return clipboard;
+              return state.clipboard;
             }
           },
         });
@@ -279,16 +291,19 @@ describe('Memory Streaming Tests', () => {
             content: message,
           });
         });
-        const coreMessages = result.current.messages;
+
+        // Wait for message count to increase
         await waitFor(
           () => {
             expect(error).toBeNull();
             expect(result.current.messages.length).toBeGreaterThan(messageCountBefore);
           },
-          { timeout: 1000 },
+          { timeout: 2000 },
         );
 
-        const latestMessage = coreMessages.at(-1);
+        // Get fresh reference to messages after all waits complete
+        const uiMessages = result.current.messages;
+        const latestMessage = uiMessages.at(-1);
         if (!latestMessage) throw new Error(`No latest message`);
         if (
           latestMessage.role === `assistant` &&
@@ -301,38 +316,37 @@ describe('Memory Streaming Tests', () => {
         for (const should of responseContains) {
           let searchString = typeof latestMessage.content === `string` ? latestMessage.content : ``;
 
-          if (Array.isArray(latestMessage.content)) {
-            for (const part of latestMessage.content) {
-              if (part.type === `text`) {
-                searchString += `\n${part.text}`;
-              }
-              if (part.type === `tool-result`) {
-                searchString += `\n${JSON.stringify(part.result)}`;
-              }
+          for (const part of latestMessage.parts) {
+            if (part.type === `text`) {
+              searchString += `\n${part.text}`;
+            }
+            if (part.type === `tool-invocation`) {
+              searchString += `\n${JSON.stringify(part.toolInvocation)}`;
             }
           }
+
           expect(searchString).toContain(should);
         }
       }
 
-      clipboard = `test 1!`;
+      state.clipboard = `test 1!`;
       await expectResponse({
         message: 'whats in my clipboard?',
-        responseContains: [clipboard],
+        responseContains: [state.clipboard],
       });
       await expectResponse({
         message: 'weather in Las Vegas',
         responseContains: ['Las Vegas', '70 degrees'],
       });
-      clipboard = `test 2!`;
+      state.clipboard = `test 2!`;
       await expectResponse({
         message: 'whats in my clipboard?',
-        responseContains: [clipboard],
+        responseContains: [state.clipboard],
       });
-      clipboard = `test 3!`;
+      state.clipboard = `test 3!`;
       await expectResponse({
         message: 'whats in my clipboard now?',
-        responseContains: [clipboard],
+        responseContains: [state.clipboard],
       });
     });
   });

@@ -1,8 +1,8 @@
-import { RuntimeContext } from '@mastra/core/di';
-import { isVercelTool } from '@mastra/core/tools';
+import type { RuntimeContext } from '@mastra/core/di';
 import type { ToolAction, VercelTool } from '@mastra/core/tools';
+import { isVercelTool } from '@mastra/core/tools';
+import { zodToJsonSchema } from '@mastra/core/utils/zod-to-json';
 import { stringify } from 'superjson';
-import zodToJsonSchema from 'zod-to-json-schema';
 import { HTTPException } from '../http-exception';
 import type { Context } from '../types';
 
@@ -68,11 +68,9 @@ export function executeToolHandler(tools: ToolsContext['tools']) {
     toolId,
     data,
     runtimeContext,
-    runtimeContextFromRequest,
   }: Pick<ToolsContext, 'mastra' | 'toolId' | 'runId'> & {
     data?: unknown;
     runtimeContext: RuntimeContext;
-    runtimeContextFromRequest: Record<string, unknown>;
   }) => {
     try {
       if (!toolId) {
@@ -96,16 +94,13 @@ export function executeToolHandler(tools: ToolsContext['tools']) {
         return result;
       }
 
-      const finalRuntimeContext = new RuntimeContext<Record<string, unknown>>([
-        ...Array.from(runtimeContext.entries()),
-        ...Array.from(Object.entries(runtimeContextFromRequest ?? {})),
-      ]);
-
       const result = await tool.execute({
         context: data!,
         mastra,
         runId,
-        runtimeContext: finalRuntimeContext,
+        runtimeContext,
+        // TODO: Pass proper tracing context when server API supports tracing
+        tracingContext: { currentSpan: undefined },
       });
       return result;
     } catch (error) {
@@ -114,18 +109,51 @@ export function executeToolHandler(tools: ToolsContext['tools']) {
   };
 }
 
+export async function getAgentToolHandler({
+  mastra,
+  agentId,
+  toolId,
+  runtimeContext,
+}: Pick<ToolsContext, 'mastra' | 'toolId'> & {
+  agentId?: string;
+  runtimeContext: RuntimeContext;
+}) {
+  try {
+    const agent = agentId ? mastra.getAgent(agentId) : null;
+    if (!agent) {
+      throw new HTTPException(404, { message: 'Agent not found' });
+    }
+
+    const agentTools = await agent.getTools({ runtimeContext });
+
+    const tool = Object.values(agentTools || {}).find((tool: any) => tool.id === toolId) as any;
+
+    if (!tool) {
+      throw new HTTPException(404, { message: 'Tool not found' });
+    }
+
+    const serializedTool = {
+      ...tool,
+      inputSchema: tool.inputSchema ? stringify(zodToJsonSchema(tool.inputSchema)) : undefined,
+      outputSchema: tool.outputSchema ? stringify(zodToJsonSchema(tool.outputSchema)) : undefined,
+    };
+
+    return serializedTool;
+  } catch (error) {
+    return handleError(error, 'Error getting agent tool');
+  }
+}
+
 export async function executeAgentToolHandler({
   mastra,
   agentId,
   toolId,
   data,
   runtimeContext,
-  runtimeContextFromRequest,
 }: Pick<ToolsContext, 'mastra' | 'toolId'> & {
   agentId?: string;
   data: any;
   runtimeContext: RuntimeContext;
-  runtimeContextFromRequest: Record<string, unknown>;
 }) {
   try {
     const agent = agentId ? mastra.getAgent(agentId) : null;
@@ -133,7 +161,9 @@ export async function executeAgentToolHandler({
       throw new HTTPException(404, { message: 'Tool not found' });
     }
 
-    const tool = Object.values(agent?.tools || {}).find((tool: any) => tool.id === toolId) as any;
+    const agentTools = await agent.getTools({ runtimeContext });
+
+    const tool = Object.values(agentTools || {}).find((tool: any) => tool.id === toolId) as any;
 
     if (!tool) {
       throw new HTTPException(404, { message: 'Tool not found' });
@@ -148,16 +178,13 @@ export async function executeAgentToolHandler({
     //   return result;
     // }
 
-    const finalRuntimeContext = new RuntimeContext<Record<string, unknown>>([
-      ...Array.from(runtimeContext.entries()),
-      ...Array.from(Object.entries(runtimeContextFromRequest ?? {})),
-    ]);
-
     const result = await tool.execute({
       context: data,
-      runtimeContext: finalRuntimeContext,
+      runtimeContext,
       mastra,
       runId: agentId,
+      // TODO: Pass proper tracing context when server API supports tracing
+      tracingContext: { currentSpan: undefined },
     });
 
     return result;

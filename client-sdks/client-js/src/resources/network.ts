@@ -1,10 +1,9 @@
 import { processDataStream } from '@ai-sdk/ui-utils';
-import type { GenerateReturn } from '@mastra/core';
+import type { GenerateReturn } from '@mastra/core/llm';
 import type { JSONSchema7 } from 'json-schema';
-import { ZodSchema } from 'zod';
-import { zodToJsonSchema } from '../utils/zod-to-json-schema';
-
+import type { ZodSchema } from 'zod';
 import type { GenerateParams, ClientOptions, StreamParams, GetNetworkResponse } from '../types';
+import { zodToJsonSchema } from '../utils/zod-to-json-schema';
 
 import { BaseResource } from './base';
 
@@ -29,9 +28,10 @@ export class Network extends BaseResource {
    * @param params - Generation parameters including prompt
    * @returns Promise containing the generated response
    */
-  generate<T extends JSONSchema7 | ZodSchema | undefined = undefined>(
-    params: GenerateParams<T>,
-  ): Promise<GenerateReturn<T>> {
+  generate<
+    Output extends JSONSchema7 | ZodSchema | undefined = undefined,
+    StructuredOutput extends JSONSchema7 | ZodSchema | undefined = undefined,
+  >(params: GenerateParams<Output>): Promise<GenerateReturn<any, Output, StructuredOutput>> {
     const processedParams = {
       ...params,
       output: zodToJsonSchema(params.output),

@@ -1,7 +1,7 @@
-import type { IMastraLogger } from "@mastra/core/logger";
-import { ErrorCode } from "@modelcontextprotocol/sdk/types.js";
-import type { Resource, ResourceTemplate } from "@modelcontextprotocol/sdk/types.js";
-import type { InternalMastraMCPClient } from "./client";
+import type { IMastraLogger } from '@mastra/core/logger';
+import { ErrorCode } from '@modelcontextprotocol/sdk/types.js';
+import type { Resource, ResourceTemplate } from '@modelcontextprotocol/sdk/types.js';
+import type { InternalMastraMCPClient } from './client';
 
 interface ResourceClientActionsConfig {
   client: InternalMastraMCPClient;
@@ -34,13 +34,12 @@ export class ResourceClientActions {
       }
     } catch (e: any) {
       // MCP Server might not support resources, so we return an empty array
-      if (e.code === ErrorCode.MethodNotFound) {      
-        return []
+      if (e.code === ErrorCode.MethodNotFound) {
+        return [];
       }
       this.logger.error(`Error getting resources from server ${this.client.name}`, {
         error: e instanceof Error ? e.message : String(e),
       });
-      console.log('errorheere', e)
       throw new Error(
         `Failed to fetch resources from server ${this.client.name}: ${e instanceof Error ? e.stack || e.message : String(e)}`,
       );
@@ -65,9 +64,8 @@ export class ResourceClientActions {
       }
     } catch (e: any) {
       // MCP Server might not support resources, so we return an empty array
-      console.log({ errorcooode: e.code })
-      if (e.code === ErrorCode.MethodNotFound) {      
-        return []
+      if (e.code === ErrorCode.MethodNotFound) {
+        return [];
       }
       this.logger.error(`Error getting resource templates from server ${this.client.name}`, {
         error: e instanceof Error ? e.message : String(e),

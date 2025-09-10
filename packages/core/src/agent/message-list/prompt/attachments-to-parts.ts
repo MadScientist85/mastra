@@ -1,6 +1,5 @@
 import type { Attachment } from '@ai-sdk/ui-utils';
 import type { FilePart, ImagePart, TextPart } from 'ai';
-import { convertDataContentToUint8Array, convertUint8ArrayToText } from './data-content';
 
 type ContentPart = TextPart | ImagePart | FilePart;
 
@@ -25,7 +24,7 @@ export function attachmentsToParts(attachments: Attachment[]): ContentPart[] {
       case 'http:':
       case 'https:': {
         if (attachment.contentType?.startsWith('image/')) {
-          parts.push({ type: 'image', image: url });
+          parts.push({ type: 'image', image: url.toString(), mimeType: attachment.contentType });
         } else {
           if (!attachment.contentType) {
             throw new Error('If the attachment is not an image, it must specify a content type');
@@ -33,7 +32,7 @@ export function attachmentsToParts(attachments: Attachment[]): ContentPart[] {
 
           parts.push({
             type: 'file',
-            data: url,
+            data: url.toString(),
             mimeType: attachment.contentType,
           });
         }
@@ -41,30 +40,17 @@ export function attachmentsToParts(attachments: Attachment[]): ContentPart[] {
       }
 
       case 'data:': {
-        let header;
-        let base64Content;
-        let mimeType;
-
-        try {
-          [header, base64Content] = attachment.url.split(',');
-          mimeType = header?.split?.(';')?.[0]?.split(':')[1];
-        } catch {
-          throw new Error(`Error processing data URL: ${attachment.url}`);
-        }
-
-        if (mimeType == null || base64Content == null) {
-          throw new Error(`Invalid data URL format: ${attachment.url}`);
-        }
-
         if (attachment.contentType?.startsWith('image/')) {
           parts.push({
             type: 'image',
-            image: convertDataContentToUint8Array(base64Content),
+            image: attachment.url,
+            mimeType: attachment.contentType,
           });
         } else if (attachment.contentType?.startsWith('text/')) {
           parts.push({
-            type: 'text',
-            text: convertUint8ArrayToText(convertDataContentToUint8Array(base64Content)),
+            type: 'file',
+            data: attachment.url,
+            mimeType: attachment.contentType,
           });
         } else {
           if (!attachment.contentType) {
@@ -73,7 +59,7 @@ export function attachmentsToParts(attachments: Attachment[]): ContentPart[] {
 
           parts.push({
             type: 'file',
-            data: base64Content,
+            data: attachment.url,
             mimeType: attachment.contentType,
           });
         }

@@ -13,6 +13,8 @@ import type {
   ListResourcesResult,
   ReadResourceResult,
   ListResourceTemplatesResult,
+  GetPromptResult,
+  Prompt,
 } from '@modelcontextprotocol/sdk/types.js';
 import { MockLanguageModelV1 } from 'ai/test';
 import { Hono } from 'hono';
@@ -22,7 +24,7 @@ import { weatherTool } from '../__fixtures__/tools';
 import { InternalMastraMCPClient } from '../client/client';
 import { MCPClient } from '../client/configuration';
 import { MCPServer } from './server';
-import type { MCPServerResources, MCPServerResourceContent } from './server';
+import type { MCPServerResources, MCPServerResourceContent, MCPRequestHandlerExtra } from './types';
 
 const PORT = 9100 + Math.floor(Math.random() * 1000);
 let server: MCPServer;
@@ -607,6 +609,227 @@ describe('MCPServer', () => {
     });
   });
 
+  describe('Prompts', () => {
+    let promptServer: MCPServer;
+    let promptInternalClient: InternalMastraMCPClient;
+    let promptHttpServer: http.Server;
+    const PROMPT_PORT = 9500 + Math.floor(Math.random() * 1000);
+
+    let currentPrompts: Prompt[] = [
+      {
+        name: 'explain-code',
+        version: 'v1',
+        description: 'Explain code v1',
+        arguments: [{ name: 'code', required: true }],
+        getMessages: async (args: any) => [
+          { role: 'user', content: { type: 'text', text: `Explain this code (v1):\n${args.code}` } },
+        ],
+      },
+      {
+        name: 'explain-code',
+        version: 'v2',
+        description: 'Explain code v2',
+        arguments: [{ name: 'code', required: true }],
+        getMessages: async (args: any) => [
+          { role: 'user', content: { type: 'text', text: `Explain this code (v2):\n${args.code}` } },
+        ],
+      },
+      {
+        name: 'summarize',
+        version: 'v1',
+        description: 'Summarize text',
+        arguments: [{ name: 'text', required: true }],
+        getMessages: async (args: any) => [
+          { role: 'user', content: { type: 'text', text: `Summarize this:\n${args.text}` } },
+        ],
+      },
+    ];
+
+    beforeAll(async () => {
+      // Register multiple versions of the same prompt
+
+      promptServer = new MCPServer({
+        name: 'PromptTestServer',
+        version: '1.0.0',
+        tools: {},
+        prompts: {
+          listPrompts: async () => currentPrompts,
+          getPromptMessages: async (params: { name: string; version?: string; args?: any }) => {
+            let prompt;
+            if (params.version) {
+              prompt = currentPrompts.find(p => p.name === params.name && p.version === params.version);
+            } else {
+              // Select the first matching name if no version is provided.
+              prompt = currentPrompts.find(p => p.name === params.name);
+            }
+            if (!prompt)
+              throw new Error(
+                `Prompt "${params.name}"${params.version ? ` (version ${params.version})` : ''} not found`,
+              );
+            return (prompt as any).getMessages(params.args);
+          },
+        },
+      });
+
+      promptHttpServer = http.createServer(async (req: http.IncomingMessage, res: http.ServerResponse) => {
+        const url = new URL(req.url || '', `http://localhost:${PROMPT_PORT}`);
+        await promptServer.startSSE({
+          url,
+          ssePath: '/sse',
+          messagePath: '/messages',
+          req,
+          res,
+        });
+      });
+      await new Promise<void>(resolve => promptHttpServer.listen(PROMPT_PORT, () => resolve()));
+      promptInternalClient = new InternalMastraMCPClient({
+        name: 'prompt-test-internal-client',
+        server: { url: new URL(`http://localhost:${PROMPT_PORT}/sse`) },
+      });
+      await promptInternalClient.connect();
+    });
+
+    afterAll(async () => {
+      await promptInternalClient.disconnect();
+      if (promptHttpServer) {
+        promptHttpServer.closeAllConnections?.();
+        await new Promise<void>((resolve, reject) => {
+          promptHttpServer.close(err => {
+            if (err) return reject(err);
+            resolve();
+          });
+        });
+      }
+      if (promptServer) {
+        await promptServer.close();
+      }
+    });
+
+    it('should send prompt list changed notification when prompts change', async () => {
+      const listChangedPromise = new Promise<void>(resolve => {
+        promptInternalClient.setPromptListChangedNotificationHandler(() => {
+          resolve();
+        });
+      });
+      await promptServer.prompts.notifyListChanged();
+
+      await expect(listChangedPromise).resolves.toBeUndefined(); // Wait for the notification
+    });
+
+    it('should list all prompts with version field', async () => {
+      const result = await promptInternalClient.listPrompts();
+      expect(result).toBeDefined();
+      expect(result.prompts).toBeInstanceOf(Array);
+      // Should contain both explain-code v1 and v2 and summarize v1
+      const explainV1 = result.prompts.find((p: Prompt) => p.name === 'explain-code' && p.version === 'v1');
+      const explainV2 = result.prompts.find((p: Prompt) => p.name === 'explain-code' && p.version === 'v2');
+      const summarizeV1 = result.prompts.find((p: Prompt) => p.name === 'summarize' && p.version === 'v1');
+      expect(explainV1).toBeDefined();
+      expect(explainV2).toBeDefined();
+      expect(summarizeV1).toBeDefined();
+    });
+
+    it('should retrieve prompt by name and version', async () => {
+      const result = await promptInternalClient.getPrompt({
+        name: 'explain-code',
+        args: { code: 'let x = 1;' },
+        version: 'v2',
+      });
+      const prompt = result.prompt as GetPromptResult;
+      expect(prompt).toBeDefined();
+      expect(prompt.name).toBe('explain-code');
+      expect(prompt.version).toBe('v2');
+
+      const messages = result.messages;
+      expect(messages).toBeDefined();
+      expect(messages.length).toBeGreaterThan(0);
+      expect(messages[0].content.text).toContain('(v2)');
+    });
+
+    it('should retrieve prompt by name and default to first version if not specified', async () => {
+      const result = await promptInternalClient.getPrompt({ name: 'explain-code', args: { code: 'let y = 2;' } });
+      expect(result.prompt).toBeDefined();
+      const prompt = result.prompt as GetPromptResult;
+      expect(prompt.name).toBe('explain-code');
+      // Should default to first version (v1)
+      expect(prompt.version).toBe('v1');
+
+      const messages = result.messages;
+      expect(messages).toBeDefined();
+      expect(messages.length).toBeGreaterThan(0);
+      expect(messages[0].content.text).toContain('(v1)');
+    });
+
+    it('should return error if prompt name/version does not exist', async () => {
+      await expect(
+        promptInternalClient.getPrompt({ name: 'explain-code', args: { code: 'foo' }, version: 'v999' }),
+      ).rejects.toThrow();
+    });
+    it('should throw error if required argument is missing', async () => {
+      await expect(
+        promptInternalClient.getPrompt({ name: 'explain-code', args: {} }), // missing 'code'
+      ).rejects.toThrow(/Missing required argument/);
+    });
+
+    it('should succeed if all required arguments are provided', async () => {
+      const result = await promptInternalClient.getPrompt({ name: 'explain-code', args: { code: 'let z = 3;' } });
+      expect(result.prompt).toBeDefined();
+      expect(result.messages[0].content.text).toContain('let z = 3;');
+    });
+    it('should allow prompts with optional arguments', async () => {
+      // Register a prompt with an optional argument
+      currentPrompts = [
+        {
+          name: 'optional-arg-prompt',
+          version: 'v1',
+          description: 'Prompt with optional argument',
+          arguments: [{ name: 'foo', required: false }],
+          getMessages: async (args: any) => [
+            { role: 'user', content: { type: 'text', text: `foo is: ${args.foo ?? 'none'}` } },
+          ],
+        },
+      ];
+      await promptServer.prompts.notifyListChanged();
+      const result = await promptInternalClient.getPrompt({ name: 'optional-arg-prompt', args: {} });
+      expect(result.prompt).toBeDefined();
+      expect(result.messages[0].content.text).toContain('foo is: none');
+    });
+    it('should retrieve prompt with no version field by name only', async () => {
+      currentPrompts = [
+        {
+          name: 'no-version',
+          description: 'Prompt without version',
+          arguments: [],
+          getMessages: async () => [{ role: 'user', content: { type: 'text', text: 'no version' } }],
+        },
+      ];
+      await promptServer.prompts.notifyListChanged();
+      const result = await promptInternalClient.getPrompt({ name: 'no-version', args: {} });
+      const prompt = result.prompt as GetPromptResult;
+      expect(prompt).toBeDefined();
+      expect(prompt.version).toBeUndefined();
+      const messages = result.messages;
+      expect(messages).toBeDefined();
+      expect(messages.length).toBeGreaterThan(0);
+      expect(messages[0].content.text).toContain('no version');
+    });
+    it('should list prompts with required fields', async () => {
+      const result = await promptInternalClient.listPrompts();
+      result.prompts.forEach((p: Prompt) => {
+        expect(p.name).toBeDefined();
+        expect(p.description).toBeDefined();
+        expect(p.arguments).toBeDefined();
+      });
+    });
+    it('should return empty list if no prompts are registered', async () => {
+      currentPrompts = [];
+      await promptServer.prompts.notifyListChanged();
+      const result = await promptInternalClient.listPrompts();
+      expect(result.prompts).toBeInstanceOf(Array);
+      expect(result.prompts.length).toBe(0);
+    });
+  });
+
   describe('MCPServer SSE transport', () => {
     let sseRes: Response | undefined;
     let reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
@@ -714,12 +937,32 @@ describe('MCPServer', () => {
     let server: MCPServer;
     let client: MCPClient;
     const PORT = 9200 + Math.floor(Math.random() * 1000);
+    const TOKEN = `<random-token>`;
 
     beforeAll(async () => {
       server = new MCPServer({
         name: 'Test MCP Server',
         version: '0.1.0',
-        tools: { weatherTool },
+        tools: {
+          weatherTool,
+          testAuthTool: {
+            description: 'Test tool to validate auth information from extra params',
+            parameters: z.object({
+              message: z.string().describe('Message to show to user'),
+            }),
+            execute: async (context, options) => {
+              const extra = options.extra as MCPRequestHandlerExtra;
+
+              return {
+                message: context.message,
+                sessionId: extra?.sessionId || null,
+                authInfo: extra?.authInfo || null,
+                requestId: extra?.requestId || null,
+                hasExtra: !!extra,
+              };
+            },
+          },
+        },
       });
 
       httpServer = http.createServer(async (req: http.IncomingMessage, res: http.ServerResponse) => {
@@ -741,6 +984,9 @@ describe('MCPServer', () => {
         servers: {
           local: {
             url: new URL(`http://localhost:${PORT}/http`),
+            requestInit: {
+              headers: { Authorization: `Bearer ${TOKEN}` },
+            },
           },
         },
       });
@@ -784,6 +1030,60 @@ describe('MCPServer', () => {
       expect(toolResult).toHaveProperty('conditions');
       expect(toolResult).toHaveProperty('windSpeed');
       expect(toolResult).toHaveProperty('windGust');
+    });
+
+    it('should pass auth information through extra parameter', async () => {
+      const mockExtra: MCPRequestHandlerExtra = {
+        signal: new AbortController().signal,
+        sessionId: 'test-session-id',
+        authInfo: {
+          token: TOKEN,
+          clientId: 'test-client-id',
+          scopes: ['read'],
+        },
+        requestId: 'test-request-id',
+        sendNotification: vi.fn(),
+        sendRequest: vi.fn(),
+      };
+
+      const mockRequest = {
+        jsonrpc: '2.0' as const,
+        id: 'test-request-1',
+        method: 'tools/call' as const,
+        params: {
+          name: 'testAuthTool',
+          arguments: {
+            message: 'test auth',
+          },
+        },
+      };
+
+      const serverInstance = server.getServer();
+
+      // @ts-ignore - this is a private property, but we need to access it to test the request handler
+      const requestHandlers = serverInstance._requestHandlers;
+      const callToolHandler = requestHandlers.get('tools/call');
+
+      expect(callToolHandler).toBeDefined();
+
+      const result = await callToolHandler(mockRequest, mockExtra);
+
+      expect(result).toBeDefined();
+      expect(result.isError).toBe(false);
+      expect(result.content).toBeInstanceOf(Array);
+      expect(result.content.length).toBeGreaterThan(0);
+
+      const toolOutput = result.content[0];
+      expect(toolOutput.type).toBe('text');
+      const toolResult = JSON.parse(toolOutput.text);
+
+      expect(toolResult.message).toBe('test auth');
+      expect(toolResult.hasExtra).toBe(true);
+      expect(toolResult.sessionId).toBe('test-session-id');
+      expect(toolResult.authInfo).toBeDefined();
+      expect(toolResult.authInfo.token).toBe(TOKEN);
+      expect(toolResult.authInfo.clientId).toBe('test-client-id');
+      expect(toolResult.requestId).toBe('test-request-id');
     });
   });
 
@@ -1047,7 +1347,7 @@ describe('MCPServer - Workflow to Tool Conversion', () => {
   });
 
   it('should call workflow.createRun().start() when the derived tool is executed', async () => {
-    const testWorkflow = createMockWorkflow('MyExecWorkflow', 'Executable workflow');
+    const testWorkflow = createMockWorkflow('MyExecWorkflow', 'Executable workflow', z.object({ data: z.string() }));
     const step = createStep({
       id: 'my-step',
       description: 'My step description',
@@ -1122,5 +1422,721 @@ describe('MCPServer - Workflow to Tool Conversion', () => {
       workflows: { unique_workflow_key_789: uniqueKeyWorkflow },
     });
     expect(server.tools()['run_unique_workflow_key_789']).toBeDefined();
+  });
+});
+
+describe('MCPServer - Elicitation', () => {
+  let elicitationServer: MCPServer;
+  let elicitationClient: InternalMastraMCPClient;
+  let elicitationHttpServer: http.Server;
+  const ELICITATION_PORT = 9600 + Math.floor(Math.random() * 1000);
+
+  beforeAll(async () => {
+    elicitationServer = new MCPServer({
+      name: 'ElicitationTestServer',
+      version: '1.0.0',
+      tools: {
+        testElicitationTool: {
+          description: 'A tool that uses elicitation to collect user input',
+          parameters: z.object({
+            message: z.string().describe('Message to show to user'),
+          }),
+          execute: async (context, options) => {
+            // Use the session-aware elicitation functionality
+            try {
+              const elicitation = options.elicitation;
+              const result = await elicitation.sendRequest({
+                message: context.message,
+                requestedSchema: {
+                  type: 'object',
+                  properties: {
+                    name: { type: 'string', title: 'Name' },
+                    email: { type: 'string', title: 'Email', format: 'email' },
+                  },
+                  required: ['name'],
+                },
+              });
+              return result;
+            } catch (error) {
+              console.error('Error sending elicitation request:', error);
+              return {
+                content: [
+                  {
+                    type: 'text',
+                    text: `Error collecting information: ${error}`,
+                  },
+                ],
+                isError: true,
+              };
+            }
+          },
+        },
+      },
+    });
+
+    beforeEach(async () => {
+      try {
+        await elicitationClient?.disconnect();
+      } catch (error) {
+        console.error('Error disconnecting elicitation client:', error);
+      }
+    });
+
+    elicitationHttpServer = http.createServer(async (req: http.IncomingMessage, res: http.ServerResponse) => {
+      const url = new URL(req.url || '', `http://localhost:${ELICITATION_PORT}`);
+      await elicitationServer.startHTTP({
+        url,
+        httpPath: '/http',
+        req,
+        res,
+      });
+    });
+
+    await new Promise<void>(resolve => elicitationHttpServer.listen(ELICITATION_PORT, () => resolve()));
+  });
+
+  afterAll(async () => {
+    await elicitationClient?.disconnect();
+    if (elicitationHttpServer) {
+      elicitationHttpServer.closeAllConnections?.();
+      await new Promise<void>((resolve, reject) => {
+        elicitationHttpServer.close(err => {
+          if (err) return reject(err);
+          resolve();
+        });
+      });
+    }
+    if (elicitationServer) {
+      await elicitationServer.close();
+    }
+  });
+
+  it('should have elicitation capability enabled', () => {
+    // Test that the server has elicitation functionality available
+    expect(elicitationServer.elicitation).toBeDefined();
+    expect(elicitationServer.elicitation.sendRequest).toBeDefined();
+  });
+
+  it('should handle elicitation request with accept response', async () => {
+    const mockElicitationHandler = vi.fn(async request => {
+      expect(request.message).toBe('Please provide your information');
+      expect(request.requestedSchema).toBeDefined();
+      expect(request.requestedSchema.properties.name).toBeDefined();
+
+      return {
+        action: 'accept' as const,
+        content: {
+          name: 'John Doe',
+          email: 'john@example.com',
+        },
+      };
+    });
+
+    elicitationClient = new InternalMastraMCPClient({
+      name: 'elicitation-test-client',
+      server: {
+        url: new URL(`http://localhost:${ELICITATION_PORT}/http`),
+      },
+    });
+    elicitationClient.elicitation.onRequest(mockElicitationHandler);
+    await elicitationClient.connect();
+
+    const tools = await elicitationClient.tools();
+    const tool = tools['testElicitationTool'];
+    expect(tool).toBeDefined();
+
+    const result = await tool.execute({
+      context: {
+        message: 'Please provide your information',
+      },
+    });
+
+    expect(mockElicitationHandler).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(result.content[0].text)).toEqual({
+      action: 'accept',
+      content: {
+        name: 'John Doe',
+        email: 'john@example.com',
+      },
+    });
+  });
+
+  it('should handle elicitation request with reject response', async () => {
+    const mockElicitationHandler = vi.fn(async request => {
+      expect(request.message).toBe('Please provide sensitive data');
+      return { action: 'decline' as const };
+    });
+
+    elicitationClient = new InternalMastraMCPClient({
+      name: 'elicitation-reject-client',
+      server: {
+        url: new URL(`http://localhost:${ELICITATION_PORT}/http`),
+      },
+    });
+    elicitationClient.elicitation.onRequest(mockElicitationHandler);
+    await elicitationClient.connect();
+
+    const tools = await elicitationClient.tools();
+    const tool = tools['testElicitationTool'];
+
+    const result = await tool.execute({
+      context: {
+        message: 'Please provide sensitive data',
+      },
+    });
+
+    expect(mockElicitationHandler).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(result.content[0].text)).toEqual({ action: 'decline' });
+  });
+
+  it('should handle elicitation request with cancel response', async () => {
+    const mockElicitationHandler = vi.fn(async () => {
+      return { action: 'cancel' as const };
+    });
+
+    elicitationClient = new InternalMastraMCPClient({
+      name: 'elicitation-cancel-client',
+      server: {
+        url: new URL(`http://localhost:${ELICITATION_PORT}/http`),
+      },
+    });
+    elicitationClient.elicitation.onRequest(mockElicitationHandler);
+    await elicitationClient.connect();
+
+    const tools = await elicitationClient.tools();
+    const tool = tools['testElicitationTool'];
+
+    const result = await tool.execute({
+      context: {
+        message: 'Please provide optional data',
+      },
+    });
+
+    expect(mockElicitationHandler).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(result.content[0].text)).toEqual({ action: 'cancel' });
+  });
+
+  it('should error when elicitation handler throws error', async () => {
+    const mockElicitationHandler = vi.fn(async () => {
+      throw new Error('Handler error');
+    });
+
+    elicitationClient = new InternalMastraMCPClient({
+      name: 'elicitation-error-client',
+      server: {
+        url: new URL(`http://localhost:${ELICITATION_PORT}/http`),
+      },
+    });
+    elicitationClient.elicitation.onRequest(mockElicitationHandler);
+    await elicitationClient.connect();
+
+    const tools = await elicitationClient.tools();
+    const tool = tools['testElicitationTool'];
+
+    const result = await tool.execute({
+      context: {
+        message: 'This will cause an error',
+      },
+    });
+
+    expect(mockElicitationHandler).toHaveBeenCalledTimes(1);
+    expect(result.content[0].text).toContain('Handler error');
+  });
+
+  it('should error when client has no elicitation handler', async () => {
+    elicitationClient = new InternalMastraMCPClient({
+      name: 'no-elicitation-handler-client',
+      server: {
+        url: new URL(`http://localhost:${ELICITATION_PORT}/http`),
+        // No elicitationHandler provided
+      },
+    });
+    await elicitationClient.connect();
+
+    const tools = await elicitationClient.tools();
+    const tool = tools['testElicitationTool'];
+
+    const result = await tool.execute({
+      context: {
+        message: 'This should fail gracefully',
+      },
+    });
+
+    // When no elicitation handler is provided, the server's elicitInput should fail
+    // and the tool should return a reject response
+    expect(result.content[0].text).toContain('Method not found');
+  });
+
+  it('should validate elicitation request schema structure', async () => {
+    const mockElicitationHandler = vi.fn(async request => {
+      expect(request.message).toBe('Please provide your information');
+      expect(request.requestedSchema).toBeDefined();
+      expect(request.requestedSchema.properties.name).toBeDefined();
+
+      return {
+        action: 'accept' as const,
+        content: {
+          validated: true,
+        },
+      };
+    });
+
+    elicitationClient = new InternalMastraMCPClient({
+      name: 'elicitation-test-client',
+      server: {
+        url: new URL(`http://localhost:${ELICITATION_PORT}/http`),
+      },
+    });
+    elicitationClient.elicitation.onRequest(mockElicitationHandler);
+    await elicitationClient.connect();
+
+    const tools = await elicitationClient.tools();
+    const tool = tools['testElicitationTool'];
+    expect(tool).toBeDefined();
+
+    const result = await tool.execute({
+      context: {
+        message: 'Please provide your information',
+      },
+    });
+
+    expect(mockElicitationHandler).toHaveBeenCalledTimes(1);
+    expect(result.content[0].text).toContain('Elicitation response content does not match requested schema');
+  });
+
+  it('should isolate elicitation handlers between different client connections', async () => {
+    const client1Handler = vi.fn(async request => {
+      expect(request.message).toBe('Please provide your information');
+      expect(request.requestedSchema).toBeDefined();
+      expect(request.requestedSchema.properties.name).toBeDefined();
+
+      return {
+        action: 'accept' as const,
+        content: {
+          name: 'John Doe',
+          email: 'john@example.com',
+        },
+      };
+    });
+    const client2Handler = vi.fn(async request => {
+      expect(request.message).toBe('Please provide your information');
+      expect(request.requestedSchema).toBeDefined();
+      expect(request.requestedSchema.properties.name).toBeDefined();
+
+      return {
+        action: 'accept' as const,
+        content: {
+          name: 'John Doe',
+          email: 'john@example.com',
+        },
+      };
+    });
+
+    // Create two independent client instances
+    const elicitationClient1 = new MCPClient({
+      id: 'elicitation-isolation-client-1',
+      servers: {
+        elicitation1: {
+          url: new URL(`http://localhost:${ELICITATION_PORT}/http`),
+        },
+      },
+    });
+
+    const elicitationClient2 = new MCPClient({
+      id: 'elicitation-isolation-client-2',
+      servers: {
+        elicitation2: {
+          url: new URL(`http://localhost:${ELICITATION_PORT}/http`),
+        },
+      },
+    });
+
+    // Each client registers its own independent handler
+    elicitationClient1.elicitation.onRequest('elicitation1', client1Handler);
+    elicitationClient2.elicitation.onRequest('elicitation2', client2Handler);
+
+    const tools = await elicitationClient1.getTools();
+    const tool = tools['elicitation1_testElicitationTool'];
+    expect(tool).toBeDefined();
+    await tool.execute({
+      context: {
+        message: 'Please provide your information',
+      },
+    });
+
+    const tools2 = await elicitationClient2.getTools();
+    const tool2 = tools2['elicitation2_testElicitationTool'];
+    expect(tool2).toBeDefined();
+
+    // Verify handlers are isolated - they should not interfere with each other
+    expect(client1Handler).toHaveBeenCalled();
+    expect(client2Handler).not.toHaveBeenCalled();
+  }, 10000);
+});
+
+describe('MCPServer with Tool Output Schema', () => {
+  let serverWithOutputSchema: MCPServer;
+  let clientWithOutputSchema: MCPClient;
+  const PORT = 9600 + Math.floor(Math.random() * 1000);
+  let httpServerWithOutputSchema: http.Server;
+
+  const structuredTool: ToolsInput = {
+    structuredTool: {
+      description: 'A test tool with structured output',
+      parameters: z.object({ input: z.string() }),
+      outputSchema: z.object({
+        processedInput: z.string(),
+        timestamp: z.string(),
+      }),
+      execute: async ({ input }: { input: string }) => ({
+        processedInput: `processed: ${input}`,
+        timestamp: mockDateISO,
+      }),
+    },
+  };
+
+  beforeAll(async () => {
+    serverWithOutputSchema = new MCPServer({
+      name: 'Test MCP Server with OutputSchema',
+      version: '0.1.0',
+      tools: structuredTool,
+    });
+
+    httpServerWithOutputSchema = http.createServer(async (req: http.IncomingMessage, res: http.ServerResponse) => {
+      const url = new URL(req.url || '', `http://localhost:${PORT}`);
+      await serverWithOutputSchema.startHTTP({
+        url,
+        httpPath: '/http',
+        req,
+        res,
+      });
+    });
+
+    await new Promise<void>(resolve => httpServerWithOutputSchema.listen(PORT, () => resolve()));
+
+    clientWithOutputSchema = new MCPClient({
+      servers: {
+        local: {
+          url: new URL(`http://localhost:${PORT}/http`),
+        },
+      },
+    });
+  });
+
+  afterAll(async () => {
+    httpServerWithOutputSchema.closeAllConnections?.();
+    await new Promise<void>(resolve =>
+      httpServerWithOutputSchema.close(() => {
+        resolve();
+      }),
+    );
+    await serverWithOutputSchema.close();
+  });
+
+  it('should list tool with outputSchema', async () => {
+    const tools = await clientWithOutputSchema.getTools();
+    const tool = tools['local_structuredTool'];
+    expect(tool).toBeDefined();
+    expect(tool.outputSchema).toBeDefined();
+  });
+
+  it('should call tool and receive structuredContent', async () => {
+    const tools = await clientWithOutputSchema.getTools();
+    const tool = tools['local_structuredTool'];
+    const result = await tool.execute({ context: { input: 'hello' } });
+
+    expect(result).toBeDefined();
+    expect(result.structuredContent).toBeDefined();
+    expect(result.structuredContent.processedInput).toBe('processed: hello');
+    expect(result.structuredContent.timestamp).toBe(mockDateISO);
+
+    expect(result.content).toBeDefined();
+    expect(result.content[0].type).toBe('text');
+    expect(JSON.parse(result.content[0].text)).toEqual(result.structuredContent);
+  });
+});
+
+describe('MCPServer - Tool Input Validation', () => {
+  let validationServer: MCPServer;
+  let validationClient: InternalMastraMCPClient;
+  let httpValidationServer: ServerType;
+  let tools: Record<string, any>;
+  const VALIDATION_PORT = 9700 + Math.floor(Math.random() * 100);
+
+  const toolsWithValidation: ToolsInput = {
+    stringTool: {
+      description: 'Tool that requires a string input',
+      parameters: z.object({
+        message: z.string().min(3, 'Message must be at least 3 characters'),
+        optional: z.string().optional(),
+      }),
+      execute: async args => ({
+        result: `Received: ${args.message}`,
+      }),
+    },
+    numberTool: {
+      description: 'Tool that requires number inputs',
+      parameters: z.object({
+        age: z.number().min(0).max(150),
+        score: z.number().optional(),
+      }),
+      execute: async args => ({
+        result: `Age: ${args.age}, Score: ${args.score ?? 'N/A'}`,
+      }),
+    },
+    complexTool: {
+      description: 'Tool with complex validation',
+      parameters: z.object({
+        email: z.string().email('Invalid email format'),
+        tags: z.array(z.string()).min(1, 'At least one tag required'),
+        metadata: z.object({
+          priority: z.enum(['low', 'medium', 'high']),
+          deadline: z.string().datetime().optional(),
+        }),
+      }),
+      execute: async args => ({
+        result: `Processing ${args.email} with ${args.tags.length} tags`,
+      }),
+    },
+  };
+
+  beforeAll(async () => {
+    const app = new Hono();
+    validationServer = new MCPServer({
+      name: 'ValidationTestServer',
+      version: '1.0.0',
+      description: 'Server for testing tool validation',
+      tools: toolsWithValidation,
+    });
+
+    app.get('/sse', async c => {
+      const url = new URL(c.req.url, `http://localhost:${VALIDATION_PORT}`);
+      return await validationServer.startHonoSSE({
+        url,
+        ssePath: '/sse',
+        messagePath: '/message',
+        context: c,
+      });
+    });
+
+    app.post('/message', async c => {
+      const url = new URL(c.req.url, `http://localhost:${VALIDATION_PORT}`);
+      return await validationServer.startHonoSSE({
+        url,
+        ssePath: '/sse',
+        messagePath: '/message',
+        context: c,
+      });
+    });
+
+    httpValidationServer = serve({
+      fetch: app.fetch,
+      port: VALIDATION_PORT,
+    });
+
+    validationClient = new InternalMastraMCPClient({
+      name: 'validation-test-client',
+      server: { url: new URL(`http://localhost:${VALIDATION_PORT}/sse`) },
+    });
+
+    await validationClient.connect();
+    tools = await validationClient.tools();
+  });
+
+  afterAll(async () => {
+    await validationClient.disconnect();
+    httpValidationServer.close();
+  });
+
+  it('should successfully execute tool with valid inputs', async () => {
+    const stringTool = tools['stringTool'];
+    expect(stringTool).toBeDefined();
+
+    const result = await stringTool.execute({
+      context: {
+        message: 'Hello world',
+        optional: 'optional value',
+      },
+    });
+
+    expect(result).toBeDefined();
+    expect(result.content[0].text).toContain('Received: Hello world');
+  });
+
+  it('should return validation error for missing required parameters', async () => {
+    const stringTool = tools['stringTool'];
+    const result = await stringTool.execute({
+      context: {},
+    });
+
+    expect(result).toBeDefined();
+    // Handle both client-side and server-side error formats
+    if (result.error) {
+      expect(result.error).toBe(true);
+      expect(result.message).toContain('Tool validation failed');
+      expect(result.message).toContain('Please fix the following errors');
+    } else {
+      expect(result.isError).toBe(true);
+      expect(result.content[0].text).toContain('Tool validation failed');
+      expect(result.content[0].text).toContain('Please fix the following errors');
+    }
+  });
+
+  it('should return validation error for invalid string length', async () => {
+    const stringTool = tools['stringTool'];
+    const result = await stringTool.execute({
+      context: {
+        message: 'Hi', // Too short, min is 3
+      },
+    });
+
+    expect(result).toBeDefined();
+    // Handle both client-side and server-side error formats
+    if (result.error) {
+      expect(result.error).toBe(true);
+      expect(result.message).toContain('Tool validation failed');
+      expect(result.message).toContain('String must contain at least 3 character(s)');
+    } else {
+      expect(result.isError).toBe(true);
+      expect(result.content[0].text).toContain('Tool validation failed');
+      expect(result.content[0].text).toContain('Message must be at least 3 characters');
+    }
+  });
+
+  it('should return validation error for invalid number range', async () => {
+    const numberTool = tools['numberTool'];
+    const result = await numberTool.execute({
+      context: {
+        age: -5, // Negative age not allowed
+      },
+    });
+
+    expect(result).toBeDefined();
+    // Handle both client-side and server-side error formats
+    if (result.error) {
+      expect(result.error).toBe(true);
+      expect(result.message).toContain('Tool validation failed');
+    } else {
+      expect(result.isError).toBe(true);
+      expect(result.content[0].text).toContain('Tool validation failed');
+    }
+  });
+
+  it('should return validation error for invalid email format', async () => {
+    const complexTool = tools['complexTool'];
+    const result = await complexTool.execute({
+      context: {
+        email: 'not-an-email',
+        tags: ['tag1'],
+        metadata: {
+          priority: 'medium',
+        },
+      },
+    });
+
+    expect(result).toBeDefined();
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain('Tool validation failed');
+    expect(result.content[0].text).toContain('Invalid email format');
+  });
+
+  it('should return validation error for empty array when minimum required', async () => {
+    const complexTool = tools['complexTool'];
+    const result = await complexTool.execute({
+      context: {
+        email: 'test@example.com',
+        tags: [], // Empty array, min 1 required
+        metadata: {
+          priority: 'low',
+        },
+      },
+    });
+
+    expect(result).toBeDefined();
+    // Handle both client-side and server-side error formats
+    if (result.error) {
+      expect(result.error).toBe(true);
+      expect(result.message).toContain('Tool validation failed');
+      expect(result.message).toContain('Array must contain at least 1 element(s)');
+    } else {
+      expect(result.isError).toBe(true);
+      expect(result.content[0].text).toContain('Tool validation failed');
+      expect(result.content[0].text).toContain('Array must contain at least 1 element(s)');
+    }
+  });
+
+  it('should return validation error for invalid enum value', async () => {
+    const complexTool = tools['complexTool'];
+    const result = await complexTool.execute({
+      context: {
+        email: 'test@example.com',
+        tags: ['tag1'],
+        metadata: {
+          priority: 'urgent', // Not in enum ['low', 'medium', 'high']
+        },
+      },
+    });
+
+    expect(result).toBeDefined();
+    // Handle both client-side and server-side error formats
+    if (result.error) {
+      expect(result.error).toBe(true);
+      expect(result.message).toContain('Tool validation failed');
+    } else {
+      expect(result.isError).toBe(true);
+      expect(result.content[0].text).toContain('Tool validation failed');
+    }
+  });
+
+  it('should handle multiple validation errors', async () => {
+    const complexTool = tools['complexTool'];
+    const result = await complexTool.execute({
+      context: {
+        email: 'invalid-email',
+        tags: [],
+        metadata: {
+          priority: 'invalid',
+        },
+      },
+    });
+
+    expect(result).toBeDefined();
+    // Handle both client-side and server-side error formats
+    if (result.error) {
+      expect(result.error).toBe(true);
+      const errorText = result.message;
+      expect(errorText).toContain('Tool validation failed');
+      // Should contain multiple validation errors
+      // Note: Some validations might not trigger when there are other errors
+      expect(errorText).toContain('- tags: Array must contain at least 1 element(s)');
+      expect(errorText).toContain('Provided arguments:');
+    } else {
+      expect(result.isError).toBe(true);
+      const errorText = result.content[0].text;
+      expect(errorText).toContain('Tool validation failed');
+      // Should contain multiple validation errors
+      // Note: Some validations might not trigger when there are other errors
+      expect(errorText).toContain('- tags: Array must contain at least 1 element(s)');
+      expect(errorText).toContain('Provided arguments:');
+    }
+  });
+
+  it('should work with executeTool method directly', async () => {
+    // Test valid input
+    const validResult = await validationServer.executeTool('stringTool', {
+      message: 'Valid message',
+    });
+    // executeTool returns result directly, not in MCP format
+    expect(validResult.result).toBe('Received: Valid message');
+
+    // Test invalid input - should return validation error (not throw)
+    const invalidResult = await validationServer.executeTool('stringTool', {
+      message: 'No', // Too short
+    });
+
+    // executeTool returns client-side validation format
+    expect(invalidResult.error).toBe(true);
+    expect(invalidResult.message).toContain('Tool validation failed');
+    expect(invalidResult.message).toContain('Message must be at least 3 characters');
   });
 });

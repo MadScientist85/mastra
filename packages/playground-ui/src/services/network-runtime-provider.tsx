@@ -9,7 +9,7 @@ import {
 import { processDataStream } from '@ai-sdk/ui-utils';
 import { useState, ReactNode, useEffect } from 'react';
 
-import { ChatProps } from '@/types';
+import { ChatProps, ModelSettings } from '@/types';
 import { useMastraClient } from '@/contexts/mastra-client-context';
 const convertMessage = (message: ThreadMessageLike): ThreadMessageLike => {
   return message;
@@ -21,14 +21,15 @@ export function MastraNetworkRuntimeProvider({
   initialMessages,
   memory,
   threadId,
-  refreshThreadList,
-  modelSettings = {},
+  modelSettings,
 }: Readonly<{
   children: ReactNode;
 }> &
-  ChatProps) {
+  Omit<ChatProps, 'settings'> & {
+    modelSettings: ModelSettings;
+  }) {
   const [isRunning, setIsRunning] = useState(false);
-  const [messages, setMessages] = useState<ThreadMessageLike[]>(initialMessages || []);
+  const [messages, setMessages] = useState<ThreadMessageLike[]>((initialMessages as ThreadMessageLike[]) || []);
   const [currentThreadId, setCurrentThreadId] = useState<string | undefined>(threadId);
 
   const { frequencyPenalty, presencePenalty, maxRetries, maxSteps, maxTokens, temperature, topK, topP, instructions } =
@@ -37,7 +38,7 @@ export function MastraNetworkRuntimeProvider({
   useEffect(() => {
     if (messages.length === 0 || currentThreadId !== threadId) {
       if (initialMessages && threadId && memory) {
-        setMessages(initialMessages);
+        setMessages(initialMessages as ThreadMessageLike[]);
         setCurrentThreadId(threadId);
       }
     }
@@ -212,7 +213,7 @@ export function MastraNetworkRuntimeProvider({
 
       setIsRunning(false);
     } catch (error) {
-      console.error('Error occured in MastraRuntimeProvider', error);
+      console.error('Error occurred in MastraRuntimeProvider', error);
       setIsRunning(false);
     }
   };

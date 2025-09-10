@@ -10,6 +10,7 @@ import type {
   MCPServerHonoSSEOptions,
   MCPServerHTTPOptions,
   MCPServerSSEOptions,
+  MCPToolType,
   PackageInfo,
   RemoteInfo,
   Repository,
@@ -47,13 +48,15 @@ export abstract class MCPServerBase extends MastraBase {
   /** Information about remote access points for this server. */
   public readonly remotes?: RemoteInfo[];
   /** The tools registered with and converted by this MCP server. */
-  public readonly convertedTools: Record<string, ConvertedTool>;
+  public convertedTools: Record<string, ConvertedTool>;
   /** Reference to the Mastra instance if this server is registered with one. */
   public mastra: Mastra | undefined;
   /** Agents to be exposed as tools. */
   protected readonly agents?: MCPServerConfig['agents'];
   /** Workflows to be exposed as tools. */
   protected readonly workflows?: MCPServerConfig['workflows'];
+  /** Original tools configuration for re-conversion when Mastra instance is registered. */
+  protected readonly originalTools: ToolsInput;
 
   /**
    * Public getter for the server's unique ID.
@@ -107,6 +110,8 @@ export abstract class MCPServerBase extends MastraBase {
    */
   __registerMastra(mastra: Mastra): void {
     this.mastra = mastra;
+    // Re-convert tools now that we have the Mastra instance to populate MCP tools execute with mastra instance
+    this.convertedTools = this.convertTools(this.originalTools, this.agents, this.workflows);
   }
 
   /**
@@ -124,7 +129,7 @@ export abstract class MCPServerBase extends MastraBase {
       this._id = slugify(config.id);
       this.idWasSet = true;
     } else {
-      this._id = randomUUID();
+      this._id = this.mastra?.generateId() || randomUUID();
     }
 
     this.description = config.description;
@@ -136,6 +141,7 @@ export abstract class MCPServerBase extends MastraBase {
     this.remotes = config.remotes;
     this.agents = config.agents;
     this.workflows = config.workflows;
+    this.originalTools = config.tools;
     this.convertedTools = this.convertTools(config.tools, config.agents, config.workflows);
   }
 
@@ -188,14 +194,18 @@ export abstract class MCPServerBase extends MastraBase {
    * Gets a list of tools provided by this MCP server, including their schemas.
    * @returns An object containing an array of tool information.
    */
-  public abstract getToolListInfo(): { tools: Array<{ name: string; description?: string; inputSchema: string }> };
+  public abstract getToolListInfo(): {
+    tools: Array<{ name: string; description?: string; inputSchema: any; outputSchema?: any; toolType?: MCPToolType }>;
+  };
 
   /**
    * Gets information for a specific tool provided by this MCP server.
    * @param toolId The ID/name of the tool to retrieve.
    * @returns Tool information (name, description, inputSchema) or undefined if not found.
    */
-  public abstract getToolInfo(toolId: string): { name: string; description?: string; inputSchema: string } | undefined;
+  public abstract getToolInfo(
+    toolId: string,
+  ): { name: string; description?: string; inputSchema: any; outputSchema?: any; toolType?: MCPToolType } | undefined;
 
   /**
    * Executes a specific tool provided by this MCP server.

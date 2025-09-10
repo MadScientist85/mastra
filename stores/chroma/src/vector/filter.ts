@@ -1,12 +1,32 @@
 import { BaseFilterTranslator } from '@mastra/core/vector/filter';
-import type { FieldCondition, VectorFilter, OperatorSupport, QueryOperator } from '@mastra/core/vector/filter';
+import type {
+  VectorFilter,
+  OperatorSupport,
+  QueryOperator,
+  OperatorValueMap,
+  LogicalOperatorValueMap,
+  BlacklistedRootOperators,
+} from '@mastra/core/vector/filter';
+
+type ChromaOperatorValueMap = Omit<OperatorValueMap, '$exists' | '$elemMatch' | '$regex' | '$options'>;
+
+type ChromaLogicalOperatorValueMap = Omit<LogicalOperatorValueMap, '$nor' | '$not'>;
+
+type ChromaBlacklisted = BlacklistedRootOperators | '$nor' | '$not';
+
+export type ChromaVectorFilter = VectorFilter<
+  keyof ChromaOperatorValueMap,
+  ChromaOperatorValueMap,
+  ChromaLogicalOperatorValueMap,
+  ChromaBlacklisted
+>;
 
 /**
  * Translator for Chroma filter queries.
  * Maintains MongoDB-compatible syntax while ensuring proper validation
  * and normalization of values.
  */
-export class ChromaFilterTranslator extends BaseFilterTranslator {
+export class ChromaFilterTranslator extends BaseFilterTranslator<ChromaVectorFilter> {
   protected override getSupportedOperators(): OperatorSupport {
     return {
       ...BaseFilterTranslator.DEFAULT_OPERATORS,
@@ -18,17 +38,17 @@ export class ChromaFilterTranslator extends BaseFilterTranslator {
     };
   }
 
-  translate(filter?: VectorFilter): VectorFilter {
+  translate(filter?: ChromaVectorFilter): ChromaVectorFilter {
     if (this.isEmpty(filter)) return filter;
     this.validateFilter(filter);
 
     return this.translateNode(filter);
   }
 
-  private translateNode(node: VectorFilter | FieldCondition, currentPath: string = ''): any {
+  private translateNode(node: ChromaVectorFilter, currentPath: string = ''): any {
     // Handle primitive values and arrays
     if (this.isRegex(node)) {
-      throw new Error('Regex is not supported in Chroma');
+      throw new Error('Regex is supported in Chroma via the `documentFilter` argument');
     }
     if (this.isPrimitive(node)) return this.normalizeComparisonValue(node);
     if (Array.isArray(node)) return { $in: this.normalizeArrayValues(node) };
@@ -39,6 +59,9 @@ export class ChromaFilterTranslator extends BaseFilterTranslator {
     if (entries.length === 1 && firstEntry && this.isOperator(firstEntry[0])) {
       const [operator, value] = firstEntry;
       const translated = this.translateOperator(operator, value);
+      if (this.isLogicalOperator(operator) && Array.isArray(translated) && translated.length === 1) {
+        return translated[0];
+      }
       return this.isLogicalOperator(operator) ? { [operator]: translated } : translated;
     }
 

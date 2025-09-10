@@ -1,21 +1,9 @@
 const meta = {
-  workflow: "Workflow",
-  step: "createStep()",
-  then: "then()",
-  parallel: "parallel()",
-  branch: "branch()",
-  dowhile: "dowhile()",
-  dountil: "dountil()",
-  foreach: "foreach()",
-  map: "map()",
-  commit: "commit()",
-  "create-run": "createRun()",
-  snapshots: "Snapshots",
-  watch: "watch()",
-  stream: "stream()",
-  execute: "execute()",
-  resume: "resume()",
-  start: "start()",
+  workflow: "Workflow Class",
+  "workflow-methods": { title: "Methods", theme: { collapsed: false } },
+  step: "Step Class",
+  run: "Run Class",
+  "run-methods": { title: "Methods", theme: { collapsed: false } },
 };
 
 export default meta;

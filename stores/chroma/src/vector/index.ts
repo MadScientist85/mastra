@@ -1,3 +1,4 @@
+import { MastraError, ErrorDomain, ErrorCategory } from '@mastra/core/error';
 import { MastraVector } from '@mastra/core/vector';
 import type {
   QueryResult,
@@ -10,53 +11,78 @@ import type {
   DeleteVectorParams,
   UpdateVectorParams,
 } from '@mastra/core/vector';
-
-import type { VectorFilter } from '@mastra/core/vector/filter';
-import { ChromaClient } from 'chromadb';
-import type { UpdateRecordsParams, Collection } from 'chromadb';
+import { ChromaClient, CloudClient } from 'chromadb';
+import type { ChromaClientArgs, RecordSet, Where, WhereDocument, Collection, Metadata } from 'chromadb';
+import type { ChromaVectorFilter } from './filter';
 import { ChromaFilterTranslator } from './filter';
 
 interface ChromaUpsertVectorParams extends UpsertVectorParams {
   documents?: string[];
 }
 
-interface ChromaQueryVectorParams extends QueryVectorParams {
-  documentFilter?: VectorFilter;
+interface ChromaQueryVectorParams extends QueryVectorParams<ChromaVectorFilter> {
+  documentFilter?: WhereDocument | null;
 }
 
-export class ChromaVector extends MastraVector {
-  private client: ChromaClient;
-  private collections: Map<string, any>;
+interface ChromaGetRecordsParams {
+  indexName: string;
+  ids?: string[];
+  filter?: ChromaVectorFilter;
+  documentFilter?: WhereDocument | null;
+  includeVector?: boolean;
+  limit?: number;
+  offset?: number;
+}
 
-  constructor({
-    path,
-    auth,
-  }: {
-    path: string;
-    auth?: {
-      provider: string;
-      credentials: string;
-    };
-  }) {
+type MastraMetadata = {
+  dimension?: number;
+};
+
+type ChromaVectorArgs = ChromaClientArgs & { apiKey?: string };
+
+const spaceMappings = {
+  cosine: 'cosine',
+  euclidean: 'l2',
+  dotproduct: 'ip',
+  l2: 'euclidean',
+  ip: 'dotproduct',
+};
+
+export class ChromaVector extends MastraVector<ChromaVectorFilter> {
+  private client: ChromaClient;
+  private collections: Map<string, Collection>;
+
+  constructor(chromaClientArgs?: ChromaVectorArgs) {
     super();
-    this.client = new ChromaClient({
-      path,
-      auth,
-    });
+    if (chromaClientArgs?.apiKey) {
+      this.client = new CloudClient({
+        apiKey: chromaClientArgs.apiKey,
+        tenant: chromaClientArgs.tenant,
+        database: chromaClientArgs.database,
+      });
+    } else {
+      this.client = new ChromaClient(chromaClientArgs);
+    }
     this.collections = new Map();
   }
 
-  async getCollection(indexName: string, throwIfNotExists: boolean = true) {
-    try {
-      const collection = await this.client.getCollection({ name: indexName, embeddingFunction: undefined as any });
-      this.collections.set(indexName, collection);
-    } catch {
-      if (throwIfNotExists) {
-        throw new Error(`Index ${indexName} does not exist`);
+  async getCollection({ indexName, forceUpdate = false }: { indexName: string; forceUpdate?: boolean }) {
+    let collection = this.collections.get(indexName);
+    if (forceUpdate || !collection) {
+      try {
+        collection = await this.client.getCollection({ name: indexName });
+        this.collections.set(indexName, collection);
+        return collection;
+      } catch {
+        throw new MastraError({
+          id: 'CHROMA_COLLECTION_GET_FAILED',
+          domain: ErrorDomain.MASTRA_VECTOR,
+          category: ErrorCategory.THIRD_PARTY,
+          details: { indexName },
+        });
       }
-      return null;
     }
-    return this.collections.get(indexName);
+    return collection;
   }
 
   private validateVectorDimensions(vectors: number[][], dimension: number): void {
@@ -70,54 +96,66 @@ export class ChromaVector extends MastraVector {
   }
 
   async upsert({ indexName, vectors, metadata, ids, documents }: ChromaUpsertVectorParams): Promise<string[]> {
-    const collection = await this.getCollection(indexName);
+    try {
+      const collection = await this.getCollection({ indexName });
 
-    // Get index stats to check dimension
-    const stats = await this.describeIndex({ indexName });
+      const stats = await this.describeIndex({ indexName });
+      this.validateVectorDimensions(vectors, stats.dimension);
+      const generatedIds = ids || vectors.map(() => crypto.randomUUID());
 
-    // Validate vector dimensions
-    this.validateVectorDimensions(vectors, stats.dimension);
+      await collection.upsert({
+        ids: generatedIds,
+        embeddings: vectors,
+        metadatas: metadata,
+        documents: documents,
+      });
 
-    // Generate IDs if not provided
-    const generatedIds = ids || vectors.map(() => crypto.randomUUID());
-
-    // Ensure metadata exists for each vector
-    const normalizedMetadata = metadata || vectors.map(() => ({}));
-
-    await collection.upsert({
-      ids: generatedIds,
-      embeddings: vectors,
-      metadatas: normalizedMetadata,
-      documents: documents,
-    });
-
-    return generatedIds;
+      return generatedIds;
+    } catch (error: any) {
+      if (error instanceof MastraError) throw error;
+      throw new MastraError(
+        {
+          id: 'CHROMA_VECTOR_UPSERT_FAILED',
+          domain: ErrorDomain.MASTRA_VECTOR,
+          category: ErrorCategory.THIRD_PARTY,
+          details: { indexName },
+        },
+        error,
+      );
+    }
   }
-
-  private HnswSpaceMap = {
-    cosine: 'cosine',
-    euclidean: 'l2',
-    dotproduct: 'ip',
-    l2: 'euclidean',
-    ip: 'dotproduct',
-  };
 
   async createIndex({ indexName, dimension, metric = 'cosine' }: CreateIndexParams): Promise<void> {
     if (!Number.isInteger(dimension) || dimension <= 0) {
-      throw new Error('Dimension must be a positive integer');
-    }
-    const hnswSpace = this.HnswSpaceMap[metric];
-    if (!['cosine', 'l2', 'ip'].includes(hnswSpace)) {
-      throw new Error(`Invalid metric: "${metric}". Must be one of: cosine, euclidean, dotproduct`);
-    }
-    try {
-      await this.client.createCollection({
-        name: indexName,
-        metadata: {
-          dimension,
-          'hnsw:space': hnswSpace,
-        },
+      throw new MastraError({
+        id: 'CHROMA_VECTOR_CREATE_INDEX_INVALID_DIMENSION',
+        text: 'Dimension must be a positive integer',
+        domain: ErrorDomain.MASTRA_VECTOR,
+        category: ErrorCategory.USER,
+        details: { dimension },
       });
+    }
+
+    const hnswSpace = spaceMappings[metric] as 'cosine' | 'l2' | 'ip' | undefined;
+
+    if (!hnswSpace || !['cosine', 'l2', 'ip'].includes(hnswSpace)) {
+      throw new MastraError({
+        id: 'CHROMA_VECTOR_CREATE_INDEX_INVALID_METRIC',
+        text: `Invalid metric: "${metric}". Must be one of: cosine, euclidean, dotproduct`,
+        domain: ErrorDomain.MASTRA_VECTOR,
+        category: ErrorCategory.USER,
+        details: { metric },
+      });
+    }
+
+    try {
+      const collection = await this.client.createCollection({
+        name: indexName,
+        metadata: { dimension },
+        configuration: { hnsw: { space: hnswSpace } },
+        embeddingFunction: null,
+      });
+      this.collections.set(indexName, collection);
     } catch (error: any) {
       // Check for 'already exists' error
       const message = error?.message || error?.toString();
@@ -126,15 +164,25 @@ export class ChromaVector extends MastraVector {
         await this.validateExistingIndex(indexName, dimension, metric);
         return;
       }
-      throw error;
+      throw new MastraError(
+        {
+          id: 'CHROMA_VECTOR_CREATE_INDEX_FAILED',
+          domain: ErrorDomain.MASTRA_VECTOR,
+          category: ErrorCategory.THIRD_PARTY,
+          details: { indexName },
+        },
+        error,
+      );
     }
   }
 
-  transformFilter(filter?: VectorFilter) {
+  transformFilter(filter?: ChromaVectorFilter) {
     const translator = new ChromaFilterTranslator();
-    return translator.translate(filter);
+    const translatedFilter = translator.translate(filter);
+    return translatedFilter ? (translatedFilter as Where) : undefined;
   }
-  async query({
+
+  async query<T extends Metadata = Metadata>({
     indexName,
     queryVector,
     topK = 10,
@@ -142,32 +190,93 @@ export class ChromaVector extends MastraVector {
     includeVector = false,
     documentFilter,
   }: ChromaQueryVectorParams): Promise<QueryResult[]> {
-    const collection = await this.getCollection(indexName, true);
+    try {
+      const collection = await this.getCollection({ indexName });
 
-    const defaultInclude = ['documents', 'metadatas', 'distances'];
+      const defaultInclude: ['documents', 'metadatas', 'distances'] = ['documents', 'metadatas', 'distances'];
 
-    const translatedFilter = this.transformFilter(filter);
-    const results = await collection.query({
-      queryEmbeddings: [queryVector],
-      nResults: topK,
-      where: translatedFilter,
-      whereDocument: documentFilter,
-      include: includeVector ? [...defaultInclude, 'embeddings'] : defaultInclude,
-    });
+      const translatedFilter = this.transformFilter(filter);
+      const results = await collection.query<T>({
+        queryEmbeddings: [queryVector],
+        nResults: topK,
+        where: translatedFilter ?? undefined,
+        whereDocument: documentFilter ?? undefined,
+        include: includeVector ? [...defaultInclude, 'embeddings'] : defaultInclude,
+      });
 
-    // Transform ChromaDB results to QueryResult format
-    return (results.ids[0] || []).map((id: string, index: number) => ({
-      id,
-      score: results.distances?.[0]?.[index] || 0,
-      metadata: results.metadatas?.[0]?.[index] || {},
-      document: results.documents?.[0]?.[index],
-      ...(includeVector && { vector: results.embeddings?.[0]?.[index] || [] }),
-    }));
+      return (results.ids[0] || []).map((id: string, index: number) => ({
+        id,
+        score: results.distances?.[0]?.[index] || 0,
+        metadata: results.metadatas?.[0]?.[index] || {},
+        document: results.documents?.[0]?.[index] ?? undefined,
+        ...(includeVector && { vector: results.embeddings?.[0]?.[index] || [] }),
+      }));
+    } catch (error: any) {
+      if (error instanceof MastraError) throw error;
+      throw new MastraError(
+        {
+          id: 'CHROMA_VECTOR_QUERY_FAILED',
+          domain: ErrorDomain.MASTRA_VECTOR,
+          category: ErrorCategory.THIRD_PARTY,
+          details: { indexName },
+        },
+        error,
+      );
+    }
+  }
+
+  async get<T extends Metadata = Metadata>({
+    indexName,
+    ids,
+    filter,
+    includeVector = false,
+    documentFilter,
+    offset,
+    limit,
+  }: ChromaGetRecordsParams) {
+    try {
+      const collection = await this.getCollection({ indexName });
+
+      const defaultInclude: ['documents', 'metadatas'] = ['documents', 'metadatas'];
+      const translatedFilter = this.transformFilter(filter);
+
+      const result = await collection.get<T>({
+        ids,
+        where: translatedFilter ?? undefined,
+        whereDocument: documentFilter ?? undefined,
+        offset,
+        limit,
+        include: includeVector ? [...defaultInclude, 'embeddings'] : defaultInclude,
+      });
+      return result.rows();
+    } catch (error: any) {
+      if (error instanceof MastraError) throw error;
+      throw new MastraError(
+        {
+          id: 'CHROMA_VECTOR_GET_FAILED',
+          domain: ErrorDomain.MASTRA_VECTOR,
+          category: ErrorCategory.THIRD_PARTY,
+          details: { indexName },
+        },
+        error,
+      );
+    }
   }
 
   async listIndexes(): Promise<string[]> {
-    const collections = await this.client.listCollections();
-    return collections.map(collection => collection);
+    try {
+      const collections = await this.client.listCollections();
+      return collections.map(collection => collection.name);
+    } catch (error: any) {
+      throw new MastraError(
+        {
+          id: 'CHROMA_VECTOR_LIST_INDEXES_FAILED',
+          domain: ErrorDomain.MASTRA_VECTOR,
+          category: ErrorCategory.THIRD_PARTY,
+        },
+        error,
+      );
+    }
   }
 
   /**
@@ -177,22 +286,65 @@ export class ChromaVector extends MastraVector {
    * @returns A promise that resolves to the index statistics including dimension, count and metric
    */
   async describeIndex({ indexName }: DescribeIndexParams): Promise<IndexStats> {
-    const collection = await this.getCollection(indexName);
-    const count = await collection.count();
-    const metadata = collection.metadata;
+    try {
+      const collection = await this.getCollection({ indexName });
+      const count = await collection.count();
+      const metadata = collection.metadata as MastraMetadata | undefined;
+      const space = collection.configuration.hnsw?.space || collection.configuration.spann?.space || undefined;
 
-    const hnswSpace = metadata?.['hnsw:space'] as 'cosine' | 'l2' | 'ip';
-
-    return {
-      dimension: metadata?.dimension || 0,
-      count,
-      metric: this.HnswSpaceMap[hnswSpace] as 'cosine' | 'euclidean' | 'dotproduct',
-    };
+      return {
+        dimension: metadata?.dimension || 0,
+        count,
+        metric: space ? (spaceMappings[space] as 'cosine' | 'euclidean' | 'dotproduct') : undefined,
+      };
+    } catch (error: any) {
+      if (error instanceof MastraError) throw error;
+      throw new MastraError(
+        {
+          id: 'CHROMA_VECTOR_DESCRIBE_INDEX_FAILED',
+          domain: ErrorDomain.MASTRA_VECTOR,
+          category: ErrorCategory.THIRD_PARTY,
+          details: { indexName },
+        },
+        error,
+      );
+    }
   }
 
   async deleteIndex({ indexName }: DeleteIndexParams): Promise<void> {
-    await this.client.deleteCollection({ name: indexName });
-    this.collections.delete(indexName);
+    try {
+      await this.client.deleteCollection({ name: indexName });
+      this.collections.delete(indexName);
+    } catch (error: any) {
+      throw new MastraError(
+        {
+          id: 'CHROMA_VECTOR_DELETE_INDEX_FAILED',
+          domain: ErrorDomain.MASTRA_VECTOR,
+          category: ErrorCategory.THIRD_PARTY,
+          details: { indexName },
+        },
+        error,
+      );
+    }
+  }
+
+  async forkIndex({ indexName, newIndexName }: { indexName: string; newIndexName: string }): Promise<void> {
+    try {
+      const collection = await this.getCollection({ indexName, forceUpdate: true });
+      const forkedCollection = await collection.fork({ name: newIndexName });
+      this.collections.set(newIndexName, forkedCollection);
+    } catch (error: any) {
+      if (error instanceof MastraError) throw error;
+      throw new MastraError(
+        {
+          id: 'CHROMA_INDEX_FORK_FAILED',
+          domain: ErrorDomain.MASTRA_VECTOR,
+          category: ErrorCategory.THIRD_PARTY,
+          details: { indexName },
+        },
+        error,
+      );
+    }
   }
 
   /**
@@ -206,44 +358,61 @@ export class ChromaVector extends MastraVector {
    * @throws Will throw an error if no updates are provided or if the update operation fails.
    */
   async updateVector({ indexName, id, update }: UpdateVectorParams): Promise<void> {
+    if (!update.vector && !update.metadata) {
+      throw new MastraError({
+        id: 'CHROMA_VECTOR_UPDATE_NO_PAYLOAD',
+        text: 'No updates provided for vector',
+        domain: ErrorDomain.MASTRA_VECTOR,
+        category: ErrorCategory.USER,
+        details: { indexName, id },
+      });
+    }
+
     try {
-      if (!update.vector && !update.metadata) {
-        throw new Error('No updates provided');
-      }
+      const collection: Collection = await this.getCollection({ indexName });
 
-      const collection: Collection = await this.getCollection(indexName, true);
-
-      const updateOptions: UpdateRecordsParams = { ids: [id] };
+      const updateRecordSet: RecordSet = { ids: [id] };
 
       if (update?.vector) {
         const stats = await this.describeIndex({ indexName });
         this.validateVectorDimensions([update.vector], stats.dimension);
-        updateOptions.embeddings = [update.vector];
+        updateRecordSet.embeddings = [update.vector];
       }
 
       if (update?.metadata) {
-        updateOptions.metadatas = [update.metadata];
+        updateRecordSet.metadatas = [update.metadata];
       }
 
-      return await collection.update(updateOptions);
+      return await collection.update(updateRecordSet);
     } catch (error: any) {
-      throw new Error(`Failed to update vector by id: ${id} for index name: ${indexName}: ${error.message}`);
+      if (error instanceof MastraError) throw error;
+      throw new MastraError(
+        {
+          id: 'CHROMA_VECTOR_UPDATE_FAILED',
+          domain: ErrorDomain.MASTRA_VECTOR,
+          category: ErrorCategory.THIRD_PARTY,
+          details: { indexName, id },
+        },
+        error,
+      );
     }
   }
 
-  /**
-   * Deletes a vector by its ID.
-   * @param indexName - The name of the index containing the vector.
-   * @param id - The ID of the vector to delete.
-   * @returns A promise that resolves when the deletion is complete.
-   * @throws Will throw an error if the deletion operation fails.
-   */
   async deleteVector({ indexName, id }: DeleteVectorParams): Promise<void> {
     try {
-      const collection: Collection = await this.getCollection(indexName, true);
+      const collection: Collection = await this.getCollection({ indexName });
       await collection.delete({ ids: [id] });
     } catch (error: any) {
-      throw new Error(`Failed to delete vector by id: ${id} for index name: ${indexName}: ${error.message}`);
+      if (error instanceof MastraError) throw error;
+      throw new MastraError(
+        {
+          id: 'CHROMA_VECTOR_DELETE_FAILED',
+          domain: ErrorDomain.MASTRA_VECTOR,
+          category: ErrorCategory.THIRD_PARTY,
+          details: { indexName, id },
+        },
+        error,
+      );
     }
   }
 }

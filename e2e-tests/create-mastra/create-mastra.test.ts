@@ -45,24 +45,27 @@ describe('create mastra', () => {
   describe('dev', () => {
     let port: number;
     let proc: ReturnType<typeof execa> | undefined;
-    beforeAll(async () => {
-      port = await getPort();
-      proc = execa('pnpm', ['dev', '--port', port.toString()], {
-        cwd: projectPath,
-      });
-      proc!.stderr?.on('data', data => {
-        console.error(data?.toString());
-      });
-      await new Promise<void>(resolve => {
-        console.log('waiting for server to start');
-        proc!.stdout?.on('data', data => {
-          console.log(data?.toString());
-          if (data?.toString()?.includes(`http://localhost:${port}`)) {
-            resolve();
-          }
+    beforeAll(
+      async () => {
+        port = await getPort();
+        proc = execa('pnpm', ['dev', '--port', port.toString()], {
+          cwd: projectPath,
         });
-      });
-    });
+        proc!.stderr?.on('data', data => {
+          console.error(data?.toString());
+        });
+        await new Promise<void>(resolve => {
+          console.log('waiting for server to start');
+          proc!.stdout?.on('data', data => {
+            console.log(data?.toString());
+            if (data?.toString()?.includes(`http://localhost:${port}`)) {
+              resolve();
+            }
+          });
+        });
+      },
+      60 * 10 * 1000,
+    );
 
     afterAll(async () => {
       if (proc) {
@@ -95,18 +98,21 @@ describe('create mastra', () => {
               "defaultGenerateOptions": {},
               "defaultStreamOptions": {},
               "instructions": "
-                You are a helpful weather assistant that provides accurate weather information.
+                You are a helpful weather assistant that provides accurate weather information and can help planning activities based on the weather.
 
                 Your primary function is to help users get weather details for specific locations. When responding:
                 - Always ask for a location if none is provided
-                - If the location name isn’t in English, please translate it
+                - If the location name isn't in English, please translate it
                 - If giving a location with multiple parts (e.g. "New York, NY"), use the most relevant part (e.g. "New York")
                 - Include relevant details like humidity, wind conditions, and precipitation
                 - Keep responses concise but informative
+                - If the user asks for activities and provides the weather forecast, suggest activities based on the weather forecast.
+                - If the user asks for activities, respond in the format they request.
 
                 Use the weatherTool to fetch current weather data.
           ",
               "modelId": "gpt-4o-mini",
+              "modelVersion": "v1",
               "name": "Weather Agent",
               "provider": "openai.chat",
               "tools": {

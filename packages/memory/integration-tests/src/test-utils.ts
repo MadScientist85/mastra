@@ -1,6 +1,7 @@
-import type { CoreMessage, MastraMessageV1 } from '@mastra/core';
-import { MessageList } from '@mastra/core/agent';
 import type { MastraMessageV2 } from '@mastra/core/agent';
+import { MessageList } from '@mastra/core/agent';
+import type { CoreMessage } from '@mastra/core/llm';
+import type { MastraMessageV1 } from '@mastra/core/memory';
 
 const toolArgs = {
   weather: { location: 'New York' },
@@ -23,11 +24,13 @@ const toolResults = {
  */
 export function generateConversationHistory({
   threadId,
+  resourceId = 'test-resource',
   messageCount = 5,
   toolFrequency = 3,
   toolNames = ['weather', 'calculator', 'search'],
 }: {
   threadId: string;
+  resourceId?: string;
   messageCount?: number;
   toolFrequency?: number;
   toolNames?: (keyof typeof toolArgs)[];
@@ -56,6 +59,7 @@ export function generateConversationHistory({
       content: { format: 2, parts: [{ type: 'text', text: userContent }] },
       id: `message-${i * 2}`,
       threadId,
+      resourceId,
       createdAt: new Date(startTime + i * 2000), // Each pair 2 seconds apart
     });
     counts.messages++;
@@ -88,6 +92,7 @@ export function generateConversationHistory({
         },
         id: `tool-call-${i * 2 + 1}`,
         threadId,
+        resourceId,
         createdAt: new Date(startTime + i * 2000 + 1000), // 1 second after user message
       });
       counts.messages++;
@@ -100,6 +105,7 @@ export function generateConversationHistory({
         content: { format: 2, parts: [{ type: 'text', text: Array(15).fill(words).flat().join(' ') }] }, // ~60 tokens
         id: `message-${i * 2 + 1}`,
         threadId,
+        resourceId,
         createdAt: new Date(startTime + i * 2000 + 1000), // 1 second after user message
       });
       counts.messages++;
@@ -114,6 +120,7 @@ export function generateConversationHistory({
       content: { format: 2, parts: [{ type: 'text', text: userContent }] },
       id: `message-${messages.length + 1 * 2}`,
       threadId,
+      resourceId,
       createdAt: new Date(startTime + messages.length + 1 * 2000), // Each pair 2 seconds apart
     });
     counts.messages++;

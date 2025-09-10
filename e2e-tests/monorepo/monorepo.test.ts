@@ -5,7 +5,7 @@ import { setupMonorepo } from './prepare';
 import { mkdtemp, rm } from 'fs/promises';
 import { tmpdir } from 'os';
 import getPort from 'get-port';
-import { execa } from 'execa';
+import { execa, execaNode } from 'execa';
 
 const timeout = 5 * 60 * 1000;
 
@@ -32,7 +32,7 @@ describe.for([['pnpm'] as const])(`%s monorepo`, ([pkgManager]) => {
     } catch {}
   });
 
-  describe('tsconfig paths', () => {
+  describe('tsconfig paths', { timeout: 60 * 1000 }, () => {
     it('should resolve paths', async () => {
       const inputFile = join(fixturePath, 'apps', 'custom', '.mastra', 'output', 'index.mjs');
       const bundle = await rollup({
@@ -58,7 +58,7 @@ describe.for([['pnpm'] as const])(`%s monorepo`, ([pkgManager]) => {
       const res = await fetch(`http://localhost:${port}/test`);
       const body = await res.json();
       expect(res.status).toBe(200);
-      expect(body).toEqual({ message: 'Hello, world!' });
+      expect(body).toEqual({ message: 'Hello, world!', a: 'b' });
     });
     it('should resolve api ALL routes', async () => {
       let res = await fetch(`http://localhost:${port}/all`);
@@ -72,6 +72,13 @@ describe.for([['pnpm'] as const])(`%s monorepo`, ([pkgManager]) => {
       body = await res.json();
       expect(res.status).toBe(200);
       expect(body).toEqual({ message: 'Hello, POST!' });
+    });
+
+    it('should return tools from the api', async () => {
+      const res = await fetch(`http://localhost:${port}/api/tools`);
+      const body = await res.json();
+      expect(res.status).toBe(200);
+      expect(Object.keys(body)).toEqual(['calculatorTool', 'lodashTool']);
     });
   }
 
@@ -95,7 +102,7 @@ describe.for([['pnpm'] as const])(`%s monorepo`, ([pkgManager]) => {
 
       await new Promise<void>(resolve => {
         proc!.stdout?.on('data', data => {
-          console.log(data?.toString());
+          process.stdout.write(data?.toString());
           if (data?.toString()?.includes(`http://localhost:${port}`)) {
             resolve();
           }
@@ -106,8 +113,13 @@ describe.for([['pnpm'] as const])(`%s monorepo`, ([pkgManager]) => {
     afterAll(async () => {
       if (proc) {
         try {
-          proc!.kill('SIGINT');
-        } catch {}
+          proc.kill('SIGKILL');
+        } catch (err) {
+          // @ts-expect-error - isCanceled is not typed
+          if (!err.killed) {
+            console.log('failed to kill build proc', err);
+          }
+        }
       }
     }, timeout);
 
@@ -122,10 +134,9 @@ describe.for([['pnpm'] as const])(`%s monorepo`, ([pkgManager]) => {
 
     beforeAll(async () => {
       const inputFile = join(fixturePath, 'apps', 'custom', '.mastra', 'output');
-      proc = execa('node', ['index.mjs'], {
+      proc = execaNode('index.mjs', {
         cwd: inputFile,
         cancelSignal,
-        gracefulCancel: true,
         env: {
           OPENAI_API_KEY: process.env.OPENAI_API_KEY,
           MASTRA_PORT: port.toString(),
@@ -149,7 +160,7 @@ describe.for([['pnpm'] as const])(`%s monorepo`, ([pkgManager]) => {
           await proc;
         } catch (err) {
           // @ts-expect-error - isCanceled is not typed
-          if (!proc.isCanceled) {
+          if (!err.isCanceled) {
             console.log('failed to kill build proc', err);
           }
         }
@@ -195,7 +206,8 @@ describe.for([['pnpm'] as const])(`%s monorepo`, ([pkgManager]) => {
           setImmediate(() => controller.abort());
           await proc;
         } catch (err) {
-          if (!(await proc).isCanceled) {
+          // @ts-expect-error - isCanceled is not typed
+          if (!err.isCanceled) {
             console.log('failed to kill start proc', err);
           }
         }

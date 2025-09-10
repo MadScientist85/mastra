@@ -1,5 +1,1987 @@
 # mastra
 
+## 0.12.2
+
+### Patch Changes
+
+- Updated dependencies [[`61926ef`](https://github.com/mastra-ai/mastra/commit/61926ef40d415b805a63527cffe27a50542e15e5)]:
+  - @mastra/core@0.16.2
+  - @mastra/deployer@0.16.2
+
+## 0.12.2-alpha.0
+
+### Patch Changes
+
+- Updated dependencies [[`61926ef`](https://github.com/mastra-ai/mastra/commit/61926ef40d415b805a63527cffe27a50542e15e5)]:
+  - @mastra/core@0.16.2-alpha.0
+  - @mastra/deployer@0.16.2-alpha.0
+
+## 0.12.1
+
+### Patch Changes
+
+- dependencies updates: ([#7544](https://github.com/mastra-ai/mastra/pull/7544))
+  - Updated dependency [`fs-extra@^11.3.1` ↗︎](https://www.npmjs.com/package/fs-extra/v/11.3.1) (from `^11.3.0`, in `dependencies`)
+
+- Use workflow streamVNext in playground ([#7575](https://github.com/mastra-ai/mastra/pull/7575))
+
+- add workflow streaming in agent thread ([#7506](https://github.com/mastra-ai/mastra/pull/7506))
+
+- Fix template slug when getting template environment variables ([#7650](https://github.com/mastra-ai/mastra/pull/7650))
+
+- Update cli dev copy from "Local" - ([#7579](https://github.com/mastra-ai/mastra/pull/7579))
+
+- Updated dependencies [[`6d6e5dd`](https://github.com/mastra-ai/mastra/commit/6d6e5dd00edd5f4d2f310d347c615aef3ed7f609), [`0f7b8c0`](https://github.com/mastra-ai/mastra/commit/0f7b8c0c22d2a677a0f71c35ad1bc2d60b063d39), [`47b6dc9`](https://github.com/mastra-ai/mastra/commit/47b6dc94f4976d4f3d3882e8f19eb365bbc5976c), [`827d876`](https://github.com/mastra-ai/mastra/commit/827d8766f36a900afcaf64a040f7ba76249009b3), [`0662d02`](https://github.com/mastra-ai/mastra/commit/0662d02ef16916e67531890639fcd72c69cfb6e2), [`565d65f`](https://github.com/mastra-ai/mastra/commit/565d65fc16314a99f081975ec92f2636dff0c86d), [`6189844`](https://github.com/mastra-ai/mastra/commit/61898448e65bda02bb814fb15801a89dc6476938), [`4da3d68`](https://github.com/mastra-ai/mastra/commit/4da3d68a778e5c4d5a17351ef223289fe2f45a45), [`90cab34`](https://github.com/mastra-ai/mastra/commit/90cab347db71359dc5f3d001b1e8d63fd958879a), [`fd9bbfe`](https://github.com/mastra-ai/mastra/commit/fd9bbfee22484f8493582325f53e8171bf8e682b), [`e75360a`](https://github.com/mastra-ai/mastra/commit/e75360a134d722df969777abcf36092fadad1f12), [`7eaf1d1`](https://github.com/mastra-ai/mastra/commit/7eaf1d1cec7e828d7a98efc2a748ac395bbdba3b), [`6f046b5`](https://github.com/mastra-ai/mastra/commit/6f046b5ccc5c8721302a9a61d5d16c12374cc8d7), [`d7a8f59`](https://github.com/mastra-ai/mastra/commit/d7a8f59154b0621aec4f41a6b2ea2b3882f03cb7), [`0b0bbb2`](https://github.com/mastra-ai/mastra/commit/0b0bbb24f4198ead69792e92b68a350f52b45cf3), [`d951f41`](https://github.com/mastra-ai/mastra/commit/d951f41771e4e5da8da4b9f870949f9509e38756), [`4dda259`](https://github.com/mastra-ai/mastra/commit/4dda2593b6343f9258671de5fb237aeba3ef6bb7), [`8049e2e`](https://github.com/mastra-ai/mastra/commit/8049e2e8cce80a00353c64894c62b695ac34e35e), [`f3427cd`](https://github.com/mastra-ai/mastra/commit/f3427cdaf9eecd63360dfc897a4acbf5f4143a4e), [`defed1c`](https://github.com/mastra-ai/mastra/commit/defed1ca8040cc8d42e645c5a50a1bc52a4918d7), [`79b39c1`](https://github.com/mastra-ai/mastra/commit/79b39c1def3bbd5d6ee2d2cc1e89ea378a940477), [`6991ced`](https://github.com/mastra-ai/mastra/commit/6991cedcb5a44a49d9fe58ef67926e1f96ba55b1), [`9cb9c42`](https://github.com/mastra-ai/mastra/commit/9cb9c422854ee81074989dd2d8dccc0500ba8d3e), [`f36343e`](https://github.com/mastra-ai/mastra/commit/f36343e02935b9a112a45b2dc3de7b562cc3aa68), [`8334859`](https://github.com/mastra-ai/mastra/commit/83348594d4f37b311ba4a94d679c5f8721d796d4), [`05f13b8`](https://github.com/mastra-ai/mastra/commit/05f13b8fb269ccfc4de98e9db58dbe16eae55a5e)]:
+  - @mastra/deployer@0.16.1
+  - @mastra/mcp@0.12.0
+  - @mastra/core@0.16.1
+
+## 0.12.1-alpha.2
+
+### Patch Changes
+
+- Fix template slug when getting template environment variables ([#7650](https://github.com/mastra-ai/mastra/pull/7650))
+
+- Updated dependencies [[`fd9bbfe`](https://github.com/mastra-ai/mastra/commit/fd9bbfee22484f8493582325f53e8171bf8e682b)]:
+  - @mastra/core@0.16.1-alpha.3
+  - @mastra/deployer@0.16.1-alpha.3
+
+## 0.12.1-alpha.1
+
+### Patch Changes
+
+- Use workflow streamVNext in playground ([#7575](https://github.com/mastra-ai/mastra/pull/7575))
+
+- add workflow streaming in agent thread ([#7506](https://github.com/mastra-ai/mastra/pull/7506))
+
+- Updated dependencies [[`0f7b8c0`](https://github.com/mastra-ai/mastra/commit/0f7b8c0c22d2a677a0f71c35ad1bc2d60b063d39), [`47b6dc9`](https://github.com/mastra-ai/mastra/commit/47b6dc94f4976d4f3d3882e8f19eb365bbc5976c), [`565d65f`](https://github.com/mastra-ai/mastra/commit/565d65fc16314a99f081975ec92f2636dff0c86d), [`4da3d68`](https://github.com/mastra-ai/mastra/commit/4da3d68a778e5c4d5a17351ef223289fe2f45a45), [`0b0bbb2`](https://github.com/mastra-ai/mastra/commit/0b0bbb24f4198ead69792e92b68a350f52b45cf3), [`d951f41`](https://github.com/mastra-ai/mastra/commit/d951f41771e4e5da8da4b9f870949f9509e38756), [`8049e2e`](https://github.com/mastra-ai/mastra/commit/8049e2e8cce80a00353c64894c62b695ac34e35e), [`f36343e`](https://github.com/mastra-ai/mastra/commit/f36343e02935b9a112a45b2dc3de7b562cc3aa68)]:
+  - @mastra/mcp@0.12.0-alpha.1
+  - @mastra/core@0.16.1-alpha.1
+  - @mastra/deployer@0.16.1-alpha.1
+
+## 0.12.1-alpha.0
+
+### Patch Changes
+
+- dependencies updates: ([#7544](https://github.com/mastra-ai/mastra/pull/7544))
+  - Updated dependency [`fs-extra@^11.3.1` ↗︎](https://www.npmjs.com/package/fs-extra/v/11.3.1) (from `^11.3.0`, in `dependencies`)
+
+- Update cli dev copy from "Local" - ([#7579](https://github.com/mastra-ai/mastra/pull/7579))
+
+- Updated dependencies [[`6d6e5dd`](https://github.com/mastra-ai/mastra/commit/6d6e5dd00edd5f4d2f310d347c615aef3ed7f609), [`0662d02`](https://github.com/mastra-ai/mastra/commit/0662d02ef16916e67531890639fcd72c69cfb6e2), [`6189844`](https://github.com/mastra-ai/mastra/commit/61898448e65bda02bb814fb15801a89dc6476938), [`90cab34`](https://github.com/mastra-ai/mastra/commit/90cab347db71359dc5f3d001b1e8d63fd958879a), [`e75360a`](https://github.com/mastra-ai/mastra/commit/e75360a134d722df969777abcf36092fadad1f12), [`d7a8f59`](https://github.com/mastra-ai/mastra/commit/d7a8f59154b0621aec4f41a6b2ea2b3882f03cb7), [`4dda259`](https://github.com/mastra-ai/mastra/commit/4dda2593b6343f9258671de5fb237aeba3ef6bb7), [`defed1c`](https://github.com/mastra-ai/mastra/commit/defed1ca8040cc8d42e645c5a50a1bc52a4918d7), [`79b39c1`](https://github.com/mastra-ai/mastra/commit/79b39c1def3bbd5d6ee2d2cc1e89ea378a940477), [`6991ced`](https://github.com/mastra-ai/mastra/commit/6991cedcb5a44a49d9fe58ef67926e1f96ba55b1), [`9cb9c42`](https://github.com/mastra-ai/mastra/commit/9cb9c422854ee81074989dd2d8dccc0500ba8d3e), [`8334859`](https://github.com/mastra-ai/mastra/commit/83348594d4f37b311ba4a94d679c5f8721d796d4)]:
+  - @mastra/deployer@0.16.1-alpha.0
+  - @mastra/core@0.16.1-alpha.0
+  - @mastra/mcp@0.12.0-alpha.0
+
+## 0.12.0
+
+### Minor Changes
+
+- a01cf14: Add workflow graph in agent (workflow as tool in agent)
+
+### Patch Changes
+
+- cf4e353: Agent Builder Template - adding in UI components to use agent builder template actions
+- 788e612: Fix playground workflow graph is broken when workflow starts with a branch
+- 5397eb4: Add public URL support when adding files in Multi Modal
+- 376913a: Update peerdeps
+- Updated dependencies [8fbf79e]
+- Updated dependencies [cf4e353]
+- Updated dependencies [fd83526]
+- Updated dependencies [d0b90ab]
+- Updated dependencies [6f5eb7a]
+- Updated dependencies [a01cf14]
+- Updated dependencies [a9e50ee]
+- Updated dependencies [5397eb4]
+- Updated dependencies [376913a]
+- Updated dependencies [c9f4e4a]
+- Updated dependencies [0acbc80]
+- Updated dependencies [376913a]
+  - @mastra/core@0.16.0
+  - @mastra/deployer@0.16.0
+  - @mastra/loggers@0.10.11
+  - @mastra/mcp@0.11.4
+
+## 0.12.0-alpha.1
+
+### Patch Changes
+
+- 376913a: Update peerdeps
+- Updated dependencies [8fbf79e]
+- Updated dependencies [376913a]
+- Updated dependencies [376913a]
+  - @mastra/core@0.16.0-alpha.1
+  - @mastra/loggers@0.10.11-alpha.0
+  - @mastra/mcp@0.11.4-alpha.0
+  - @mastra/deployer@0.16.0-alpha.1
+
+## 0.12.0-alpha.0
+
+### Minor Changes
+
+- a01cf14: Add workflow graph in agent (workflow as tool in agent)
+
+### Patch Changes
+
+- cf4e353: Agent Builder Template - adding in UI components to use agent builder template actions
+- 788e612: Fix playground workflow graph is broken when workflow starts with a branch
+- 5397eb4: Add public URL support when adding files in Multi Modal
+- Updated dependencies [cf4e353]
+- Updated dependencies [fd83526]
+- Updated dependencies [d0b90ab]
+- Updated dependencies [6f5eb7a]
+- Updated dependencies [a01cf14]
+- Updated dependencies [a9e50ee]
+- Updated dependencies [5397eb4]
+- Updated dependencies [c9f4e4a]
+- Updated dependencies [0acbc80]
+  - @mastra/deployer@0.16.0-alpha.0
+  - @mastra/core@0.16.0-alpha.0
+
+## 0.11.3
+
+### Patch Changes
+
+- 64152fd: Improve output of Cli Dev command
+- de3cbc6: Update the `package.json` file to include additional fields like `repository`, `homepage` or `files`.
+- 26b0d7c: Cleanup pkg output
+- 8e4fe90: Unify focus outlines
+- 2f55297: Fix issue when using `yarn dlx create-mastra`
+- e3d8fea: Support Inngest flow control features for Mastra Inngest workflows
+- f539199: mastra start - load env files, custom env. Deperecate --env flag for mastra build
+- ab48c97: dependencies updates:
+  - Updated dependency [`zod-to-json-schema@^3.24.6` ↗︎](https://www.npmjs.com/package/zod-to-json-schema/v/3.24.6) (from `^3.24.5`, in `dependencies`)
+- 87de958: fix chat outline
+- 6f715fe: Fix plyground baseUrl, default api baseUrl to playground baseUrl
+- 01264f1: Mastra dev- load env vars before watch
+- 3308c9f: fix dev:playground command
+- d99baf6: change outline
+- 8f22a2c: During package installation do not print audit, funding or any non-error logs
+- Updated dependencies [ab48c97]
+- Updated dependencies [3e0bd2a]
+- Updated dependencies [2b64943]
+- Updated dependencies [85ef90b]
+- Updated dependencies [aedbbfa]
+- Updated dependencies [ff89505]
+- Updated dependencies [637f323]
+- Updated dependencies [de3cbc6]
+- Updated dependencies [c19bcf7]
+- Updated dependencies [4474d04]
+- Updated dependencies [183dc95]
+- Updated dependencies [a1111e2]
+- Updated dependencies [b42a961]
+- Updated dependencies [71b657b]
+- Updated dependencies [61debef]
+- Updated dependencies [9beaeff]
+- Updated dependencies [29de0e1]
+- Updated dependencies [f643c65]
+- Updated dependencies [00c74e7]
+- Updated dependencies [f0dfcac]
+- Updated dependencies [fef7375]
+- Updated dependencies [6d98856]
+- Updated dependencies [e3d8fea]
+- Updated dependencies [45e4d39]
+- Updated dependencies [ad78bfc]
+- Updated dependencies [9eee594]
+- Updated dependencies [7149d8d]
+- Updated dependencies [822c2e8]
+- Updated dependencies [3b8972b]
+- Updated dependencies [979912c]
+- Updated dependencies [7dcf4c0]
+- Updated dependencies [4106a58]
+- Updated dependencies [ad78bfc]
+- Updated dependencies [6f715fe]
+- Updated dependencies [48f0742]
+- Updated dependencies [0302f50]
+- Updated dependencies [12adcc8]
+- Updated dependencies [6ac697e]
+- Updated dependencies [74db265]
+- Updated dependencies [6cffb99]
+- Updated dependencies [0ce418a]
+- Updated dependencies [3e0153a]
+- Updated dependencies [af90672]
+- Updated dependencies [8387952]
+- Updated dependencies [7f3b8da]
+- Updated dependencies [905352b]
+- Updated dependencies [599d04c]
+- Updated dependencies [a6e2254]
+- Updated dependencies [56041d0]
+- Updated dependencies [3412597]
+- Updated dependencies [5eca5d2]
+- Updated dependencies [8f22a2c]
+- Updated dependencies [f2cda47]
+- Updated dependencies [5de1555]
+- Updated dependencies [cfd377a]
+- Updated dependencies [1ed5a3e]
+- Updated dependencies [03d0c39]
+  - @mastra/core@0.15.3
+  - @mastra/deployer@0.15.3
+  - @mastra/loggers@0.10.10
+  - @mastra/mcp@0.11.3
+
+## 0.11.3-alpha.4
+
+### Patch Changes
+
+- [#7358](https://github.com/mastra-ai/mastra/pull/7358) [`2f55297`](https://github.com/mastra-ai/mastra/commit/2f552975f4eb602f24c9e811c18587a65f620d72) Thanks [@LekoArts](https://github.com/LekoArts)! - Fix issue when using `yarn dlx create-mastra`
+
+- [#7357](https://github.com/mastra-ai/mastra/pull/7357) [`01264f1`](https://github.com/mastra-ai/mastra/commit/01264f1280db040d1bd1ac9b8d29cfcaac3d6cbc) Thanks [@TheIsrael1](https://github.com/TheIsrael1)! - Mastra dev- load env vars before watch
+
+- Updated dependencies [[`c19bcf7`](https://github.com/mastra-ai/mastra/commit/c19bcf7b43542b02157b5e17303e519933a153ab), [`b42a961`](https://github.com/mastra-ai/mastra/commit/b42a961a5aefd19d6e938a7705fc0ecc90e8f756), [`45e4d39`](https://github.com/mastra-ai/mastra/commit/45e4d391a2a09fc70c48e4d60f505586ada1ba0e), [`3b8972b`](https://github.com/mastra-ai/mastra/commit/3b8972bab8161d9fd96f6a41f57181443636cd43), [`0302f50`](https://github.com/mastra-ai/mastra/commit/0302f50861a53c66ff28801fc371b37c5f97e41e), [`74db265`](https://github.com/mastra-ai/mastra/commit/74db265b96aa01a72ffd91dcae0bc3b346cca0f2), [`6cffb99`](https://github.com/mastra-ai/mastra/commit/6cffb99030dc46256e4c3c0e6730565a2825d7a4), [`7f3b8da`](https://github.com/mastra-ai/mastra/commit/7f3b8da6dd21c35d3672e44b4f5dd3502b8f8f92), [`905352b`](https://github.com/mastra-ai/mastra/commit/905352bcda134552400eb252bca1cb05a7975c14), [`f2cda47`](https://github.com/mastra-ai/mastra/commit/f2cda47ae911038c5d5489f54c36517d6f15bdcc), [`cfd377a`](https://github.com/mastra-ai/mastra/commit/cfd377a3a33a9c88b644f6540feed9cd9832db47), [`03d0c39`](https://github.com/mastra-ai/mastra/commit/03d0c3963a748294577dd232a53ee01e1e5bcc12)]:
+  - @mastra/core@0.15.3-alpha.6
+  - @mastra/mcp@0.11.3-alpha.3
+  - @mastra/deployer@0.15.3-alpha.6
+
+## 0.11.3-alpha.3
+
+### Patch Changes
+
+- [#7343](https://github.com/mastra-ai/mastra/pull/7343) [`de3cbc6`](https://github.com/mastra-ai/mastra/commit/de3cbc61079211431bd30487982ea3653517278e) Thanks [@LekoArts](https://github.com/LekoArts)! - Update the `package.json` file to include additional fields like `repository`, `homepage` or `files`.
+
+- Updated dependencies [[`2b64943`](https://github.com/mastra-ai/mastra/commit/2b64943a282c99988c2e5b6e1269bfaca60e6fe3), [`85ef90b`](https://github.com/mastra-ai/mastra/commit/85ef90bb2cd4ae4df855c7ac175f7d392c55c1bf), [`de3cbc6`](https://github.com/mastra-ai/mastra/commit/de3cbc61079211431bd30487982ea3653517278e)]:
+  - @mastra/deployer@0.15.3-alpha.5
+  - @mastra/core@0.15.3-alpha.5
+  - @mastra/loggers@0.10.10-alpha.0
+  - @mastra/mcp@0.11.3-alpha.2
+
+## 0.11.3-alpha.2
+
+### Patch Changes
+
+- [#7329](https://github.com/mastra-ai/mastra/pull/7329) [`26b0d7c`](https://github.com/mastra-ai/mastra/commit/26b0d7c7cba46469351d453714e119ac7aae9da2) Thanks [@wardpeet](https://github.com/wardpeet)! - Cleanup pkg output
+
+- [#7218](https://github.com/mastra-ai/mastra/pull/7218) [`f539199`](https://github.com/mastra-ai/mastra/commit/f53919950a9320b292732e0cfcdf61cdae6c8742) Thanks [@TheIsrael1](https://github.com/TheIsrael1)! - mastra start - load env files, custom env. Deperecate --env flag for mastra build
+
+- [#5816](https://github.com/mastra-ai/mastra/pull/5816) [`ab48c97`](https://github.com/mastra-ai/mastra/commit/ab48c979098ea571faf998a55d3a00e7acd7a715) Thanks [@dane-ai-mastra](https://github.com/apps/dane-ai-mastra)! - dependencies updates:
+  - Updated dependency [`zod-to-json-schema@^3.24.6` ↗︎](https://www.npmjs.com/package/zod-to-json-schema/v/3.24.6) (from `^3.24.5`, in `dependencies`)
+
+- [#6946](https://github.com/mastra-ai/mastra/pull/6946) [`8f22a2c`](https://github.com/mastra-ai/mastra/commit/8f22a2c35a0a9ddd2f34a9c3ebb6ff6668aa9ea9) Thanks [@LekoArts](https://github.com/LekoArts)! - During package installation do not print audit, funding or any non-error logs
+
+- Updated dependencies [[`ab48c97`](https://github.com/mastra-ai/mastra/commit/ab48c979098ea571faf998a55d3a00e7acd7a715), [`3e0bd2a`](https://github.com/mastra-ai/mastra/commit/3e0bd2aa0a19823939f9a973d44791f4927ff5c3), [`ff89505`](https://github.com/mastra-ai/mastra/commit/ff895057c8c7e91a5535faef46c5e5391085ddfa), [`183dc95`](https://github.com/mastra-ai/mastra/commit/183dc95596f391b977bd1a2c050b8498dac74891), [`a1111e2`](https://github.com/mastra-ai/mastra/commit/a1111e24e705488adfe5e0a6f20c53bddf26cb22), [`61debef`](https://github.com/mastra-ai/mastra/commit/61debefd80ad3a7ed5737e19df6a23d40091689a), [`9beaeff`](https://github.com/mastra-ai/mastra/commit/9beaeffa4a97b1d5fd01a7f8af8708b16067f67c), [`ad78bfc`](https://github.com/mastra-ai/mastra/commit/ad78bfc4ea6a1fff140432bf4f638e01af7af668), [`9eee594`](https://github.com/mastra-ai/mastra/commit/9eee594e35e0ca2a650fcc33fa82009a142b9ed0), [`979912c`](https://github.com/mastra-ai/mastra/commit/979912cfd180aad53287cda08af771df26454e2c), [`7dcf4c0`](https://github.com/mastra-ai/mastra/commit/7dcf4c04f44d9345b1f8bc5d41eae3f11ac61611), [`ad78bfc`](https://github.com/mastra-ai/mastra/commit/ad78bfc4ea6a1fff140432bf4f638e01af7af668), [`48f0742`](https://github.com/mastra-ai/mastra/commit/48f0742662414610dc9a7a99d45902d059ee123d), [`12adcc8`](https://github.com/mastra-ai/mastra/commit/12adcc8929db79b3cf7b83237ebaf6ba2db0181e), [`0ce418a`](https://github.com/mastra-ai/mastra/commit/0ce418a1ccaa5e125d4483a9651b635046152569), [`8387952`](https://github.com/mastra-ai/mastra/commit/838795227b4edf758c84a2adf6f7fba206c27719), [`5eca5d2`](https://github.com/mastra-ai/mastra/commit/5eca5d2655788863ea0442a46c9ef5d3c6dbe0a8), [`8f22a2c`](https://github.com/mastra-ai/mastra/commit/8f22a2c35a0a9ddd2f34a9c3ebb6ff6668aa9ea9)]:
+  - @mastra/core@0.15.3-alpha.4
+  - @mastra/deployer@0.15.3-alpha.4
+  - @mastra/mcp@0.11.3-alpha.1
+
+## 0.11.3-alpha.1
+
+### Patch Changes
+
+- [#7090](https://github.com/mastra-ai/mastra/pull/7090) [`e3d8fea`](https://github.com/mastra-ai/mastra/commit/e3d8feaacfb8b5c5c03c13604cc06ea2873d45fe) Thanks [@K-Mistele](https://github.com/K-Mistele)! - Support Inngest flow control features for Mastra Inngest workflows
+
+- [#7210](https://github.com/mastra-ai/mastra/pull/7210) [`87de958`](https://github.com/mastra-ai/mastra/commit/87de95832a7bdfa9ecb14473c84dc874331f1a7d) Thanks [@mfrachet](https://github.com/mfrachet)! - fix chat outline
+
+- Updated dependencies [[`aedbbfa`](https://github.com/mastra-ai/mastra/commit/aedbbfa064124ddde039111f12629daebfea7e48), [`71b657b`](https://github.com/mastra-ai/mastra/commit/71b657bffebbdcfdf1ce9c6d72003041bd6e200a), [`f643c65`](https://github.com/mastra-ai/mastra/commit/f643c651bdaf57c2343cf9dbfc499010495701fb), [`fef7375`](https://github.com/mastra-ai/mastra/commit/fef737534574f41b432a7361a285f776c3bac42b), [`6d98856`](https://github.com/mastra-ai/mastra/commit/6d98856ed7cf56cbd6c4e02b3254e3dfb1e455db), [`e3d8fea`](https://github.com/mastra-ai/mastra/commit/e3d8feaacfb8b5c5c03c13604cc06ea2873d45fe), [`3412597`](https://github.com/mastra-ai/mastra/commit/3412597a6644c0b6bf3236d6e319ed1450c5bae8)]:
+  - @mastra/core@0.15.3-alpha.3
+  - @mastra/deployer@0.15.3-alpha.3
+
+## 0.11.3-alpha.0
+
+### Patch Changes
+
+- [#7046](https://github.com/mastra-ai/mastra/pull/7046) [`64152fd`](https://github.com/mastra-ai/mastra/commit/64152fd4e8f8c76612b82a2e4981ee09b22674d7) Thanks [@adeleke5140](https://github.com/adeleke5140)! - Improve output of Cli Dev command
+
+- [#7076](https://github.com/mastra-ai/mastra/pull/7076) [`8e4fe90`](https://github.com/mastra-ai/mastra/commit/8e4fe90605ee4dfcfd911a7f07e1355fe49205ba) Thanks [@mfrachet](https://github.com/mfrachet)! - Unify focus outlines
+
+- [#7115](https://github.com/mastra-ai/mastra/pull/7115) [`6f715fe`](https://github.com/mastra-ai/mastra/commit/6f715fe524296e1138a319e56bcf8e4214bd5dd5) Thanks [@TheIsrael1](https://github.com/TheIsrael1)! - Fix plyground baseUrl, default api baseUrl to playground baseUrl
+
+- [#7044](https://github.com/mastra-ai/mastra/pull/7044) [`3308c9f`](https://github.com/mastra-ai/mastra/commit/3308c9ff1da7594925d193a825f33da2880fb9c1) Thanks [@mfrachet](https://github.com/mfrachet)! - fix dev:playground command
+
+- [#7101](https://github.com/mastra-ai/mastra/pull/7101) [`d99baf6`](https://github.com/mastra-ai/mastra/commit/d99baf6e69bbf83e9a286fbd18c47543de12cb58) Thanks [@mfrachet](https://github.com/mfrachet)! - change outline
+
+- Updated dependencies [[`00c74e7`](https://github.com/mastra-ai/mastra/commit/00c74e73b1926be0d475693bb886fb67a22ff352), [`6f715fe`](https://github.com/mastra-ai/mastra/commit/6f715fe524296e1138a319e56bcf8e4214bd5dd5), [`3e0153a`](https://github.com/mastra-ai/mastra/commit/3e0153adcf2309f3ffb01c9ac9e0f5adc0caa259), [`af90672`](https://github.com/mastra-ai/mastra/commit/af906722d8da28688882193b1e531026f9e2e81e), [`a6e2254`](https://github.com/mastra-ai/mastra/commit/a6e225469159950bb69e8d240d510ec57dc0d79a), [`56041d0`](https://github.com/mastra-ai/mastra/commit/56041d018863a3da6b98c512e47348647c075fb3), [`5de1555`](https://github.com/mastra-ai/mastra/commit/5de15554d3d6695211945a36928f6657e76cddc9), [`1ed5a3e`](https://github.com/mastra-ai/mastra/commit/1ed5a3e19330374c4347a4237cd2f4b9ffb60376)]:
+  - @mastra/core@0.15.3-alpha.0
+  - @mastra/deployer@0.15.3-alpha.0
+  - @mastra/mcp@0.11.3-alpha.0
+
+## 0.11.2
+
+### Patch Changes
+
+- [`c6113ed`](https://github.com/mastra-ai/mastra/commit/c6113ed7f9df297e130d94436ceee310273d6430) Thanks [@wardpeet](https://github.com/wardpeet)! - Fix peerdpes for @mastra/core
+
+- Updated dependencies [[`c6113ed`](https://github.com/mastra-ai/mastra/commit/c6113ed7f9df297e130d94436ceee310273d6430)]:
+  - @mastra/deployer@0.15.2
+  - @mastra/loggers@0.10.9
+  - @mastra/mcp@0.11.2
+  - @mastra/core@0.15.2
+
+## 0.11.1
+
+### Patch Changes
+
+- [`95b2aa9`](https://github.com/mastra-ai/mastra/commit/95b2aa908230919e67efcac0d69005a2d5745298) Thanks [@wardpeet](https://github.com/wardpeet)! - Fix peerdeps @mastra/core
+
+- Updated dependencies [[`95b2aa9`](https://github.com/mastra-ai/mastra/commit/95b2aa908230919e67efcac0d69005a2d5745298)]:
+  - @mastra/deployer@0.15.1
+  - @mastra/loggers@0.10.8
+  - @mastra/mcp@0.11.1
+  - @mastra/core@0.15.1
+
+## 0.11.0
+
+### Minor Changes
+
+- [#7032](https://github.com/mastra-ai/mastra/pull/7032) [`1191ce9`](https://github.com/mastra-ai/mastra/commit/1191ce946b40ed291e7877a349f8388e3cff7e5c) Thanks [@wardpeet](https://github.com/wardpeet)! - Bump zod peerdep to 3.25.0 to support both v3/v4
+
+### Patch Changes
+
+- [#6938](https://github.com/mastra-ai/mastra/pull/6938) [`0778757`](https://github.com/mastra-ai/mastra/commit/07787570e4addbd501522037bd2542c3d9e26822) Thanks [@dane-ai-mastra](https://github.com/apps/dane-ai-mastra)! - dependencies updates:
+  - Updated dependency [`@opentelemetry/auto-instrumentations-node@^0.62.1` ↗︎](https://www.npmjs.com/package/@opentelemetry/auto-instrumentations-node/v/0.62.1) (from `^0.62.0`, in `dependencies`)
+
+- [#6942](https://github.com/mastra-ai/mastra/pull/6942) [`ca8ec2f`](https://github.com/mastra-ai/mastra/commit/ca8ec2f61884b9dfec5fc0d5f4f29d281ad13c01) Thanks [@wardpeet](https://github.com/wardpeet)! - Add zod as peerdeps for all packages
+
+- [#6892](https://github.com/mastra-ai/mastra/pull/6892) [`f61b8c6`](https://github.com/mastra-ai/mastra/commit/f61b8c6b35ec96312d9bb52570578d4f0124467d) Thanks [@wardpeet](https://github.com/wardpeet)! - Improve playground build
+
+- [#6948](https://github.com/mastra-ai/mastra/pull/6948) [`a8070e6`](https://github.com/mastra-ai/mastra/commit/a8070e63ab384ae14a214faaf8634c53b7064bc3) Thanks [@taofeeq-deru](https://github.com/taofeeq-deru)! - Preserve run state in workflows after viewing traces
+
+- Updated dependencies [[`0778757`](https://github.com/mastra-ai/mastra/commit/07787570e4addbd501522037bd2542c3d9e26822), [`e9a36bd`](https://github.com/mastra-ai/mastra/commit/e9a36bd03ed032528b60186a318f563ebf59c01a), [`2b38a60`](https://github.com/mastra-ai/mastra/commit/2b38a60da0c1153028d8241c7748b41c5fb81121), [`e38f807`](https://github.com/mastra-ai/mastra/commit/e38f8072853cc803ba48394e1930825129708400), [`943a7f3`](https://github.com/mastra-ai/mastra/commit/943a7f3dbc6a8ab3f9b7bc7c8a1c5b319c3d7f56), [`681252d`](https://github.com/mastra-ai/mastra/commit/681252d20e57fcee6821377dea96cacab3bc230f), [`01be5d3`](https://github.com/mastra-ai/mastra/commit/01be5d358fad8faa101e5c69dfa54562c02cc0af), [`bf504a8`](https://github.com/mastra-ai/mastra/commit/bf504a833051f6f321d832cc7d631f3cb86d657b), [`24d9ee3`](https://github.com/mastra-ai/mastra/commit/24d9ee3db1c09d15f27a5d0971b102abcfcf7dfd), [`da58ccc`](https://github.com/mastra-ai/mastra/commit/da58ccc1f2ac33da0cb97b00443fc6208b45bdec), [`be49354`](https://github.com/mastra-ai/mastra/commit/be493546dca540101923ec700feb31f9a13939f2), [`d591ab3`](https://github.com/mastra-ai/mastra/commit/d591ab3ecc985c1870c0db347f8d7a20f7360536), [`ba82abe`](https://github.com/mastra-ai/mastra/commit/ba82abe76e869316bb5a9c95e8ea3946f3436fae), [`2a96802`](https://github.com/mastra-ai/mastra/commit/2a96802f76790ebb86a1bcb254398dccf27e5479), [`727f7e5`](https://github.com/mastra-ai/mastra/commit/727f7e5086e62e0dfe3356fb6dcd8bcb420af246), [`e6f5046`](https://github.com/mastra-ai/mastra/commit/e6f50467aff317e67e8bd74c485c3fbe2a5a6db1), [`82d9f64`](https://github.com/mastra-ai/mastra/commit/82d9f647fbe4f0177320e7c05073fce88599aa95), [`2e58325`](https://github.com/mastra-ai/mastra/commit/2e58325beb170f5b92f856e27d915cd26917e5e6), [`1191ce9`](https://github.com/mastra-ai/mastra/commit/1191ce946b40ed291e7877a349f8388e3cff7e5c), [`de24804`](https://github.com/mastra-ai/mastra/commit/de248044e79b407d211b339ce3ed4dc6e1630704), [`4189486`](https://github.com/mastra-ai/mastra/commit/4189486c6718fda78347bdf4ce4d3fc33b2236e1), [`ca8ec2f`](https://github.com/mastra-ai/mastra/commit/ca8ec2f61884b9dfec5fc0d5f4f29d281ad13c01), [`9613558`](https://github.com/mastra-ai/mastra/commit/9613558e6475f4710e05d1be7553a32ee7bddc20)]:
+  - @mastra/core@0.15.0
+  - @mastra/deployer@0.15.0
+  - @mastra/mcp@0.11.0
+
+## 0.11.0-alpha.3
+
+### Minor Changes
+
+- [#7032](https://github.com/mastra-ai/mastra/pull/7032) [`1191ce9`](https://github.com/mastra-ai/mastra/commit/1191ce946b40ed291e7877a349f8388e3cff7e5c) Thanks [@wardpeet](https://github.com/wardpeet)! - Bump zod peerdep to 3.25.0 to support both v3/v4
+
+### Patch Changes
+
+- Updated dependencies [[`1191ce9`](https://github.com/mastra-ai/mastra/commit/1191ce946b40ed291e7877a349f8388e3cff7e5c)]:
+  - @mastra/deployer@0.15.0-alpha.4
+  - @mastra/core@0.15.0-alpha.4
+  - @mastra/mcp@0.11.0-alpha.3
+
+## 0.10.24-alpha.2
+
+### Patch Changes
+
+- Updated dependencies [[`da58ccc`](https://github.com/mastra-ai/mastra/commit/da58ccc1f2ac33da0cb97b00443fc6208b45bdec)]:
+  - @mastra/deployer@0.15.0-alpha.3
+  - @mastra/mcp@0.11.0-alpha.2
+  - @mastra/core@0.15.0-alpha.3
+
+## 0.10.24-alpha.1
+
+### Patch Changes
+
+- [#6942](https://github.com/mastra-ai/mastra/pull/6942) [`ca8ec2f`](https://github.com/mastra-ai/mastra/commit/ca8ec2f61884b9dfec5fc0d5f4f29d281ad13c01) Thanks [@wardpeet](https://github.com/wardpeet)! - Add zod as peerdeps for all packages
+
+- Updated dependencies [[`2b38a60`](https://github.com/mastra-ai/mastra/commit/2b38a60da0c1153028d8241c7748b41c5fb81121), [`943a7f3`](https://github.com/mastra-ai/mastra/commit/943a7f3dbc6a8ab3f9b7bc7c8a1c5b319c3d7f56), [`681252d`](https://github.com/mastra-ai/mastra/commit/681252d20e57fcee6821377dea96cacab3bc230f), [`01be5d3`](https://github.com/mastra-ai/mastra/commit/01be5d358fad8faa101e5c69dfa54562c02cc0af), [`24d9ee3`](https://github.com/mastra-ai/mastra/commit/24d9ee3db1c09d15f27a5d0971b102abcfcf7dfd), [`be49354`](https://github.com/mastra-ai/mastra/commit/be493546dca540101923ec700feb31f9a13939f2), [`d591ab3`](https://github.com/mastra-ai/mastra/commit/d591ab3ecc985c1870c0db347f8d7a20f7360536), [`ba82abe`](https://github.com/mastra-ai/mastra/commit/ba82abe76e869316bb5a9c95e8ea3946f3436fae), [`727f7e5`](https://github.com/mastra-ai/mastra/commit/727f7e5086e62e0dfe3356fb6dcd8bcb420af246), [`82d9f64`](https://github.com/mastra-ai/mastra/commit/82d9f647fbe4f0177320e7c05073fce88599aa95), [`4189486`](https://github.com/mastra-ai/mastra/commit/4189486c6718fda78347bdf4ce4d3fc33b2236e1), [`ca8ec2f`](https://github.com/mastra-ai/mastra/commit/ca8ec2f61884b9dfec5fc0d5f4f29d281ad13c01)]:
+  - @mastra/deployer@0.14.2-alpha.1
+  - @mastra/core@0.14.2-alpha.1
+  - @mastra/mcp@0.10.13-alpha.1
+
+## 0.10.24-alpha.0
+
+### Patch Changes
+
+- [#6938](https://github.com/mastra-ai/mastra/pull/6938) [`0778757`](https://github.com/mastra-ai/mastra/commit/07787570e4addbd501522037bd2542c3d9e26822) Thanks [@dane-ai-mastra](https://github.com/apps/dane-ai-mastra)! - dependencies updates:
+  - Updated dependency [`@opentelemetry/auto-instrumentations-node@^0.62.1` ↗︎](https://www.npmjs.com/package/@opentelemetry/auto-instrumentations-node/v/0.62.1) (from `^0.62.0`, in `dependencies`)
+
+- [#6892](https://github.com/mastra-ai/mastra/pull/6892) [`f61b8c6`](https://github.com/mastra-ai/mastra/commit/f61b8c6b35ec96312d9bb52570578d4f0124467d) Thanks [@wardpeet](https://github.com/wardpeet)! - Improve playground build
+
+- [#6948](https://github.com/mastra-ai/mastra/pull/6948) [`a8070e6`](https://github.com/mastra-ai/mastra/commit/a8070e63ab384ae14a214faaf8634c53b7064bc3) Thanks [@taofeeq-deru](https://github.com/taofeeq-deru)! - Preserve run state in workflows after viewing traces
+
+- Updated dependencies [[`0778757`](https://github.com/mastra-ai/mastra/commit/07787570e4addbd501522037bd2542c3d9e26822), [`e9a36bd`](https://github.com/mastra-ai/mastra/commit/e9a36bd03ed032528b60186a318f563ebf59c01a), [`e38f807`](https://github.com/mastra-ai/mastra/commit/e38f8072853cc803ba48394e1930825129708400), [`bf504a8`](https://github.com/mastra-ai/mastra/commit/bf504a833051f6f321d832cc7d631f3cb86d657b), [`e6f5046`](https://github.com/mastra-ai/mastra/commit/e6f50467aff317e67e8bd74c485c3fbe2a5a6db1), [`de24804`](https://github.com/mastra-ai/mastra/commit/de248044e79b407d211b339ce3ed4dc6e1630704), [`9613558`](https://github.com/mastra-ai/mastra/commit/9613558e6475f4710e05d1be7553a32ee7bddc20)]:
+  - @mastra/core@0.14.2-alpha.0
+  - @mastra/deployer@0.14.2-alpha.0
+  - @mastra/mcp@0.10.13-alpha.0
+
+## 0.10.23
+
+### Patch Changes
+
+- Updated dependencies [[`6e7e120`](https://github.com/mastra-ai/mastra/commit/6e7e1207d6e8d8b838f9024f90bd10df1181ba27), [`4c8956f`](https://github.com/mastra-ai/mastra/commit/4c8956f3110ccf39595e022f127a44a0a5c09c86), [`0f00e17`](https://github.com/mastra-ai/mastra/commit/0f00e172953ccdccadb35ed3d70f5e4d89115869), [`217cd7a`](https://github.com/mastra-ai/mastra/commit/217cd7a4ce171e9a575c41bb8c83300f4db03236), [`a5a23d9`](https://github.com/mastra-ai/mastra/commit/a5a23d981920d458dc6078919992a5338931ef02)]:
+  - @mastra/core@0.14.1
+  - @mastra/deployer@0.14.1
+
+## 0.10.23-alpha.0
+
+### Patch Changes
+
+- Updated dependencies [[`6e7e120`](https://github.com/mastra-ai/mastra/commit/6e7e1207d6e8d8b838f9024f90bd10df1181ba27), [`4c8956f`](https://github.com/mastra-ai/mastra/commit/4c8956f3110ccf39595e022f127a44a0a5c09c86), [`a5a23d9`](https://github.com/mastra-ai/mastra/commit/a5a23d981920d458dc6078919992a5338931ef02)]:
+  - @mastra/core@0.14.1-alpha.0
+  - @mastra/deployer@0.14.1-alpha.0
+
+## 0.10.22
+
+### Patch Changes
+
+- 8f8409a: Inject analytics instance into create cmd
+- 97c1d5e: Add new `scorers` subcommand for managing scorers.
+  Refactor cli to be more modular.
+- dd702eb: Fix default in playground
+- 6313063: Implement model switcher in playground
+- 1d59515: Add options to playground based on modelVersion
+- 9ce22c5: Fix swagger-ui link
+- 36928f0: Use right icon for anthropic in model switcher
+- 03997ae: Update peerdeps
+- Updated dependencies [895d3b2]
+- Updated dependencies [227c7e6]
+- Updated dependencies [12cae67]
+- Updated dependencies [bca2ba3]
+- Updated dependencies [fd3a3eb]
+- Updated dependencies [022f3a2]
+- Updated dependencies [6faaee5]
+- Updated dependencies [4232b14]
+- Updated dependencies [6313063]
+- Updated dependencies [a89de7e]
+- Updated dependencies [96518cc]
+- Updated dependencies [5a37d0c]
+- Updated dependencies [4bde0cb]
+- Updated dependencies [e1aed55]
+- Updated dependencies [cf4f357]
+- Updated dependencies [c712849]
+- Updated dependencies [04dcd66]
+- Updated dependencies [03997ae]
+- Updated dependencies [03997ae]
+- Updated dependencies [ad888a2]
+- Updated dependencies [481751d]
+- Updated dependencies [2454423]
+- Updated dependencies [194e395]
+- Updated dependencies [a9916bd]
+- Updated dependencies [a722c0b]
+- Updated dependencies [c30bca8]
+- Updated dependencies [95e1330]
+- Updated dependencies [33eb340]
+- Updated dependencies [3b5fec7]
+- Updated dependencies [a8f129d]
+- Updated dependencies [6dfc4a6]
+  - @mastra/mcp@0.10.12
+  - @mastra/core@0.14.0
+  - @mastra/deployer@0.14.0
+  - @mastra/loggers@0.10.7
+
+## 0.10.22-alpha.6
+
+### Patch Changes
+
+- 03997ae: Update peerdeps
+- Updated dependencies [03997ae]
+- Updated dependencies [03997ae]
+  - @mastra/loggers@0.10.7-alpha.0
+  - @mastra/mcp@0.10.12-alpha.2
+  - @mastra/deployer@0.14.0-alpha.7
+  - @mastra/core@0.14.0-alpha.7
+
+## 0.10.22-alpha.5
+
+### Patch Changes
+
+- 9ce22c5: Fix swagger-ui link
+- Updated dependencies [ad888a2]
+- Updated dependencies [481751d]
+- Updated dependencies [194e395]
+- Updated dependencies [a9916bd]
+  - @mastra/core@0.14.0-alpha.6
+  - @mastra/deployer@0.14.0-alpha.6
+
+## 0.10.22-alpha.4
+
+### Patch Changes
+
+- dd702eb: Fix default in playground
+
+## 0.10.22-alpha.3
+
+### Patch Changes
+
+- 1d59515: Add options to playground based on modelVersion
+- Updated dependencies [0a7f675]
+- Updated dependencies [12cae67]
+- Updated dependencies [96518cc]
+- Updated dependencies [5a37d0c]
+- Updated dependencies [4bde0cb]
+- Updated dependencies [e1aed55]
+- Updated dependencies [1a80071]
+- Updated dependencies [36a3be8]
+- Updated dependencies [c712849]
+- Updated dependencies [361757b]
+- Updated dependencies [2bb9955]
+- Updated dependencies [2454423]
+- Updated dependencies [a44d91e]
+- Updated dependencies [dfb91e9]
+- Updated dependencies [a741dde]
+- Updated dependencies [95e1330]
+- Updated dependencies [7cb3fc0]
+- Updated dependencies [195eabb]
+- Updated dependencies [33eb340]
+- Updated dependencies [b78b95b]
+  - @mastra/core@0.14.0-alpha.4
+  - @mastra/deployer@0.14.0-alpha.4
+  - @mastra/mcp@0.10.12-alpha.1
+
+## 0.10.22-alpha.2
+
+### Patch Changes
+
+- 36928f0: Use right icon for anthropic in model switcher
+- Updated dependencies [227c7e6]
+- Updated dependencies [fd3a3eb]
+- Updated dependencies [04dcd66]
+- Updated dependencies [a8f129d]
+  - @mastra/core@0.14.0-alpha.3
+  - @mastra/deployer@0.14.0-alpha.3
+
+## 0.10.22-alpha.1
+
+### Patch Changes
+
+- 8f8409a: Inject analytics instance into create cmd
+- 6313063: Implement model switcher in playground
+- Updated dependencies [895d3b2]
+- Updated dependencies [bca2ba3]
+- Updated dependencies [6faaee5]
+- Updated dependencies [4232b14]
+- Updated dependencies [6313063]
+- Updated dependencies [a89de7e]
+- Updated dependencies [cf4f357]
+- Updated dependencies [a722c0b]
+- Updated dependencies [3b5fec7]
+- Updated dependencies [6dfc4a6]
+  - @mastra/mcp@0.10.12-alpha.0
+  - @mastra/deployer@0.14.0-alpha.1
+  - @mastra/core@0.14.0-alpha.1
+
+## 0.10.22-alpha.0
+
+### Patch Changes
+
+- 97c1d5e: Add new `scorers` subcommand for managing scorers.
+  Refactor cli to be more modular.
+- Updated dependencies [c30bca8]
+  - @mastra/core@0.13.3-alpha.0
+  - @mastra/deployer@0.13.3-alpha.0
+
+## 0.10.21
+
+### Patch Changes
+
+- 63449d0: Change the globbing of tools to exclude test files. Files inside `__tests__` directory and files with `.test.` or `.spec.` in their file name are now excluded from bundling.
+- 77b6cfe: Use just modelId for gpt-5 check
+- 96169cc: Create handler that returns providers user has keys for in their env
+- 33da97c: Set temperature to 1 for gpt-5 model in playground
+- c6d2603: Properly set baseUrl in playground when user sets the host or port in Mastra instance.
+- 7aad750: Fix tool ui showing after message when chat is refreshed
+- ce04175: Add update agent model handler
+- Updated dependencies [d5330bf]
+- Updated dependencies [aaf0224]
+- Updated dependencies [2e74797]
+- Updated dependencies [42cb4e9]
+- Updated dependencies [8388649]
+- Updated dependencies [a239d41]
+- Updated dependencies [dd94a26]
+- Updated dependencies [3ba6772]
+- Updated dependencies [96169cc]
+- Updated dependencies [b5cf2a3]
+- Updated dependencies [2fff911]
+- Updated dependencies [b32c50d]
+- Updated dependencies [c6d2603]
+- Updated dependencies [63449d0]
+- Updated dependencies [121a3f8]
+- Updated dependencies [ce04175]
+- Updated dependencies [ec510e7]
+  - @mastra/core@0.13.2
+  - @mastra/deployer@0.13.2
+  - @mastra/mcp@0.10.11
+
+## 0.10.21-alpha.2
+
+### Patch Changes
+
+- 77b6cfe: Use just modelId for gpt-5 check
+- 96169cc: Create handler that returns providers user has keys for in their env
+- 33da97c: Set temperature to 1 for gpt-5 model in playground
+- c6d2603: Properly set baseUrl in playground when user sets the host or port in Mastra instance.
+- ce04175: Add update agent model handler
+- Updated dependencies [d5330bf]
+- Updated dependencies [aaf0224]
+- Updated dependencies [42cb4e9]
+- Updated dependencies [a239d41]
+- Updated dependencies [96169cc]
+- Updated dependencies [b32c50d]
+- Updated dependencies [c6d2603]
+- Updated dependencies [121a3f8]
+- Updated dependencies [ce04175]
+- Updated dependencies [ec510e7]
+  - @mastra/core@0.13.2-alpha.2
+  - @mastra/deployer@0.13.2-alpha.2
+  - @mastra/mcp@0.10.11-alpha.0
+
+## 0.10.21-alpha.1
+
+### Patch Changes
+
+- 63449d0: Change the globbing of tools to exclude test files. Files inside `__tests__` directory and files with `.test.` or `.spec.` in their file name are now excluded from bundling.
+- Updated dependencies [2e74797]
+- Updated dependencies [63449d0]
+  - @mastra/core@0.13.2-alpha.1
+  - @mastra/deployer@0.13.2-alpha.1
+
+## 0.10.21-alpha.0
+
+### Patch Changes
+
+- 7aad750: Fix tool ui showing after message when chat is refreshed
+- Updated dependencies [8388649]
+- Updated dependencies [dd94a26]
+- Updated dependencies [3ba6772]
+- Updated dependencies [2fff911]
+  - @mastra/core@0.13.2-alpha.0
+  - @mastra/deployer@0.13.2-alpha.0
+
+## 0.10.20
+
+### Patch Changes
+
+- Updated dependencies [cd0042e]
+  - @mastra/core@0.13.1
+  - @mastra/deployer@0.13.1
+
+## 0.10.20-alpha.0
+
+### Patch Changes
+
+- Updated dependencies [cd0042e]
+  - @mastra/core@0.13.1-alpha.0
+  - @mastra/deployer@0.13.1-alpha.0
+
+## 0.10.19
+
+### Patch Changes
+
+- ea0c5f2: Update to support new scorer api
+- 4a406ec: fixes TypeScript declaration file imports to ensure proper ESM compatibility
+- 35c5798: Add support for transpilePackages option
+- Updated dependencies [cb36de0]
+- Updated dependencies [d0496e6]
+- Updated dependencies [7b8172f]
+- Updated dependencies [cb36de0]
+- Updated dependencies [d0496e6]
+- Updated dependencies [a82b851]
+- Updated dependencies [ea0c5f2]
+- Updated dependencies [41a0a0e]
+- Updated dependencies [2871020]
+- Updated dependencies [9e792ef]
+- Updated dependencies [94f4812]
+- Updated dependencies [e202b82]
+- Updated dependencies [e00f6a0]
+- Updated dependencies [4a406ec]
+- Updated dependencies [b0e43c1]
+- Updated dependencies [5d377e5]
+- Updated dependencies [1fb812e]
+- Updated dependencies [35c5798]
+  - @mastra/core@0.13.0
+  - @mastra/deployer@0.13.0
+  - @mastra/mcp@0.10.10
+  - @mastra/loggers@0.10.6
+
+## 0.10.19-alpha.2
+
+### Patch Changes
+
+- 4a406ec: fixes TypeScript declaration file imports to ensure proper ESM compatibility
+- Updated dependencies [cb36de0]
+- Updated dependencies [cb36de0]
+- Updated dependencies [a82b851]
+- Updated dependencies [41a0a0e]
+- Updated dependencies [2871020]
+- Updated dependencies [4a406ec]
+- Updated dependencies [5d377e5]
+  - @mastra/core@0.13.0-alpha.2
+  - @mastra/deployer@0.13.0-alpha.2
+  - @mastra/loggers@0.10.6-alpha.0
+  - @mastra/mcp@0.10.10-alpha.0
+
+## 0.10.19-alpha.1
+
+### Patch Changes
+
+- ea0c5f2: Update to support new scorer api
+- 35c5798: Add support for transpilePackages option
+- Updated dependencies [7b8172f]
+- Updated dependencies [ea0c5f2]
+- Updated dependencies [b0e43c1]
+- Updated dependencies [1fb812e]
+- Updated dependencies [35c5798]
+  - @mastra/deployer@0.13.0-alpha.1
+  - @mastra/core@0.13.0-alpha.1
+
+## 0.10.19-alpha.0
+
+### Patch Changes
+
+- Updated dependencies [94f4812]
+- Updated dependencies [e202b82]
+- Updated dependencies [e00f6a0]
+  - @mastra/core@0.12.2-alpha.0
+  - @mastra/deployer@0.12.2-alpha.0
+
+## 0.10.18
+
+### Patch Changes
+
+- ad04455: Missed changeset in last release, needed to include create-mastra
+
+## 0.10.18-alpha.0
+
+### Patch Changes
+
+- ad04455: Missed changeset in last release, needed to include create-mastra
+
+## 0.10.17
+
+### Patch Changes
+
+- 9862477: Install specific ai v4 deps when scaffolding a project
+- 33dcb07: dependencies updates:
+  - Updated dependency [`@opentelemetry/instrumentation@^0.203.0` ↗︎](https://www.npmjs.com/package/@opentelemetry/instrumentation/v/0.203.0) (from `^0.202.0`, in `dependencies`)
+  - Updated dependency [`@opentelemetry/auto-instrumentations-node@^0.62.0` ↗︎](https://www.npmjs.com/package/@opentelemetry/auto-instrumentations-node/v/0.62.0) (from `^0.60.1`, in `dependencies`)
+  - Updated dependency [`@opentelemetry/exporter-trace-otlp-grpc@^0.203.0` ↗︎](https://www.npmjs.com/package/@opentelemetry/exporter-trace-otlp-grpc/v/0.203.0) (from `^0.202.0`, in `dependencies`)
+  - Updated dependency [`@opentelemetry/exporter-trace-otlp-http@^0.203.0` ↗︎](https://www.npmjs.com/package/@opentelemetry/exporter-trace-otlp-http/v/0.203.0) (from `^0.202.0`, in `dependencies`)
+  - Updated dependency [`@opentelemetry/sdk-node@^0.203.0` ↗︎](https://www.npmjs.com/package/@opentelemetry/sdk-node/v/0.203.0) (from `^0.202.0`, in `dependencies`)
+  - Updated dependency [`@opentelemetry/semantic-conventions@^1.36.0` ↗︎](https://www.npmjs.com/package/@opentelemetry/semantic-conventions/v/1.36.0) (from `^1.34.0`, in `dependencies`)
+- Updated dependencies [33dcb07]
+- Updated dependencies [f90797b]
+- Updated dependencies [d0d9500]
+- Updated dependencies [d30b1a0]
+- Updated dependencies [bff87f7]
+- Updated dependencies [07fe7a2]
+- Updated dependencies [b4a8df0]
+  - @mastra/core@0.12.1
+  - @mastra/mcp@0.10.9
+  - @mastra/deployer@0.12.1
+
+## 0.10.17-alpha.1
+
+### Patch Changes
+
+- 9862477: Install specific ai v4 deps when scaffolding a project
+- Updated dependencies [d0d9500]
+  - @mastra/core@0.12.1-alpha.1
+  - @mastra/deployer@0.12.1-alpha.1
+
+## 0.10.17-alpha.0
+
+### Patch Changes
+
+- 33dcb07: dependencies updates:
+  - Updated dependency [`@opentelemetry/instrumentation@^0.203.0` ↗︎](https://www.npmjs.com/package/@opentelemetry/instrumentation/v/0.203.0) (from `^0.202.0`, in `dependencies`)
+  - Updated dependency [`@opentelemetry/auto-instrumentations-node@^0.62.0` ↗︎](https://www.npmjs.com/package/@opentelemetry/auto-instrumentations-node/v/0.62.0) (from `^0.60.1`, in `dependencies`)
+  - Updated dependency [`@opentelemetry/exporter-trace-otlp-grpc@^0.203.0` ↗︎](https://www.npmjs.com/package/@opentelemetry/exporter-trace-otlp-grpc/v/0.203.0) (from `^0.202.0`, in `dependencies`)
+  - Updated dependency [`@opentelemetry/exporter-trace-otlp-http@^0.203.0` ↗︎](https://www.npmjs.com/package/@opentelemetry/exporter-trace-otlp-http/v/0.203.0) (from `^0.202.0`, in `dependencies`)
+  - Updated dependency [`@opentelemetry/sdk-node@^0.203.0` ↗︎](https://www.npmjs.com/package/@opentelemetry/sdk-node/v/0.203.0) (from `^0.202.0`, in `dependencies`)
+  - Updated dependency [`@opentelemetry/semantic-conventions@^1.36.0` ↗︎](https://www.npmjs.com/package/@opentelemetry/semantic-conventions/v/1.36.0) (from `^1.34.0`, in `dependencies`)
+- Updated dependencies [33dcb07]
+- Updated dependencies [f90797b]
+- Updated dependencies [d30b1a0]
+- Updated dependencies [bff87f7]
+- Updated dependencies [07fe7a2]
+- Updated dependencies [b4a8df0]
+  - @mastra/core@0.12.1-alpha.0
+  - @mastra/mcp@0.10.9-alpha.0
+  - @mastra/deployer@0.12.1-alpha.0
+
+## 0.10.16
+
+### Patch Changes
+
+- bc6b44a: Extract tools import from `createHonoServer`; the function now receives tools via a prop on the `options` parameter.
+- f442224: speech to text using voice config
+- 7a7754f: Fast follow scorers fixing input types, improve llm scorer reliability, fix ui to display scores that are 0
+- d8dec5e: add a cta to invite to deploy to cloud
+- 6336993: Fix workflow input form overflow
+- d5cc460: This change implements a fix to sourcemap mappings being off due to `removeDeployer` Babel plugin missing source map config.
+- f42c4c2: update peer deps for packages to latest core range
+- a5681f2: fix: pagination breaks trace grouping
+- 89d2f4e: add TTS to the playground
+- Updated dependencies [510e2c8]
+- Updated dependencies [2f72fb2]
+- Updated dependencies [27cc97a]
+- Updated dependencies [832691b]
+- Updated dependencies [557bb9d]
+- Updated dependencies [27cc97a]
+- Updated dependencies [3f89307]
+- Updated dependencies [9eda7d4]
+- Updated dependencies [9d49408]
+- Updated dependencies [bc6b44a]
+- Updated dependencies [41daa63]
+- Updated dependencies [ad0a58b]
+- Updated dependencies [254a36b]
+- Updated dependencies [2ecf658]
+- Updated dependencies [7a7754f]
+- Updated dependencies [fc92d80]
+- Updated dependencies [e0f73c6]
+- Updated dependencies [0b89602]
+- Updated dependencies [4d37822]
+- Updated dependencies [23a6a7c]
+- Updated dependencies [cda801d]
+- Updated dependencies [a77c823]
+- Updated dependencies [ff9c125]
+- Updated dependencies [09bca64]
+- Updated dependencies [9802f42]
+- Updated dependencies [d5cc460]
+- Updated dependencies [f42c4c2]
+- Updated dependencies [b8efbb9]
+- Updated dependencies [71466e7]
+- Updated dependencies [0c99fbe]
+  - @mastra/core@0.12.0
+  - @mastra/deployer@0.12.0
+  - @mastra/loggers@0.10.5
+  - @mastra/mcp@0.10.8
+
+## 0.10.16-alpha.3
+
+### Patch Changes
+
+- f42c4c2: update peer deps for packages to latest core range
+- Updated dependencies [f42c4c2]
+  - @mastra/deployer@0.12.0-alpha.5
+  - @mastra/loggers@0.10.5-alpha.0
+  - @mastra/mcp@0.10.8-alpha.0
+  - @mastra/core@0.12.0-alpha.5
+
+## 0.10.16-alpha.2
+
+### Patch Changes
+
+- d5cc460: This change implements a fix to sourcemap mappings being off due to `removeDeployer` Babel plugin missing source map config.
+- a5681f2: fix: pagination breaks trace grouping
+- Updated dependencies [27cc97a]
+- Updated dependencies [27cc97a]
+- Updated dependencies [41daa63]
+- Updated dependencies [254a36b]
+- Updated dependencies [0b89602]
+- Updated dependencies [4d37822]
+- Updated dependencies [ff9c125]
+- Updated dependencies [d5cc460]
+- Updated dependencies [b8efbb9]
+- Updated dependencies [71466e7]
+- Updated dependencies [0c99fbe]
+  - @mastra/core@0.12.0-alpha.2
+  - @mastra/deployer@0.12.0-alpha.2
+
+## 0.10.16-alpha.1
+
+### Patch Changes
+
+- 6336993: Fix workflow input form overflow
+- Updated dependencies [e0f73c6]
+- Updated dependencies [cda801d]
+- Updated dependencies [a77c823]
+  - @mastra/core@0.12.0-alpha.1
+  - @mastra/deployer@0.12.0-alpha.1
+
+## 0.10.16-alpha.0
+
+### Patch Changes
+
+- bc6b44a: Extract tools import from `createHonoServer`; the function now receives tools via a prop on the `options` parameter.
+- f442224: speech to text using voice config
+- 7a7754f: Fast follow scorers fixing input types, improve llm scorer reliability, fix ui to display scores that are 0
+- d8dec5e: add a cta to invite to deploy to cloud
+- 89d2f4e: add TTS to the playground
+- Updated dependencies [510e2c8]
+- Updated dependencies [2f72fb2]
+- Updated dependencies [832691b]
+- Updated dependencies [557bb9d]
+- Updated dependencies [3f89307]
+- Updated dependencies [9eda7d4]
+- Updated dependencies [9d49408]
+- Updated dependencies [bc6b44a]
+- Updated dependencies [2ecf658]
+- Updated dependencies [7a7754f]
+- Updated dependencies [fc92d80]
+- Updated dependencies [23a6a7c]
+- Updated dependencies [09bca64]
+  - @mastra/core@0.12.0-alpha.0
+  - @mastra/deployer@0.12.0-alpha.0
+
+## 0.10.15
+
+### Patch Changes
+
+- 1a45f3a: Fix peerdeps
+
+## 0.10.14
+
+### Patch Changes
+
+- dd2a4c9: change the way we start the dev process of playground
+- af1f902: share thread list between agent, network and cloud
+- 8f89bcd: fix traces pagination + sharing trace view with cloud
+- 0bf0bc8: fix link in shared components + add e2e tests
+- 2affc57: Fix output type of network loop
+- 51192f8: Spread the loaded env into the main process
+- f6c4d75: fix date picker on change
+- 59f0dcd: Add light background color for step statuses
+- 698518b: Allow external templates from github
+- cf8d497: factorize tabs component between cloud and core
+- 7827943: Handle streaming large data
+- 808b493: wrap runtime context with tooltip provider for usage in cloud
+- 8364fac: Fix displaying scorer input
+- 09464dd: Share AgentMetadata component with cloud
+- 80692d5: refactor: sharing only the UI and not data fetching for traces
+- 80c2b06: Fix agent chat stop button to cancel stream/generate reqs in the playground
+- Updated dependencies [f248d53]
+- Updated dependencies [82c6860]
+- Updated dependencies [2affc57]
+- Updated dependencies [66e13e3]
+- Updated dependencies [edd9482]
+- Updated dependencies [0938991]
+- Updated dependencies [18344d7]
+- Updated dependencies [7ba91fa]
+- Updated dependencies [a512ede]
+- Updated dependencies [35b1155]
+- Updated dependencies [9d372c2]
+- Updated dependencies [45469c5]
+- Updated dependencies [40c2525]
+- Updated dependencies [e473f27]
+- Updated dependencies [032cb66]
+- Updated dependencies [6f50efd]
+- Updated dependencies [24eb25c]
+- Updated dependencies [bf6903e]
+- Updated dependencies [703ac71]
+- Updated dependencies [a723d69]
+- Updated dependencies [7827943]
+- Updated dependencies [4c06f06]
+- Updated dependencies [5889a31]
+- Updated dependencies [bf1e7e7]
+- Updated dependencies [65e3395]
+- Updated dependencies [9de6f58]
+- Updated dependencies [4933192]
+- Updated dependencies [d1c77a4]
+- Updated dependencies [bea9dd1]
+- Updated dependencies [7983e53]
+- Updated dependencies [dcd4802]
+- Updated dependencies [cbddd18]
+- Updated dependencies [7ba91fa]
+- Updated dependencies [15ce274]
+  - @mastra/core@0.11.0
+  - @mastra/deployer@0.11.0
+
+## 0.10.14-alpha.3
+
+### Patch Changes
+
+- 8364fac: Fix displaying scorer input
+
+## 0.10.14-alpha.2
+
+### Patch Changes
+
+- dd2a4c9: change the way we start the dev process of playground
+- af1f902: share thread list between agent, network and cloud
+- 2affc57: Fix output type of network loop
+- 51192f8: Spread the loaded env into the main process
+- f6c4d75: fix date picker on change
+- 698518b: Allow external templates from github
+- 09464dd: Share AgentMetadata component with cloud
+- 80c2b06: Fix agent chat stop button to cancel stream/generate reqs in the playground
+- Updated dependencies [f248d53]
+- Updated dependencies [82c6860]
+- Updated dependencies [2affc57]
+- Updated dependencies [66e13e3]
+- Updated dependencies [edd9482]
+- Updated dependencies [18344d7]
+- Updated dependencies [7ba91fa]
+- Updated dependencies [a512ede]
+- Updated dependencies [35b1155]
+- Updated dependencies [9d372c2]
+- Updated dependencies [45469c5]
+- Updated dependencies [40c2525]
+- Updated dependencies [e473f27]
+- Updated dependencies [032cb66]
+- Updated dependencies [24eb25c]
+- Updated dependencies [703ac71]
+- Updated dependencies [a723d69]
+- Updated dependencies [4c06f06]
+- Updated dependencies [5889a31]
+- Updated dependencies [65e3395]
+- Updated dependencies [9de6f58]
+- Updated dependencies [4933192]
+- Updated dependencies [d1c77a4]
+- Updated dependencies [bea9dd1]
+- Updated dependencies [dcd4802]
+- Updated dependencies [7ba91fa]
+- Updated dependencies [15ce274]
+  - @mastra/core@0.11.0-alpha.2
+  - @mastra/deployer@0.11.0-alpha.2
+
+## 0.10.14-alpha.1
+
+### Patch Changes
+
+- 8f89bcd: fix traces pagination + sharing trace view with cloud
+- 59f0dcd: Add light background color for step statuses
+- cf8d497: factorize tabs component between cloud and core
+- 80692d5: refactor: sharing only the UI and not data fetching for traces
+- Updated dependencies [7983e53]
+  - @mastra/deployer@0.11.0-alpha.1
+  - @mastra/core@0.11.0-alpha.1
+
+## 0.10.14-alpha.0
+
+### Patch Changes
+
+- 0bf0bc8: fix link in shared components + add e2e tests
+- 7827943: Handle streaming large data
+- 808b493: wrap runtime context with tooltip provider for usage in cloud
+- Updated dependencies [0938991]
+- Updated dependencies [6f50efd]
+- Updated dependencies [bf6903e]
+- Updated dependencies [7827943]
+- Updated dependencies [bf1e7e7]
+- Updated dependencies [cbddd18]
+  - @mastra/deployer@0.11.0-alpha.0
+  - @mastra/core@0.11.0-alpha.0
+
+## 0.10.13
+
+### Patch Changes
+
+- 593631d: allow to pass ref to the link abstraction
+- 5237998: Fix foreach output
+- 1aa60b1: Pipe runtimeContext to vNext network agent stream and generate steps, wire up runtimeContext for vNext Networks in cliet SDK & playground
+- d49334d: export tool list for usage in cloud
+- 9cdfcb5: fix infinite rerenders on agents table + share runtime context for cloud
+- 794d9f3: Fix thread creation in playground
+- 5130bcb: dependencies updates:
+  - Updated dependency [`swr@^2.3.4` ↗︎](https://www.npmjs.com/package/swr/v/2.3.4) (from `^2.3.3`, in `dependencies`)
+- 984887a: dependencies updates:
+  - Updated dependency [`prettier@^3.6.2` ↗︎](https://www.npmjs.com/package/prettier/v/3.6.2) (from `^3.5.3`, in `dependencies`)
+- aa9528a: Display reasoning in playground
+- 45174f3: share network list between core and cloud
+- 48f5532: export workflow list for usage in cloud
+- 3e484be: Added CLI template option
+- 626b0f4: [Cloud-126] Working Memory Playground - Added working memory to playground to allow users to view/edit working memory
+- e1d0080: abstract Link component between cloud and core
+- f9b1508: add the same agent table as in cloud and export it from the playground
+- dfbeec6: Fix navigation to vnext AgentNetwork agents
+- Updated dependencies [7776324]
+- Updated dependencies [0b56518]
+- Updated dependencies [db5cc15]
+- Updated dependencies [2ba5b76]
+- Updated dependencies [7b57e2c]
+- Updated dependencies [5237998]
+- Updated dependencies [c3a30de]
+- Updated dependencies [37c1acd]
+- Updated dependencies [1aa60b1]
+- Updated dependencies [89ec9d4]
+- Updated dependencies [cf3a184]
+- Updated dependencies [fe4bbd4]
+- Updated dependencies [d6bfd60]
+- Updated dependencies [626b0f4]
+- Updated dependencies [c22a91f]
+- Updated dependencies [f7403ab]
+- Updated dependencies [6c89d7f]
+  - @mastra/deployer@0.10.15
+  - @mastra/core@0.10.15
+
+## 0.10.13-alpha.2
+
+### Patch Changes
+
+- 794d9f3: Fix thread creation in playground
+- dfbeec6: Fix navigation to vnext AgentNetwork agents
+
+## 0.10.13-alpha.1
+
+### Patch Changes
+
+- d49334d: export tool list for usage in cloud
+- 9cdfcb5: fix infinite rerenders on agents table + share runtime context for cloud
+- 45174f3: share network list between core and cloud
+- 48f5532: export workflow list for usage in cloud
+- 3e484be: Added CLI template option
+- Updated dependencies [0b56518]
+- Updated dependencies [2ba5b76]
+- Updated dependencies [c3a30de]
+- Updated dependencies [cf3a184]
+- Updated dependencies [fe4bbd4]
+- Updated dependencies [d6bfd60]
+  - @mastra/core@0.10.15-alpha.1
+  - @mastra/deployer@0.10.15-alpha.1
+
+## 0.10.13-alpha.0
+
+### Patch Changes
+
+- 593631d: allow to pass ref to the link abstraction
+- 5237998: Fix foreach output
+- 1aa60b1: Pipe runtimeContext to vNext network agent stream and generate steps, wire up runtimeContext for vNext Networks in cliet SDK & playground
+- 5130bcb: dependencies updates:
+  - Updated dependency [`swr@^2.3.4` ↗︎](https://www.npmjs.com/package/swr/v/2.3.4) (from `^2.3.3`, in `dependencies`)
+- 984887a: dependencies updates:
+  - Updated dependency [`prettier@^3.6.2` ↗︎](https://www.npmjs.com/package/prettier/v/3.6.2) (from `^3.5.3`, in `dependencies`)
+- aa9528a: Display reasoning in playground
+- 626b0f4: [Cloud-126] Working Memory Playground - Added working memory to playground to allow users to view/edit working memory
+- e1d0080: abstract Link component between cloud and core
+- f9b1508: add the same agent table as in cloud and export it from the playground
+- Updated dependencies [7776324]
+- Updated dependencies [db5cc15]
+- Updated dependencies [7b57e2c]
+- Updated dependencies [5237998]
+- Updated dependencies [37c1acd]
+- Updated dependencies [1aa60b1]
+- Updated dependencies [89ec9d4]
+- Updated dependencies [626b0f4]
+- Updated dependencies [c22a91f]
+- Updated dependencies [f7403ab]
+- Updated dependencies [6c89d7f]
+  - @mastra/deployer@0.10.15-alpha.0
+  - @mastra/core@0.10.15-alpha.0
+
+## 0.10.12
+
+### Patch Changes
+
+- 640f47e: move agent model settings into agent settings
+- 5d0c163: Scaffold create-mastra projects with zod@^3 to prevent package version conflicts during install
+- 53e3f58: Add support for custom instrumentation files
+- Updated dependencies [b4a9811]
+- Updated dependencies [4d5583d]
+- Updated dependencies [53e3f58]
+  - @mastra/core@0.10.12
+  - @mastra/deployer@0.10.12
+
+## 0.10.12-alpha.0
+
+### Patch Changes
+
+- 640f47e: move agent model settings into agent settings
+- 5d0c163: Scaffold create-mastra projects with zod@^3 to prevent package version conflicts during install
+- 53e3f58: Add support for custom instrumentation files
+- Updated dependencies [b4a9811]
+- Updated dependencies [53e3f58]
+  - @mastra/core@0.10.12-alpha.0
+  - @mastra/deployer@0.10.12-alpha.0
+
+## 0.10.11
+
+### Patch Changes
+
+- ec77f83: Expose --inspect flag for mastra dev to start debugger
+- af9e40e: Map log level number to string value
+- f457d86: reset localstorage when resetting model settings
+- 8722d53: Fix multi modal remaining steps
+- 565cc0c: fix redirection when clicking on the playground breadcrumbs
+- 4219597: add JSON input close to form input
+- 2873c7f: dependencies updates:
+  - Updated dependency [`dotenv@^16.6.1` ↗︎](https://www.npmjs.com/package/dotenv/v/16.6.1) (from `^16.5.0`, in `dependencies`)
+- a9f51e4: Fix plaground get tools not including x-mastra-dev-header"
+- 3322d00: Fix tools watcher in dev
+- b790fd1: Use SerializedStepFlowEntry in playground
+- a7a836a: Highlight send event button
+- Updated dependencies [2873c7f]
+- Updated dependencies [1c1c6a1]
+- Updated dependencies [bc40cdd]
+- Updated dependencies [2873c7f]
+- Updated dependencies [1c1c6a1]
+- Updated dependencies [d9b26b5]
+- Updated dependencies [f5ec3a4]
+- Updated dependencies [f8ce2cc]
+- Updated dependencies [ab3bbff]
+- Updated dependencies [8c846b6]
+- Updated dependencies [c7bbf1e]
+- Updated dependencies [8722d53]
+- Updated dependencies [565cc0c]
+- Updated dependencies [b790fd1]
+- Updated dependencies [132027f]
+- Updated dependencies [0c85311]
+- Updated dependencies [d7ed04d]
+- Updated dependencies [c0ba5e2]
+- Updated dependencies [18ca936]
+- Updated dependencies [cb16baf]
+- Updated dependencies [40cd025]
+- Updated dependencies [f36e4f1]
+- Updated dependencies [7f6e403]
+  - @mastra/core@0.10.11
+  - @mastra/deployer@0.10.11
+  - @mastra/mcp@0.10.6
+
+## 0.10.11-alpha.3
+
+### Patch Changes
+
+- f457d86: reset localstorage when resetting model settings
+- 8722d53: Fix multi modal remaining steps
+- Updated dependencies [c7bbf1e]
+- Updated dependencies [8722d53]
+- Updated dependencies [132027f]
+- Updated dependencies [0c85311]
+- Updated dependencies [c0ba5e2]
+- Updated dependencies [cb16baf]
+  - @mastra/core@0.10.11-alpha.3
+  - @mastra/mcp@0.10.6-alpha.1
+  - @mastra/deployer@0.10.11-alpha.3
+
+## 0.10.11-alpha.2
+
+### Patch Changes
+
+- ec77f83: Expose --inspect flag for mastra dev to start debugger
+- 565cc0c: fix redirection when clicking on the playground breadcrumbs
+- 4219597: add JSON input close to form input
+- 2873c7f: dependencies updates:
+  - Updated dependency [`dotenv@^16.6.1` ↗︎](https://www.npmjs.com/package/dotenv/v/16.6.1) (from `^16.5.0`, in `dependencies`)
+- Updated dependencies [2873c7f]
+- Updated dependencies [1c1c6a1]
+- Updated dependencies [2873c7f]
+- Updated dependencies [1c1c6a1]
+- Updated dependencies [d9b26b5]
+- Updated dependencies [f5ec3a4]
+- Updated dependencies [ab3bbff]
+- Updated dependencies [565cc0c]
+- Updated dependencies [18ca936]
+  - @mastra/core@0.10.11-alpha.2
+  - @mastra/deployer@0.10.11-alpha.2
+  - @mastra/mcp@0.10.6-alpha.0
+
+## 0.10.11-alpha.1
+
+### Patch Changes
+
+- a7a836a: Highlight send event button
+- Updated dependencies [7f6e403]
+  - @mastra/core@0.10.11-alpha.1
+  - @mastra/deployer@0.10.11-alpha.1
+
+## 0.10.11-alpha.0
+
+### Patch Changes
+
+- af9e40e: Map log level number to string value
+- a9f51e4: Fix plaground get tools not including x-mastra-dev-header"
+- 3322d00: Fix tools watcher in dev
+- b790fd1: Use SerializedStepFlowEntry in playground
+- Updated dependencies [bc40cdd]
+- Updated dependencies [f8ce2cc]
+- Updated dependencies [8c846b6]
+- Updated dependencies [b790fd1]
+- Updated dependencies [d7ed04d]
+- Updated dependencies [f36e4f1]
+  - @mastra/deployer@0.10.11-alpha.0
+  - @mastra/core@0.10.11-alpha.0
+
+## 0.10.10
+
+### Patch Changes
+
+- 6997af1: add send event to server, deployer, client-js and playground-ui
+- 4d3fbdf: Return tool error message rather than throw when a tool error happens for agent and tool playground page.
+- Updated dependencies [6e13b80]
+- Updated dependencies [25bf999]
+- Updated dependencies [6997af1]
+- Updated dependencies [4d3fbdf]
+  - @mastra/deployer@0.10.10
+  - @mastra/loggers@0.10.3
+  - @mastra/core@0.10.10
+
+## 0.10.10-alpha.2
+
+### Patch Changes
+
+- Updated dependencies [25bf999]
+  - @mastra/loggers@0.10.3-alpha.0
+
+## 0.10.10-alpha.1
+
+### Patch Changes
+
+- 6997af1: add send event to server, deployer, client-js and playground-ui
+- Updated dependencies [6997af1]
+  - @mastra/deployer@0.10.10-alpha.1
+  - @mastra/core@0.10.10-alpha.1
+
+## 0.10.10-alpha.0
+
+### Patch Changes
+
+- 4d3fbdf: Return tool error message rather than throw when a tool error happens for agent and tool playground page.
+- Updated dependencies [6e13b80]
+- Updated dependencies [4d3fbdf]
+  - @mastra/deployer@0.10.10-alpha.0
+  - @mastra/core@0.10.10-alpha.0
+
+## 0.10.9
+
+### Patch Changes
+
+- 4e06e3f: timing not displayed correctly in traces
+- 7e801dd: [MASTRA-4118] fixes issue with agent network loopStream where subsequent messages aren't present in playground on refresh
+- d093c1e: Update example workflow to use existing weather agent
+- a606c75: show right suspend schema for nested workflow on playground
+- 1cbdfd0: update create-mastra gemini model to 2.5
+- 1760a1c: Use workflow stream in playground instead of watch
+- 038e5ae: Add cancel workflow run
+- ac369c6: Show resume data on workflow graph
+- 91c43b4: Use process.execPath for node in dev
+- 976a62b: remove persistence capabilities in model settings components
+- 4e809ad: Visualizations for .sleep()/.sleepUntil()/.waitForEvent()
+- f78f399: Make AgentModelSettings shareable between cloud and playground
+- 57929df: agent network display
+- Updated dependencies [9dda1ac]
+- Updated dependencies [9dda1ac]
+- Updated dependencies [c984582]
+- Updated dependencies [7e801dd]
+- Updated dependencies [a606c75]
+- Updated dependencies [7aa70a4]
+- Updated dependencies [764f86a]
+- Updated dependencies [1760a1c]
+- Updated dependencies [038e5ae]
+- Updated dependencies [7dda16a]
+- Updated dependencies [6f87544]
+- Updated dependencies [5ebfcdd]
+- Updated dependencies [81a1b3b]
+- Updated dependencies [b2d0c91]
+- Updated dependencies [4e809ad]
+- Updated dependencies [57929df]
+- Updated dependencies [7e801dd]
+- Updated dependencies [b7852ed]
+- Updated dependencies [6320a61]
+  - @mastra/core@0.10.9
+  - @mastra/deployer@0.10.9
+
+## 0.10.9-alpha.0
+
+### Patch Changes
+
+- 4e06e3f: timing not displayed correctly in traces
+- 7e801dd: [MASTRA-4118] fixes issue with agent network loopStream where subsequent messages aren't present in playground on refresh
+- d093c1e: Update example workflow to use existing weather agent
+- a606c75: show right suspend schema for nested workflow on playground
+- 1cbdfd0: update create-mastra gemini model to 2.5
+- 1760a1c: Use workflow stream in playground instead of watch
+- 038e5ae: Add cancel workflow run
+- ac369c6: Show resume data on workflow graph
+- 91c43b4: Use process.execPath for node in dev
+- 976a62b: remove persistence capabilities in model settings components
+- 4e809ad: Visualizations for .sleep()/.sleepUntil()/.waitForEvent()
+- f78f399: Make AgentModelSettings shareable between cloud and playground
+- 57929df: agent network display
+- Updated dependencies [9dda1ac]
+- Updated dependencies [9dda1ac]
+- Updated dependencies [c984582]
+- Updated dependencies [7e801dd]
+- Updated dependencies [a606c75]
+- Updated dependencies [7aa70a4]
+- Updated dependencies [764f86a]
+- Updated dependencies [1760a1c]
+- Updated dependencies [038e5ae]
+- Updated dependencies [7dda16a]
+- Updated dependencies [6f87544]
+- Updated dependencies [5ebfcdd]
+- Updated dependencies [81a1b3b]
+- Updated dependencies [b2d0c91]
+- Updated dependencies [4e809ad]
+- Updated dependencies [57929df]
+- Updated dependencies [7e801dd]
+- Updated dependencies [b7852ed]
+- Updated dependencies [6320a61]
+  - @mastra/core@0.10.9-alpha.0
+  - @mastra/deployer@0.10.9-alpha.0
+
+## 0.10.8
+
+### Patch Changes
+
+- a344ac7: Fix tool streaming in agent network
+- Updated dependencies [b8f16b2]
+- Updated dependencies [3e04487]
+- Updated dependencies [a344ac7]
+- Updated dependencies [dc4ca0a]
+  - @mastra/core@0.10.8
+  - @mastra/deployer@0.10.8
+
+## 0.10.8-alpha.1
+
+### Patch Changes
+
+- Updated dependencies [b8f16b2]
+- Updated dependencies [3e04487]
+- Updated dependencies [dc4ca0a]
+  - @mastra/core@0.10.8-alpha.1
+  - @mastra/deployer@0.10.8-alpha.1
+
+## 0.10.8-alpha.0
+
+### Patch Changes
+
+- a344ac7: Fix tool streaming in agent network
+- Updated dependencies [a344ac7]
+  - @mastra/deployer@0.10.8-alpha.0
+  - @mastra/core@0.10.8-alpha.0
+
+## 0.10.7
+
+### Patch Changes
+
+- 5d74aab: vNext network in playground
+- 9102d89: Fix final output not showing on playground for previously suspended steps
+- 17903a3: Remove install step from dev for telemetry
+- 8e1b6e9: dependencies updates:
+  - Updated dependency [`zod@^3.25.67` ↗︎](https://www.npmjs.com/package/zod/v/3.25.67) (from `^3.25.57`, in `dependencies`)
+- 21ffb97: Make dynamic form handle schema better
+- be3d5a3: Remove recharts and ramada (unused deps)
+- f9b4350: fix icons not showing on all agents
+- Updated dependencies [8e1b6e9]
+- Updated dependencies [36cd0f1]
+- Updated dependencies [2eab82b]
+- Updated dependencies [ee93d96]
+- Updated dependencies [c00039d]
+- Updated dependencies [15e9d26]
+- Updated dependencies [d1baedb]
+- Updated dependencies [d8f2d19]
+- Updated dependencies [9bf1d55]
+- Updated dependencies [4d21bf2]
+- Updated dependencies [914684e]
+- Updated dependencies [07d6d88]
+- Updated dependencies [9d52b17]
+- Updated dependencies [2097952]
+- Updated dependencies [792c4c0]
+- Updated dependencies [5d74aab]
+- Updated dependencies [5d74aab]
+- Updated dependencies [17903a3]
+- Updated dependencies [a8b194f]
+- Updated dependencies [4fb0cc2]
+- Updated dependencies [d2a7a31]
+- Updated dependencies [502fe05]
+- Updated dependencies [144eb0b]
+- Updated dependencies [8ba1b51]
+- Updated dependencies [10a4f10]
+- Updated dependencies [4efcfa0]
+- Updated dependencies [0e17048]
+- Updated dependencies [dc93062]
+  - @mastra/deployer@0.10.7
+  - @mastra/mcp@0.10.5
+  - @mastra/core@0.10.7
+
+## 0.10.7-alpha.5
+
+### Patch Changes
+
+- f9b4350: fix icons not showing on all agents
+  - @mastra/core@0.10.7-alpha.5
+  - @mastra/deployer@0.10.7-alpha.5
+
+## 0.10.7-alpha.4
+
+### Patch Changes
+
+- Updated dependencies [a8b194f]
+- Updated dependencies [dc93062]
+  - @mastra/core@0.10.7-alpha.4
+  - @mastra/mcp@0.10.5-alpha.2
+  - @mastra/deployer@0.10.7-alpha.4
+
+## 0.10.7-alpha.3
+
+### Patch Changes
+
+- Updated dependencies [792c4c0]
+- Updated dependencies [502fe05]
+- Updated dependencies [10a4f10]
+- Updated dependencies [4efcfa0]
+  - @mastra/core@0.10.7-alpha.3
+  - @mastra/deployer@0.10.7-alpha.3
+
+## 0.10.7-alpha.2
+
+### Patch Changes
+
+- 5d74aab: vNext network in playground
+- 17903a3: Remove install step from dev for telemetry
+- 8e1b6e9: dependencies updates:
+  - Updated dependency [`zod@^3.25.67` ↗︎](https://www.npmjs.com/package/zod/v/3.25.67) (from `^3.25.57`, in `dependencies`)
+- be3d5a3: Remove recharts and ramada (unused deps)
+- Updated dependencies [8e1b6e9]
+- Updated dependencies [36cd0f1]
+- Updated dependencies [2eab82b]
+- Updated dependencies [ee93d96]
+- Updated dependencies [c00039d]
+- Updated dependencies [15e9d26]
+- Updated dependencies [9bf1d55]
+- Updated dependencies [914684e]
+- Updated dependencies [07d6d88]
+- Updated dependencies [5d74aab]
+- Updated dependencies [5d74aab]
+- Updated dependencies [17903a3]
+- Updated dependencies [144eb0b]
+  - @mastra/deployer@0.10.7-alpha.2
+  - @mastra/mcp@0.10.5-alpha.1
+  - @mastra/core@0.10.7-alpha.2
+
+## 0.10.7-alpha.1
+
+### Patch Changes
+
+- 21ffb97: Make dynamic form handle schema better
+- Updated dependencies [d1baedb]
+- Updated dependencies [4d21bf2]
+- Updated dependencies [2097952]
+- Updated dependencies [4fb0cc2]
+- Updated dependencies [d2a7a31]
+- Updated dependencies [0e17048]
+  - @mastra/core@0.10.7-alpha.1
+  - @mastra/mcp@0.10.5-alpha.0
+  - @mastra/deployer@0.10.7-alpha.1
+
+## 0.10.7-alpha.0
+
+### Patch Changes
+
+- 9102d89: Fix final output not showing on playground for previously suspended steps
+- Updated dependencies [d8f2d19]
+- Updated dependencies [9d52b17]
+- Updated dependencies [8ba1b51]
+  - @mastra/core@0.10.7-alpha.0
+  - @mastra/deployer@0.10.7-alpha.0
+
+## 0.10.6
+
+### Patch Changes
+
+- 02560d4: lift evals fetching to the playground package instead
+- 084f6aa: Add logs to circular dependency to warn people when starting server might break
+- b29c802: Remove open browser
+- 5f2aa3e: Move workflow hooks to playground
+- 4051477: dependencies updates:
+  - Updated dependency [`@clack/prompts@^0.11.0` ↗︎](https://www.npmjs.com/package/@clack/prompts/v/0.11.0) (from `^0.8.2`, in `dependencies`)
+  - Updated dependency [`@opentelemetry/instrumentation@^0.202.0` ↗︎](https://www.npmjs.com/package/@opentelemetry/instrumentation/v/0.202.0) (from `^0.57.2`, in `dependencies`)
+  - Updated dependency [`posthog-node@4.18.0` ↗︎](https://www.npmjs.com/package/posthog-node/v/4.18.0) (from `4.16.0`, in `dependencies`)
+  - Updated dependency [`yocto-spinner@^0.2.3` ↗︎](https://www.npmjs.com/package/yocto-spinner/v/0.2.3) (from `^0.1.2`, in `dependencies`)
+  - Added dependency [`open@^10.1.2` ↗︎](https://www.npmjs.com/package/open/v/10.1.2) (to `dependencies`)
+- b40f365: dependencies updates:
+  - Updated dependency [`@clack/prompts@^0.11.0` ↗︎](https://www.npmjs.com/package/@clack/prompts/v/0.11.0) (from `^0.8.2`, in `dependencies`)
+  - Updated dependency [`@opentelemetry/instrumentation@^0.202.0` ↗︎](https://www.npmjs.com/package/@opentelemetry/instrumentation/v/0.202.0) (from `^0.57.2`, in `dependencies`)
+  - Updated dependency [`posthog-node@4.18.0` ↗︎](https://www.npmjs.com/package/posthog-node/v/4.18.0) (from `4.16.0`, in `dependencies`)
+  - Updated dependency [`yocto-spinner@^0.2.3` ↗︎](https://www.npmjs.com/package/yocto-spinner/v/0.2.3) (from `^0.1.2`, in `dependencies`)
+- 63f6b7d: dependencies updates:
+  - Updated dependency [`execa@^9.6.0` ↗︎](https://www.npmjs.com/package/execa/v/9.6.0) (from `^9.5.2`, in `dependencies`)
+  - Updated dependency [`json-schema-to-zod@^2.6.1` ↗︎](https://www.npmjs.com/package/json-schema-to-zod/v/2.6.1) (from `^2.6.0`, in `dependencies`)
+  - Updated dependency [`shell-quote@^1.8.3` ↗︎](https://www.npmjs.com/package/shell-quote/v/1.8.3) (from `^1.8.2`, in `dependencies`)
+  - Updated dependency [`strip-json-comments@^5.0.2` ↗︎](https://www.npmjs.com/package/strip-json-comments/v/5.0.2) (from `^5.0.1`, in `dependencies`)
+  - Updated dependency [`zod@^3.25.57` ↗︎](https://www.npmjs.com/package/zod/v/3.25.57) (from `^3.25.56`, in `dependencies`)
+- 143b4e4: Fix globbing of tools to only capture js/ts files
+- 44ba52d: Add proper error message when installation of mastra fails
+- 311132e: move useWorkflow to playground instead of playground-ui
+- 3270d9d: Fix runtime context being undefined
+- 906f992: CLI error log
+- 53d3c37: Get workflows from an agent if not found from Mastra instance #5083
+- fc677d7: For final result for a workflow
+- 47e7029: Add open browser functionality when running mastra dev
+- Updated dependencies [63f6b7d]
+- Updated dependencies [4051477]
+- Updated dependencies [2d12edd]
+- Updated dependencies [63f6b7d]
+- Updated dependencies [c28ed65]
+- Updated dependencies [63f6b7d]
+- Updated dependencies [12a95fc]
+- Updated dependencies [79b9909]
+- Updated dependencies [4b0f8a6]
+- Updated dependencies [51264a5]
+- Updated dependencies [8e6f677]
+- Updated dependencies [d70c420]
+- Updated dependencies [ee9af57]
+- Updated dependencies [ec7f824]
+- Updated dependencies [36f1c36]
+- Updated dependencies [084f6aa]
+- Updated dependencies [2a16996]
+- Updated dependencies [10d352e]
+- Updated dependencies [9589624]
+- Updated dependencies [bd1674f]
+- Updated dependencies [69f76f7]
+- Updated dependencies [3270d9d]
+- Updated dependencies [53d3c37]
+- Updated dependencies [751c894]
+- Updated dependencies [577ce3a]
+- Updated dependencies [9260b3a]
+  - @mastra/core@0.10.6
+  - @mastra/deployer@0.10.6
+  - @mastra/mcp@0.10.4
+
+## 0.10.6-alpha.7
+
+### Patch Changes
+
+- b29c802: Remove open browser
+- Updated dependencies [bd1674f]
+- Updated dependencies [69f76f7]
+  - @mastra/mcp@0.10.4-alpha.1
+  - @mastra/deployer@0.10.6-alpha.5
+
+## 0.10.6-alpha.6
+
+### Patch Changes
+
+- 5f2aa3e: Move workflow hooks to playground
+- Updated dependencies [12a95fc]
+- Updated dependencies [51264a5]
+- Updated dependencies [8e6f677]
+  - @mastra/core@0.10.6-alpha.5
+  - @mastra/deployer@0.10.6-alpha.5
+
+## 0.10.6-alpha.5
+
+### Patch Changes
+
+- 084f6aa: Add logs to circular dependency to warn people when starting server might break
+- Updated dependencies [79b9909]
+- Updated dependencies [084f6aa]
+- Updated dependencies [9589624]
+  - @mastra/deployer@0.10.6-alpha.4
+  - @mastra/core@0.10.6-alpha.4
+
+## 0.10.6-alpha.4
+
+### Patch Changes
+
+- 4051477: dependencies updates:
+  - Updated dependency [`@clack/prompts@^0.11.0` ↗︎](https://www.npmjs.com/package/@clack/prompts/v/0.11.0) (from `^0.8.2`, in `dependencies`)
+  - Updated dependency [`@opentelemetry/instrumentation@^0.202.0` ↗︎](https://www.npmjs.com/package/@opentelemetry/instrumentation/v/0.202.0) (from `^0.57.2`, in `dependencies`)
+  - Updated dependency [`posthog-node@4.18.0` ↗︎](https://www.npmjs.com/package/posthog-node/v/4.18.0) (from `4.16.0`, in `dependencies`)
+  - Updated dependency [`yocto-spinner@^0.2.3` ↗︎](https://www.npmjs.com/package/yocto-spinner/v/0.2.3) (from `^0.1.2`, in `dependencies`)
+  - Added dependency [`open@^10.1.2` ↗︎](https://www.npmjs.com/package/open/v/10.1.2) (to `dependencies`)
+- b40f365: dependencies updates:
+  - Updated dependency [`@clack/prompts@^0.11.0` ↗︎](https://www.npmjs.com/package/@clack/prompts/v/0.11.0) (from `^0.8.2`, in `dependencies`)
+  - Updated dependency [`@opentelemetry/instrumentation@^0.202.0` ↗︎](https://www.npmjs.com/package/@opentelemetry/instrumentation/v/0.202.0) (from `^0.57.2`, in `dependencies`)
+  - Updated dependency [`posthog-node@4.18.0` ↗︎](https://www.npmjs.com/package/posthog-node/v/4.18.0) (from `4.16.0`, in `dependencies`)
+  - Updated dependency [`yocto-spinner@^0.2.3` ↗︎](https://www.npmjs.com/package/yocto-spinner/v/0.2.3) (from `^0.1.2`, in `dependencies`)
+- Updated dependencies [4051477]
+- Updated dependencies [c28ed65]
+- Updated dependencies [d70c420]
+- Updated dependencies [2a16996]
+  - @mastra/deployer@0.10.6-alpha.3
+  - @mastra/core@0.10.6-alpha.3
+
+## 0.10.6-alpha.3
+
+### Patch Changes
+
+- Updated dependencies [4b0f8a6]
+- Updated dependencies [ec7f824]
+  - @mastra/core@0.10.6-alpha.2
+  - @mastra/deployer@0.10.6-alpha.2
+
+## 0.10.6-alpha.2
+
+### Patch Changes
+
+- 143b4e4: Fix globbing of tools to only capture js/ts files
+- 44ba52d: Add proper error message when installation of mastra fails
+- 3270d9d: Fix runtime context being undefined
+- fc677d7: For final result for a workflow
+- Updated dependencies [ee9af57]
+- Updated dependencies [3270d9d]
+- Updated dependencies [751c894]
+- Updated dependencies [577ce3a]
+- Updated dependencies [9260b3a]
+  - @mastra/deployer@0.10.6-alpha.1
+  - @mastra/core@0.10.6-alpha.1
+
+## 0.10.6-alpha.1
+
+### Patch Changes
+
+- 47e7029: Add open browser functionality when running mastra dev
+
+## 0.10.6-alpha.0
+
+### Patch Changes
+
+- 02560d4: lift evals fetching to the playground package instead
+- 63f6b7d: dependencies updates:
+  - Updated dependency [`execa@^9.6.0` ↗︎](https://www.npmjs.com/package/execa/v/9.6.0) (from `^9.5.2`, in `dependencies`)
+  - Updated dependency [`json-schema-to-zod@^2.6.1` ↗︎](https://www.npmjs.com/package/json-schema-to-zod/v/2.6.1) (from `^2.6.0`, in `dependencies`)
+  - Updated dependency [`shell-quote@^1.8.3` ↗︎](https://www.npmjs.com/package/shell-quote/v/1.8.3) (from `^1.8.2`, in `dependencies`)
+  - Updated dependency [`strip-json-comments@^5.0.2` ↗︎](https://www.npmjs.com/package/strip-json-comments/v/5.0.2) (from `^5.0.1`, in `dependencies`)
+  - Updated dependency [`zod@^3.25.57` ↗︎](https://www.npmjs.com/package/zod/v/3.25.57) (from `^3.25.56`, in `dependencies`)
+- 311132e: move useWorkflow to playground instead of playground-ui
+- 906f992: CLI error log
+- 53d3c37: Get workflows from an agent if not found from Mastra instance #5083
+- Updated dependencies [63f6b7d]
+- Updated dependencies [2d12edd]
+- Updated dependencies [63f6b7d]
+- Updated dependencies [63f6b7d]
+- Updated dependencies [36f1c36]
+- Updated dependencies [10d352e]
+- Updated dependencies [53d3c37]
+  - @mastra/core@0.10.6-alpha.0
+  - @mastra/deployer@0.10.6-alpha.0
+  - @mastra/mcp@0.10.4-alpha.0
+
+## 0.10.5
+
+### Patch Changes
+
+- 1ba421d: fix the tools not showing on workflows attached to agents
+- 8725d02: Improve cli by reducing the amount of setups during interactive prompt
+- 13c97f9: Save run status, result and error in storage snapshot
+- Updated dependencies [8725d02]
+- Updated dependencies [13c97f9]
+- Updated dependencies [105f872]
+  - @mastra/deployer@0.10.5
+  - @mastra/core@0.10.5
+
+## 0.10.4
+
+### Patch Changes
+
+- e719504: don't start posthog when the browser is Brave
+- 8e1994a: Fix bug where port auto increments on restart
+- afd9fda: Reset retry-count on code change and only retry if server actually is running
+
+  Fixes #4563
+
+- b4ee346: Reintroduce --env flag for mastra dev, build
+- f1f1f1b: Add basic filtering capabilities to logs
+- 125b1c6: Updated @mastra/mcp-docs-server configuration in create-mastra for Windows - the cmd /c workaround for Cursor/Windsurf is no longer required
+- 82090c1: Add pagination to logs
+- d1ed912: dependencies updates:
+  - Updated dependency [`dotenv@^16.5.0` ↗︎](https://www.npmjs.com/package/dotenv/v/16.5.0) (from `^16.4.7`, in `dependencies`)
+- 1ccccff: dependencies updates:
+  - Updated dependency [`zod@^3.25.56` ↗︎](https://www.npmjs.com/package/zod/v/3.25.56) (from `^3.24.3`, in `dependencies`)
+- 1ccccff: dependencies updates:
+  - Updated dependency [`zod@^3.25.56` ↗︎](https://www.npmjs.com/package/zod/v/3.25.56) (from `^3.24.3`, in `dependencies`)
+- 26f0031: Removed @latest from @mastra/mcp-docs-server scaffolded configuration for Windsurf/Cursor/VSCode. There is an npx caching issue that causes @latest to break the MCP server for many users, and for now removing @latest makes it work. We will debug this more but for now having a working docs server is more important than it updating every time users start their IDE.
+- d7d41f0: Fix mastra dev cmd
+- 8f60de4: fix workflow output when the schema is a primitive
+- 4c4ee43: [fix] recreate resizable sidebar on workflow
+- a528bdb: Add dynamic port allocation if port is already in use
+- Updated dependencies [d1ed912]
+- Updated dependencies [d1ed912]
+- Updated dependencies [f595975]
+- Updated dependencies [d90c49f]
+- Updated dependencies [1ccccff]
+- Updated dependencies [1ccccff]
+- Updated dependencies [afd9fda]
+- Updated dependencies [f6fd25f]
+- Updated dependencies [dffb67b]
+- Updated dependencies [f1f1f1b]
+- Updated dependencies [925ab94]
+- Updated dependencies [9597ee5]
+- Updated dependencies [f9816ae]
+- Updated dependencies [82090c1]
+- Updated dependencies [69f6101]
+- Updated dependencies [1b443fd]
+- Updated dependencies [ce97900]
+- Updated dependencies [fc579cd]
+- Updated dependencies [514fdde]
+- Updated dependencies [f1309d3]
+- Updated dependencies [bebd27c]
+- Updated dependencies [14a2566]
+- Updated dependencies [f7f8293]
+- Updated dependencies [48eddb9]
+- Updated dependencies [66f4424]
+  - @mastra/core@0.10.4
+  - @mastra/deployer@0.10.4
+  - @mastra/loggers@0.10.2
+  - @mastra/mcp@0.10.3
+
+## 0.10.4-alpha.5
+
+### Patch Changes
+
+- 4c4ee43: [fix] recreate resizable sidebar on workflow
+- Updated dependencies [66f4424]
+  - @mastra/loggers@0.10.2-alpha.1
+
+## 0.10.4-alpha.4
+
+### Patch Changes
+
+- Updated dependencies [925ab94]
+  - @mastra/core@0.10.4-alpha.3
+  - @mastra/deployer@0.10.4-alpha.3
+
+## 0.10.4-alpha.3
+
+### Patch Changes
+
+- Updated dependencies [48eddb9]
+  - @mastra/core@0.10.4-alpha.2
+  - @mastra/deployer@0.10.4-alpha.2
+
+## 0.10.4-alpha.2
+
+### Patch Changes
+
+- e719504: don't start posthog when the browser is Brave
+- b4ee346: Reintroduce --env flag for mastra dev, build
+
+## 0.10.4-alpha.1
+
+### Patch Changes
+
+- 8e1994a: Fix bug where port auto increments on restart
+- 125b1c6: Updated @mastra/mcp-docs-server configuration in create-mastra for Windows - the cmd /c workaround for Cursor/Windsurf is no longer required
+- 1ccccff: dependencies updates:
+  - Updated dependency [`zod@^3.25.56` ↗︎](https://www.npmjs.com/package/zod/v/3.25.56) (from `^3.24.3`, in `dependencies`)
+- 1ccccff: dependencies updates:
+  - Updated dependency [`zod@^3.25.56` ↗︎](https://www.npmjs.com/package/zod/v/3.25.56) (from `^3.24.3`, in `dependencies`)
+- 26f0031: Removed @latest from @mastra/mcp-docs-server scaffolded configuration for Windsurf/Cursor/VSCode. There is an npx caching issue that causes @latest to break the MCP server for many users, and for now removing @latest makes it work. We will debug this more but for now having a working docs server is more important than it updating every time users start their IDE.
+- Updated dependencies [d90c49f]
+- Updated dependencies [1ccccff]
+- Updated dependencies [1ccccff]
+- Updated dependencies [f6fd25f]
+- Updated dependencies [dffb67b]
+- Updated dependencies [9597ee5]
+- Updated dependencies [fc579cd]
+- Updated dependencies [514fdde]
+- Updated dependencies [f1309d3]
+- Updated dependencies [bebd27c]
+- Updated dependencies [f7f8293]
+  - @mastra/deployer@0.10.4-alpha.1
+  - @mastra/core@0.10.4-alpha.1
+  - @mastra/mcp@0.10.3-alpha.0
+
+## 0.10.4-alpha.0
+
+### Patch Changes
+
+- afd9fda: Reset retry-count on code change and only retry if server actually is running
+
+  Fixes #4563
+
+- f1f1f1b: Add basic filtering capabilities to logs
+- 82090c1: Add pagination to logs
+- d1ed912: dependencies updates:
+  - Updated dependency [`dotenv@^16.5.0` ↗︎](https://www.npmjs.com/package/dotenv/v/16.5.0) (from `^16.4.7`, in `dependencies`)
+- d7d41f0: Fix mastra dev cmd
+- 8f60de4: fix workflow output when the schema is a primitive
+- a528bdb: Add dynamic port allocation if port is already in use
+- Updated dependencies [d1ed912]
+- Updated dependencies [d1ed912]
+- Updated dependencies [f595975]
+- Updated dependencies [afd9fda]
+- Updated dependencies [f1f1f1b]
+- Updated dependencies [f9816ae]
+- Updated dependencies [82090c1]
+- Updated dependencies [69f6101]
+- Updated dependencies [1b443fd]
+- Updated dependencies [ce97900]
+- Updated dependencies [14a2566]
+  - @mastra/core@0.10.4-alpha.0
+  - @mastra/deployer@0.10.4-alpha.0
+  - @mastra/loggers@0.10.2-alpha.0
+
+## 0.10.3
+
+### Patch Changes
+
+- Updated dependencies [2b0fc7e]
+  - @mastra/core@0.10.3
+  - @mastra/deployer@0.10.3
+
+## 0.10.3-alpha.0
+
+### Patch Changes
+
+- Updated dependencies [2b0fc7e]
+  - @mastra/core@0.10.3-alpha.0
+  - @mastra/deployer@0.10.3-alpha.0
+
+## 0.10.2
+
+### Patch Changes
+
+- 73fec0b: Mastra start cli command"
+- 401bbae: Show workflow graph from stepGraph of previous runs when viewing a previous run
+- 592a2db: Added different icons for agents and workflows in mcp tools list
+- 1b5fc55: Fixed an issue where the playground wouldn't display images saved in memory. Fixed memory to always store images as strings. Removed duplicate storage of reasoning and file/image parts in storage dbs
+- f73e11b: fix telemetry disabled not working on playground
+- 9666468: move the fetch traces call to the playground instead of playground-ui
+- 1fcc048: chore: generate sourcemaps in dev build
+- 90e96de: Fix: prevent default flag from triggering interactive prompt
+- a399086: Bumping because we forgot to
+- 89a69d0: add a way to go to the given trace of a workflow step
+- 6fd77b5: add docs and txt support for multi modal
+- 9faee5b: small fixes in the workflows graph
+- 631683f: move workflow runs list in playground-ui instead of playground
+- 068b850: fix: able to pass headers to playground components which are using the mastra client
+- 668af6d: Fix mastra dev server restarts
+- f0d559f: Fix peerdeps for alpha channel
+- f6ddf55: fix traces not showing and reduce API surface from playground ui
+- 9a31c09: Highlight steps in nested workflows on workflow graph
+- Updated dependencies [ee77e78]
+- Updated dependencies [592a2db]
+- Updated dependencies [e5dc18d]
+- Updated dependencies [ab5adbe]
+- Updated dependencies [e8d2aff]
+- Updated dependencies [1e8bb40]
+- Updated dependencies [1b5fc55]
+- Updated dependencies [195c428]
+- Updated dependencies [f73e11b]
+- Updated dependencies [37643b8]
+- Updated dependencies [99fd6cf]
+- Updated dependencies [1fcc048]
+- Updated dependencies [c5bf1ce]
+- Updated dependencies [f946acf]
+- Updated dependencies [add596e]
+- Updated dependencies [8dc94d8]
+- Updated dependencies [ecebbeb]
+- Updated dependencies [4187ed4]
+- Updated dependencies [79d5145]
+- Updated dependencies [12b7002]
+- Updated dependencies [f0d559f]
+- Updated dependencies [2901125]
+  - @mastra/core@0.10.2
+  - @mastra/mcp@0.10.2
+  - @mastra/deployer@0.10.2
+  - @mastra/loggers@0.10.1
+
+## 0.10.2-alpha.9
+
+### Patch Changes
+
+- 90e96de: Fix: prevent default flag from triggering interactive prompt
+- Updated dependencies [37643b8]
+- Updated dependencies [79d5145]
+  - @mastra/core@0.10.2-alpha.8
+  - @mastra/deployer@0.10.2-alpha.8
+
+## 0.10.2-alpha.8
+
+### Patch Changes
+
+- a399086: Bumping because we forgot to
+  - @mastra/deployer@0.10.2-alpha.7
+  - @mastra/core@0.10.2-alpha.7
+
+## 0.10.2-alpha.7
+
+### Patch Changes
+
+- 1fcc048: chore: generate sourcemaps in dev build
+- 6fd77b5: add docs and txt support for multi modal
+- 631683f: move workflow runs list in playground-ui instead of playground
+- Updated dependencies [99fd6cf]
+- Updated dependencies [1fcc048]
+- Updated dependencies [8dc94d8]
+  - @mastra/core@0.10.2-alpha.6
+  - @mastra/deployer@0.10.2-alpha.6
+
+## 0.10.2-alpha.6
+
+### Patch Changes
+
+- 1b5fc55: Fixed an issue where the playground wouldn't display images saved in memory. Fixed memory to always store images as strings. Removed duplicate storage of reasoning and file/image parts in storage dbs
+- 9666468: move the fetch traces call to the playground instead of playground-ui
+- 668af6d: Fix mastra dev server restarts
+- Updated dependencies [1b5fc55]
+- Updated dependencies [add596e]
+- Updated dependencies [ecebbeb]
+  - @mastra/core@0.10.2-alpha.5
+  - @mastra/deployer@0.10.2-alpha.5
+
+## 0.10.2-alpha.5
+
+### Patch Changes
+
+- 401bbae: Show workflow graph from stepGraph of previous runs when viewing a previous run
+
 ## 0.10.2-alpha.4
 
 ### Patch Changes

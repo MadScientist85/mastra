@@ -148,6 +148,13 @@ The constructor accepts an `MCPServerConfig` object with the following propertie
       description:
         "An object defining how the server should handle MCP resources. See Resource Handling section for details.",
     },
+    {
+      name: "prompts",
+      type: "MCPServerPrompts",
+      isOptional: true,
+      description:
+        "An object defining how the server should handle MCP prompts. See Prompt Handling section for details.",
+    },
   ]}
 />
 
@@ -351,21 +358,21 @@ Here are the details for the values needed by the `startHonoSSE` method:
 
 ### startHTTP()
 
-This method helps you integrate the MCP server with an existing web server to use Server-Sent Events (SSE) for communication. You'll call this from your web server's code when it receives a request for the SSE or message paths.
+This method helps you integrate the MCP server with an existing web server to use streamable HTTP for communication. You'll call this from your web server's code when it receives HTTP requests.
 
 ```typescript
 async startHTTP({
   url,
-  ssePath,
-  messagePath,
+  httpPath,
   req,
   res,
+  options = { sessionIdGenerator: () => randomUUID() },
 }: {
   url: URL;
-  ssePath: string;
-  messagePath: string;
-  req: any;
-  res: any;
+  httpPath: string;
+  req: http.IncomingMessage;
+  res: http.ServerResponse<http.IncomingMessage>;
+  options?: StreamableHTTPServerTransportOptions;
 }): Promise<void>
 ```
 
@@ -376,11 +383,13 @@ import http from "http";
 
 const httpServer = http.createServer(async (req, res) => {
   await server.startHTTP({
-    url: new URL(req.url || "", `http://localhost:1234`),
-    ssePath: "/http",
-    messagePath: "/message",
+    url: new URL(req.url || '', 'http://localhost:1234'),
+    httpPath: `/mcp`,
     req,
     res,
+    options: {
+      sessionIdGenerator: undefined,
+    },
   });
 });
 
@@ -394,32 +403,67 @@ Here are the details for the values needed by the `startHTTP` method:
 <PropertiesTable
   content={[
     {
-      name: "url",
-      type: "URL",
-      description: "The web address the user is requesting.",
+      name: 'url',
+      type: 'URL',
+      description: 'The web address the user is requesting.',
     },
     {
-      name: "ssePath",
-      type: "string",
+      name: 'httpPath',
+      type: 'string',
       description:
-        "The specific part of the URL where clients will connect for SSE (e.g., '/http').",
+        "The specific part of the URL where the MCP server will handle HTTP requests (e.g., '/mcp').",
     },
     {
-      name: "messagePath",
-      type: "string",
+      name: 'req',
+      type: 'http.IncomingMessage',
+      description: 'The incoming request object from your web server.',
+    },
+    {
+      name: 'res',
+      type: 'http.ServerResponse',
       description:
-        "The specific part of the URL where clients will send messages (e.g., '/message').",
+        'The response object from your web server, used to send data back.',
     },
     {
-      name: "req",
-      type: "any",
-      description: "The incoming request object from your web server.",
-    },
-    {
-      name: "res",
-      type: "any",
+      name: 'options',
+      type: 'StreamableHTTPServerTransportOptions',
       description:
-        "The response object from your web server, used to send data back.",
+        'Optional configuration for the HTTP transport. See the options table below for more details.',
+      optional: true,
+    },
+  ]}
+/>
+
+The `StreamableHTTPServerTransportOptions` object allows you to customize the behavior of the HTTP transport. Here are the available options:
+
+<PropertiesTable
+  content={[
+    {
+      name: 'sessionIdGenerator',
+      type: '(() => string) | undefined',
+      description:
+        'A function that generates a unique session ID. This should be a cryptographically secure, globally unique string. Return `undefined` to disable session management.',
+    },
+    {
+      name: 'onsessioninitialized',
+      type: '(sessionId: string) => void',
+      description:
+        'A callback that is invoked when a new session is initialized. This is useful for tracking active MCP sessions.',
+      optional: true,
+    },
+    {
+      name: 'enableJsonResponse',
+      type: 'boolean',
+      description:
+        'If `true`, the server will return plain JSON responses instead of using Server-Sent Events (SSE) for streaming. Defaults to `false`.',
+      optional: true,
+    },
+    {
+      name: 'eventStore',
+      type: 'EventStore',
+      description:
+        'An event store for message resumability. Providing this enables clients to reconnect and resume message streams.',
+      optional: true,
     },
   ]}
 />
@@ -668,11 +712,366 @@ Example:
 await serverWithResources.resources.notifyListChanged();
 ```
 
+## Prompt Handling
+
+### What are MCP Prompts?
+
+Prompts are reusable templates or workflows that MCP servers expose to clients. They can accept arguments, include resource context, support versioning, and be used to standardize LLM interactions.
+
+Prompts are identified by a unique name (and optional version) and can be dynamic or static.
+
+### `MCPServerPrompts` Type
+
+The `prompts` option takes an object of type `MCPServerPrompts`. This type defines the callbacks your server will use to handle prompt requests:
+
+```typescript
+export type MCPServerPrompts = {
+  // Callback to list available prompts
+  listPrompts: () => Promise<Prompt[]>;
+
+  // Callback to get the messages/content for a specific prompt
+  getPromptMessages?: ({
+    name,
+    version,
+    args,
+  }: {
+    name: string;
+    version?: string;
+    args?: any;
+  }) => Promise<{ prompt: Prompt; messages: PromptMessage[] }>;
+};
+```
+
+Example:
+
+```typescript
+import { MCPServer } from "@mastra/mcp";
+import type { Prompt, PromptMessage, MCPServerPrompts } from "@mastra/mcp";
+
+const prompts: Prompt[] = [
+  {
+    name: "analyze-code",
+    description: "Analyze code for improvements",
+    version: "v1"
+  },
+  {
+    name: "analyze-code",
+    description: "Analyze code for improvements (new logic)",
+    version: "v2"
+  }
+];
+
+const myPromptHandlers: MCPServerPrompts = {
+  listPrompts: async () => prompts,
+  getPromptMessages: async ({ name, version, args }) => {
+    if (name === "analyze-code") {
+      if (version === "v2") {
+        const prompt = prompts.find(p => p.name === name && p.version === "v2");
+        if (!prompt) throw new Error("Prompt version not found");
+        return {
+          prompt,
+          messages: [
+            {
+              role: "user",
+              content: { type: "text", text: `Analyze this code with the new logic: ${args.code}` }
+            }
+          ]
+        };
+      }
+      // Default or v1
+      const prompt = prompts.find(p => p.name === name && p.version === "v1");
+      if (!prompt) throw new Error("Prompt version not found");
+      return {
+        prompt,
+        messages: [
+          {
+            role: "user",
+            content: { type: "text", text: `Analyze this code: ${args.code}` }
+          }
+        ]
+      };
+    }
+    throw new Error("Prompt not found");
+  }
+};
+
+const serverWithPrompts = new MCPServer({
+  name: "Promptful Server",
+  version: "1.0.0",
+  tools: { /* ... */ },
+  prompts: myPromptHandlers,
+});
+```
+
+### Notifying Clients of Prompt Changes
+
+If the available prompts change, your server can notify connected clients:
+
+#### `server.prompts.notifyListChanged()`
+
+Call this method when the overall list of available prompts has changed (e.g., a prompt was added or removed). This will send a `notifications/prompts/list_changed` message to clients, prompting them to re-fetch the list of prompts.
+
+```typescript
+await serverWithPrompts.prompts.notifyListChanged();
+```
+
+### Best Practices for Prompt Handling
+
+- Use clear, descriptive prompt names and descriptions.
+- Validate all required arguments in `getPromptMessages`.
+- Include a `version` field if you expect to make breaking changes.
+- Use the `version` parameter to select the correct prompt logic.
+- Notify clients when prompt lists change.
+- Handle errors with informative messages.
+- Document argument expectations and available versions.
+
+---
+
 ## Examples
 
 For practical examples of setting up and deploying an MCPServer, see the [Deploying an MCPServer Example](/examples/agents/deploying-mcp-server).
 
 The example at the beginning of this page also demonstrates how to instantiate `MCPServer` with both tools and agents.
+
+## Elicitation
+
+### What is Elicitation?
+
+Elicitation is a feature in the Model Context Protocol (MCP) that allows servers to request structured information from users. This enables interactive workflows where servers can collect additional data dynamically.
+
+The `MCPServer` class automatically includes elicitation capabilities. Tools receive an `options` parameter in their `execute` function that includes an `elicitation.sendRequest()` method for requesting user input.
+
+### Tool Execution Signature
+
+When tools are executed within an MCP server context, they receive an additional `options` parameter:
+
+```typescript
+execute: async ({ context }, options) => {
+  // context contains the tool's input parameters
+  // options contains server capabilities like elicitation and authentication info
+  
+  // Access authentication information (when available)
+  if (options.extra?.authInfo) {
+    console.log('Authenticated request from:', options.extra.authInfo.clientId);
+  }
+  
+  // Use elicitation capabilities
+  const result = await options.elicitation.sendRequest({
+    message: "Please provide information",
+    requestedSchema: { /* schema */ }
+  });
+  
+  return result;
+}
+```
+
+### How Elicitation Works
+
+A common use case is during tool execution. When a tool needs user input, it can use the elicitation functionality provided through the tool's execution options:
+
+1. The tool calls `options.elicitation.sendRequest()` with a message and schema
+2. The request is sent to the connected MCP client
+3. The client presents the request to the user (via UI, command line, etc.)
+4. The user provides input, declines, or cancels the request
+5. The client sends the response back to the server
+6. The tool receives the response and continues execution
+
+### Using Elicitation in Tools
+
+Here's an example of a tool that uses elicitation to collect user contact information:
+
+```typescript
+import { MCPServer } from "@mastra/mcp";
+import { createTool } from "@mastra/core/tools";
+import { z } from "zod";
+
+const server = new MCPServer({
+  name: "Interactive Server",
+  version: "1.0.0",
+  tools: {
+    collectContactInfo: createTool({
+      id: "collectContactInfo",
+      description: "Collects user contact information through elicitation",
+      inputSchema: z.object({
+        reason: z.string().optional().describe("Reason for collecting contact info"),
+      }),
+      execute: async ({ context }, options) => {
+        const { reason } = context;
+        
+        // Log session info if available
+        console.log('Request from session:', options.extra?.sessionId);
+
+        try {
+          // Request user input via elicitation
+          const result = await options.elicitation.sendRequest({
+            message: reason 
+              ? `Please provide your contact information. ${reason}`
+              : 'Please provide your contact information',
+            requestedSchema: {
+              type: 'object',
+              properties: {
+                name: {
+                  type: 'string',
+                  title: 'Full Name',
+                  description: 'Your full name',
+                },
+                email: {
+                  type: 'string',
+                  title: 'Email Address', 
+                  description: 'Your email address',
+                  format: 'email',
+                },
+                phone: {
+                  type: 'string',
+                  title: 'Phone Number',
+                  description: 'Your phone number (optional)',
+                },
+              },
+              required: ['name', 'email'],
+            },
+          });
+
+          // Handle the user's response
+          if (result.action === 'accept') {
+            return `Contact information collected: ${JSON.stringify(result.content, null, 2)}`;
+          } else if (result.action === 'decline') {
+            return 'Contact information collection was declined by the user.';
+          } else {
+            return 'Contact information collection was cancelled by the user.';
+          }
+        } catch (error) {
+          return `Error collecting contact information: ${error}`;
+        }
+      },
+    }),
+  },
+});
+```
+
+### Elicitation Request Schema
+
+The `requestedSchema` must be a flat object with primitive properties only. Supported types include:
+
+- **String**: `{ type: 'string', title: 'Display Name', description: 'Help text' }`
+- **Number**: `{ type: 'number', minimum: 0, maximum: 100 }`
+- **Boolean**: `{ type: 'boolean', default: false }`
+- **Enum**: `{ type: 'string', enum: ['option1', 'option2'] }`
+
+Example schema:
+
+```typescript
+{
+  type: 'object',
+  properties: {
+    name: {
+      type: 'string',
+      title: 'Full Name',
+      description: 'Your complete name',
+    },
+    age: {
+      type: 'number',
+      title: 'Age',
+      minimum: 18,
+      maximum: 120,
+    },
+    newsletter: {
+      type: 'boolean',
+      title: 'Subscribe to Newsletter',
+      default: false,
+    },
+  },
+  required: ['name'],
+}
+```
+
+### Response Actions
+
+Users can respond to elicitation requests in three ways:
+
+1. **Accept** (`action: 'accept'`): User provided data and confirmed submission
+   - Contains `content` field with the submitted data
+2. **Decline** (`action: 'decline'`): User explicitly declined to provide information
+   - No content field
+3. **Cancel** (`action: 'cancel'`): User dismissed the request without deciding
+   - No content field
+
+Tools should handle all three response types appropriately.
+
+### Security Considerations
+
+- **Never request sensitive information** like passwords, SSNs, or credit card numbers
+- Validate all user input against the provided schema
+- Handle declining and cancellation gracefully
+- Provide clear reasons for data collection
+- Respect user privacy and preferences
+
+### Tool Execution API
+
+The elicitation functionality is available through the `options` parameter in tool execution:
+
+```typescript
+// Within a tool's execute function
+execute: async ({ context }, options) => {
+  // Use elicitation for user input
+  const result = await options.elicitation.sendRequest({
+    message: string,           // Message to display to user
+    requestedSchema: object    // JSON schema defining expected response structure
+  }): Promise<ElicitResult>
+  
+  // Access authentication info if needed
+  if (options.extra?.authInfo) {
+    // Use options.extra.authInfo.token, etc.
+  }
+}
+```
+
+Note that elicitation is **session-aware** when using HTTP-based transports (SSE or HTTP). This means that when multiple clients are connected to the same server, elicitation requests are routed to the correct client session that initiated the tool execution.
+
+The `ElicitResult` type:
+
+```typescript
+type ElicitResult = {
+  action: 'accept' | 'decline' | 'cancel';
+  content?: any; // Only present when action is 'accept'
+}
+```
+
+## Authentication Context
+
+Tools can access request metadata via `options.extra` when using HTTP-based transports:
+
+```typescript
+execute: async ({ context }, options) => {
+  if (!options.extra?.authInfo?.token) {
+    return "Authentication required";
+  }
+  
+  // Use the auth token
+  const response = await fetch('/api/data', {
+    headers: { Authorization: `Bearer ${options.extra.authInfo.token}` },
+    signal: options.extra.signal,
+  });
+  
+  return response.json();
+}
+```
+
+The `extra` object contains:
+- `authInfo`: Authentication info (when provided by server middleware)
+- `sessionId`: Session identifier  
+- `signal`: AbortSignal for cancellation
+- `sendNotification`/`sendRequest`: MCP protocol functions
+
+> Note: To enable authentication, your HTTP server needs middleware that populates `req.auth` before calling `server.startHTTP()`. For example:
+> ```typescript
+> httpServer.createServer((req, res) => {
+>   // Add auth middleware
+>   req.auth = validateAuthToken(req.headers.authorization);
+>   
+>   // Then pass to MCP server
+>   await server.startHTTP({ url, httpPath, req, res });
+> });
+> ```
 
 ## Related Information
 

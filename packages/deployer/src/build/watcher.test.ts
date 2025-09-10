@@ -21,7 +21,11 @@ describe('watcher', () => {
       await getInputOptions('test-entry.js', 'node', env);
 
       // Assert
-      expect(bundlerGetInputOptions).toHaveBeenCalledWith('test-entry.js', expect.anything(), 'node', env);
+      expect(bundlerGetInputOptions).toHaveBeenCalledWith('test-entry.js', expect.anything(), 'node', env, {
+        isDev: true,
+        sourcemap: false,
+        workspaceRoot: expect.any(String),
+      });
     });
 
     it('should not pass NODE_ENV to bundler when not provided', async () => {
@@ -30,7 +34,11 @@ describe('watcher', () => {
       const bundlerGetInputOptions = vi.mocked(await import('./bundler')).getInputOptions;
 
       // Assert
-      expect(bundlerGetInputOptions).toHaveBeenCalledWith('test-entry.js', expect.anything(), 'node', undefined);
+      expect(bundlerGetInputOptions).toHaveBeenCalledWith('test-entry.js', expect.anything(), 'node', undefined, {
+        isDev: true,
+        sourcemap: false,
+        workspaceRoot: expect.any(String),
+      });
     });
   });
 });

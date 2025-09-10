@@ -3,10 +3,9 @@ import type { JSONSchema7 } from 'json-schema';
 import { describe, it, expect, vi } from 'vitest';
 import { z } from 'zod';
 import { RuntimeContext } from '../../runtime-context';
+import { MockProvider } from '../../test-utils/llm-mock';
 import { createTool } from '../../tools';
 import { makeCoreTool } from '../../utils';
-
-import { MockProvider } from './mock';
 
 describe('MastraLLM', () => {
   const mockMastra = {
@@ -18,6 +17,7 @@ describe('MastraLLM', () => {
   };
 
   const runtimeContext = new RuntimeContext();
+  const tracingContext = {};
 
   const mockTools = {
     testTool: makeCoreTool(
@@ -34,6 +34,7 @@ describe('MastraLLM', () => {
         logger: mockMastra.logger,
         mastra: mockMastra as any,
         runtimeContext,
+        tracingContext,
       },
     ),
   };
@@ -86,6 +87,7 @@ describe('MastraLLM', () => {
         temperature: 0.7,
         maxSteps: 5,
         runtimeContext,
+        tracingContext,
       });
 
       expect(generateSpy).toHaveBeenCalled();
@@ -102,9 +104,9 @@ describe('MastraLLM', () => {
       const result = await aisdkObject.generate(messages, {
         tools: mockTools,
         temperature: 0.7,
-        maxSteps: 5,
         output: schema,
         runtimeContext,
+        tracingContext,
       });
 
       expect(generateSpy).toHaveBeenCalled();
@@ -117,6 +119,7 @@ describe('MastraLLM', () => {
         temperature: 0.7,
         maxSteps: 5,
         runtimeContext,
+        tracingContext,
       });
 
       expect(generateSpy).toHaveBeenCalled();
@@ -129,6 +132,7 @@ describe('MastraLLM', () => {
         temperature: 0.7,
         maxSteps: 5,
         runtimeContext,
+        tracingContext,
       });
 
       expect(generateSpy).toHaveBeenCalled();
@@ -143,6 +147,7 @@ describe('MastraLLM', () => {
         temperature: 0.7,
         maxSteps: 5,
         runtimeContext,
+        tracingContext,
       });
 
       expect(generateSpy).toHaveBeenCalled();
@@ -158,6 +163,7 @@ describe('MastraLLM', () => {
         temperature: 0.7,
         maxSteps: 5,
         runtimeContext,
+        tracingContext,
       });
 
       expect(generateSpy).toHaveBeenCalled();
@@ -173,6 +179,7 @@ describe('MastraLLM', () => {
         temperature: 0.7,
         maxSteps: 5,
         runtimeContext,
+        tracingContext,
       });
 
       expect(streamSpy).toHaveBeenCalled();
@@ -184,6 +191,7 @@ describe('MastraLLM', () => {
         temperature: 0.7,
         maxSteps: 5,
         runtimeContext,
+        tracingContext,
       });
 
       expect(streamSpy).toHaveBeenCalled();
@@ -195,6 +203,7 @@ describe('MastraLLM', () => {
         temperature: 0.7,
         maxSteps: 5,
         runtimeContext,
+        tracingContext,
       });
 
       expect(streamSpy).toHaveBeenCalled();
@@ -212,6 +221,7 @@ describe('MastraLLM', () => {
         temperature: 0.7,
         maxSteps: 5,
         runtimeContext,
+        tracingContext,
       });
 
       expect(streamSpy).toHaveBeenCalled();
@@ -233,6 +243,7 @@ describe('MastraLLM', () => {
         temperature: 0.7,
         maxSteps: 5,
         runtimeContext,
+        tracingContext,
       });
 
       expect(streamSpy).toHaveBeenCalled();
@@ -250,6 +261,7 @@ describe('MastraLLM', () => {
         temperature: 0.7,
         maxSteps: 5,
         runtimeContext,
+        tracingContext,
       });
 
       expect(streamSpy).toHaveBeenCalled();
@@ -271,6 +283,7 @@ describe('MastraLLM', () => {
         temperature: 0.7,
         maxSteps: 5,
         runtimeContext,
+        tracingContext,
       });
 
       expect(streamSpy).toHaveBeenCalled();
@@ -287,6 +300,7 @@ describe('MastraLLM', () => {
         temperature: 0.7,
         maxSteps: 5,
         runtimeContext,
+        tracingContext,
       });
 
       expect(generateSpy).toHaveBeenCalled();
@@ -303,6 +317,7 @@ describe('MastraLLM', () => {
         temperature: 0.7,
         maxSteps: 5,
         runtimeContext,
+        tracingContext,
       });
 
       expect(generateSpy).toHaveBeenCalled();
@@ -317,6 +332,7 @@ describe('MastraLLM', () => {
         temperature: 0.7,
         maxSteps: 5,
         runtimeContext,
+        tracingContext,
       });
 
       expect(generateSpy).toHaveBeenCalled();
@@ -332,6 +348,7 @@ describe('MastraLLM', () => {
         temperature: 0.7,
         maxSteps: 5,
         runtimeContext,
+        tracingContext,
       });
 
       expect(generateSpy).toHaveBeenCalled();
@@ -354,6 +371,7 @@ describe('MastraLLM', () => {
         temperature: 0.7,
         maxSteps: 5,
         runtimeContext,
+        tracingContext,
       });
 
       expect(generateSpy).toHaveBeenCalled();
@@ -369,6 +387,7 @@ describe('MastraLLM', () => {
         temperature: 0.7,
         maxSteps: 5,
         runtimeContext,
+        tracingContext,
       });
 
       expect(generateSpy).toHaveBeenCalled();
@@ -391,6 +410,7 @@ describe('MastraLLM', () => {
         temperature: 0.7,
         maxSteps: 5,
         runtimeContext,
+        tracingContext,
       });
 
       expect(generateSpy).toHaveBeenCalled();
@@ -407,6 +427,7 @@ describe('MastraLLM', () => {
         temperature: 0.7,
         maxSteps: 5,
         runtimeContext,
+        tracingContext,
       });
 
       expect(streamSpy).toHaveBeenCalled();
@@ -421,6 +442,7 @@ describe('MastraLLM', () => {
         temperature: 0.7,
         maxSteps: 5,
         runtimeContext,
+        tracingContext,
       });
 
       expect(streamSpy).toHaveBeenCalled();
@@ -435,6 +457,7 @@ describe('MastraLLM', () => {
         temperature: 0.7,
         maxSteps: 5,
         runtimeContext,
+        tracingContext,
       });
 
       expect(streamSpy).toHaveBeenCalled();
@@ -452,6 +475,7 @@ describe('MastraLLM', () => {
         temperature: 0.7,
         maxSteps: 5,
         runtimeContext,
+        tracingContext,
       });
 
       expect(streamSpy).toHaveBeenCalled();
@@ -467,6 +491,7 @@ describe('MastraLLM', () => {
         temperature: 0.7,
         maxSteps: 5,
         runtimeContext,
+        tracingContext,
       });
 
       expect(streamSpy).toHaveBeenCalled();
@@ -498,6 +523,7 @@ describe('MastraLLM', () => {
         temperature: 0.7,
         maxSteps: 5,
         runtimeContext,
+        tracingContext,
       });
 
       expect(streamSpy).toHaveBeenCalled();
@@ -517,7 +543,7 @@ describe('MastraLLM', () => {
         runtimeContext,
         structuredOutput: schema,
         temperature: 0.7,
-        maxSteps: 5,
+        tracingContext,
       });
 
       expect(result?.object?.content).toEqual('Custom object response');
@@ -532,8 +558,8 @@ describe('MastraLLM', () => {
         messages,
         structuredOutput: arraySchema,
         temperature: 0.7,
-        maxSteps: 5,
         runtimeContext,
+        tracingContext,
       });
 
       expect(generateSpy).toHaveBeenCalled();
@@ -554,8 +580,8 @@ describe('MastraLLM', () => {
         messages,
         structuredOutput: jsonSchema,
         temperature: 0.7,
-        maxSteps: 5,
         runtimeContext,
+        tracingContext,
       });
 
       expect(generateSpy).toHaveBeenCalled();
@@ -573,8 +599,8 @@ describe('MastraLLM', () => {
         tools: mockTools,
         structuredOutput: schema,
         temperature: 0.7,
-        maxSteps: 5,
         runtimeContext,
+        tracingContext,
       });
     });
   });
@@ -593,6 +619,7 @@ describe('MastraLLM', () => {
         temperature: 0.7,
         maxSteps: 5,
         runtimeContext,
+        tracingContext,
       });
 
       expect(streamSpy).toHaveBeenCalled();
@@ -608,6 +635,7 @@ describe('MastraLLM', () => {
         temperature: 0.7,
         maxSteps: 5,
         runtimeContext,
+        tracingContext,
       });
 
       expect(streamSpy).toHaveBeenCalled();
@@ -629,6 +657,7 @@ describe('MastraLLM', () => {
         temperature: 0.7,
         maxSteps: 5,
         runtimeContext,
+        tracingContext,
       });
 
       expect(streamSpy).toHaveBeenCalled();
@@ -650,6 +679,7 @@ describe('MastraLLM', () => {
         temperature: 0.7,
         maxSteps: 5,
         runtimeContext,
+        tracingContext,
       });
 
       expect(streamSpy).toHaveBeenCalled();
@@ -669,6 +699,7 @@ describe('MastraLLM', () => {
         temperature: 0.7,
         maxSteps: 5,
         runtimeContext,
+        tracingContext,
       });
 
       expect(streamSpy).toHaveBeenCalled();
@@ -687,6 +718,7 @@ describe('MastraLLM', () => {
         temperature: 0.7,
         maxSteps: 5,
         runtimeContext,
+        tracingContext,
       });
 
       expect(streamSpy).toHaveBeenCalled();
@@ -707,6 +739,7 @@ describe('MastraLLM', () => {
         temperature: 0.7,
         maxSteps: 5,
         runtimeContext,
+        tracingContext,
       });
 
       expect(streamSpy).toHaveBeenCalled();

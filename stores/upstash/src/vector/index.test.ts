@@ -37,7 +37,7 @@ function waitUntilVectorsIndexed(vector: UpstashVector, indexName: string, expec
  */
 describe.skipIf(!process.env.UPSTASH_VECTOR_URL || !process.env.UPSTASH_VECTOR_TOKEN)('UpstashVector', () => {
   let vectorStore: UpstashVector;
-  const VECTOR_DIMENSION = 1536;
+  const VECTOR_DIMENSION = 1024;
   const testIndexName = 'default';
   const filterIndexName = 'filter-index';
 
@@ -250,7 +250,7 @@ describe.skipIf(!process.env.UPSTASH_VECTOR_URL || !process.env.UPSTASH_VECTOR_T
     it('should describe an index correctly', async () => {
       const stats = await vectorStore.describeIndex({ indexName: 'mastra_default' });
       expect(stats).toEqual({
-        dimension: 1536,
+        dimension: 1024,
         metric: 'cosine',
         count: 0,
       });
@@ -1146,7 +1146,7 @@ describe.skipIf(!process.env.UPSTASH_VECTOR_URL || !process.env.UPSTASH_VECTOR_T
           vectorStore.query({
             indexName: filterIndexName,
             queryVector: createVector(0),
-            filter: { field: { $invalidOp: 'value' } },
+            filter: { field: { $invalidOp: 'value' } as any },
           }),
         ).rejects.toThrow();
       });
@@ -1196,7 +1196,7 @@ describe.skipIf(!process.env.UPSTASH_VECTOR_URL || !process.env.UPSTASH_VECTOR_T
         const results = await vectorStore.query({
           indexName: filterIndexName,
           queryVector: createVector(0),
-          filter: { $and: { not: 'an array' } },
+          filter: { $and: { not: 'an array' } as any },
         });
         expect(results.length).toBeGreaterThan(0);
       });

@@ -1,7 +1,10 @@
+import type { ToolExecutionOptions } from 'ai';
+import type { ToolCallOptions } from 'ai-v5';
 import type { z } from 'zod';
 
 import type { Mastra } from '../mastra';
 import type { ToolAction, ToolExecutionContext } from './types';
+import { validateToolInput } from './validation';
 
 export class Tool<
   TSchemaIn extends z.ZodSchema | undefined = undefined,
@@ -21,8 +24,21 @@ export class Tool<
     this.description = opts.description;
     this.inputSchema = opts.inputSchema;
     this.outputSchema = opts.outputSchema;
-    this.execute = opts.execute;
     this.mastra = opts.mastra;
+
+    // Wrap the execute function with validation if it exists
+    if (opts.execute) {
+      const originalExecute = opts.execute;
+      this.execute = async (context: TContext, options?: ToolExecutionOptions) => {
+        // Validate input if schema exists
+        const { data, error } = validateToolInput(this.inputSchema, context, this.id);
+        if (error) {
+          return error as any;
+        }
+
+        return originalExecute(data as TContext, options);
+      };
+    }
   }
 }
 
@@ -43,7 +59,7 @@ export function createTool<
   ? Tool<TSchemaIn, TSchemaOut, TContext> & {
       inputSchema: TSchemaIn;
       outputSchema: TSchemaOut;
-      execute: (context: TContext) => Promise<any>;
+      execute: (context: TContext, options: ToolExecutionOptions | ToolCallOptions) => Promise<any>;
     }
   : Tool<TSchemaIn, TSchemaOut, TContext> {
   return new Tool(opts) as any;

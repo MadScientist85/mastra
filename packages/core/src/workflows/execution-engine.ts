@@ -1,16 +1,18 @@
 import type { Mastra, SerializedStepFlowEntry } from '..';
+import type { TracingContext } from '../ai-tracing';
 import { MastraBase } from '../base';
 import type { RuntimeContext } from '../di';
 import { RegisteredLogger } from '../logger';
-import type { StepResult } from './types';
+import type { ChunkType } from '../stream/types';
+import type { Emitter, StepResult } from './types';
 import type { StepFlowEntry } from '.';
 
 /**
  * Represents an execution graph for a workflow
  */
-export interface ExecutionGraph {
+export interface ExecutionGraph<TEngineType = any> {
   id: string;
-  steps: StepFlowEntry[];
+  steps: StepFlowEntry<TEngineType>[];
   // Additional properties will be added in future implementations
 }
 /**
@@ -37,6 +39,7 @@ export abstract class ExecutionEngine extends MastraBase {
   abstract execute<TInput, TOutput>(params: {
     workflowId: string;
     runId: string;
+    disableScorers?: boolean;
     graph: ExecutionGraph;
     serializedStepGraph: SerializedStepFlowEntry[];
     input?: TInput;
@@ -46,11 +49,15 @@ export abstract class ExecutionEngine extends MastraBase {
       resumePayload: any;
       resumePath: number[];
     };
-    emitter: { emit: (event: string, data: any) => Promise<void> };
+    emitter: Emitter;
     runtimeContext: RuntimeContext;
+    tracingContext?: TracingContext;
     retryConfig?: {
       attempts?: number;
       delay?: number;
     };
+    abortController: AbortController;
+    writableStream?: WritableStream<ChunkType>;
+    format?: 'aisdk' | 'mastra' | undefined;
   }): Promise<TOutput>;
 }

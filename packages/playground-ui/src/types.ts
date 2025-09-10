@@ -1,8 +1,23 @@
-export interface Message {
+import type { AiMessageType } from '@mastra/core/memory';
+
+export type Message = AiMessageType;
+
+export interface AssistantMessage {
   id: string;
-  role: 'user' | 'assistant';
-  content: any;
-  isError?: boolean;
+  formattedMessageId: string;
+  finalStepId: string;
+  routingDecision?: {
+    resourceId: string;
+    resourceType: string;
+    selectionReason: string;
+    prompt: string;
+  };
+  finalResponse: string;
+  taskCompleteDecision?: {
+    isComplete: boolean;
+    finalResult: string;
+    completionReason: string;
+  };
 }
 
 export interface ModelSettings {
@@ -15,19 +30,27 @@ export interface ModelSettings {
   topK?: number;
   topP?: number;
   instructions?: string;
+  providerOptions?: Record<string, unknown>;
+  chatWithGenerate?: boolean;
+  chatWithGenerateVNext?: boolean;
+  chatWithStreamVNext?: boolean;
+}
+
+export interface AgentSettingsType {
+  modelSettings: ModelSettings;
 }
 
 export interface ChatProps {
   agentId: string;
   agentName?: string;
+  modelVersion?: string;
   threadId?: string;
   initialMessages?: Message[];
   memory?: boolean;
   refreshThreadList?: () => void;
-  modelSettings?: ModelSettings;
-  chatWithGenerate?: boolean;
+  settings?: AgentSettingsType;
   runtimeContext?: Record<string, any>;
-  showFileSupport?: boolean;
+  onInputChange?: (value: string) => void;
 }
 
 export type SpanStatus = {
@@ -73,6 +96,13 @@ export type RefinedTrace = {
   status: SpanStatus;
   trace: Span[];
   runId?: string;
+};
+
+export type StreamChunk = {
+  type: string;
+  payload: any;
+  runId: string;
+  from: 'AGENT' | 'WORKFLOW';
 };
 
 export * from './domains/traces/types';

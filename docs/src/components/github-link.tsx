@@ -1,11 +1,22 @@
-import { T } from "gt-next/client";
-export const GithubLink = ({ link }: { link: string }) => {
+import { T, Var } from "gt-next/client";
+
+interface GitHubLinkProps {
+  link: string;
+  marginTop?: string;
+  outdated?: boolean;
+}
+
+export const GithubLink: React.FC<GitHubLinkProps> = ({
+  link,
+  marginTop = "",
+  outdated = false,
+}) => {
   return (
     <T id="components.github_link.0" className="w-full">
       <a
         target="_blank"
         rel="noopener noreferrer"
-        className="flex w-full flex-row justify-between p-3 border border-gray-300 dark:border-[#404040] rounded-md cursor-pointer group text-zinc-900 dark:text-zinc-50"
+        className={`flex w-full flex-row justify-between p-3 border border-gray-300 dark:border-[#404040] rounded-md cursor-pointer group text-zinc-900 dark:text-zinc-50 ${marginTop}`}
         href={link}
       >
         <div className="flex flex-row gap-3">
@@ -33,7 +44,8 @@ export const GithubLink = ({ link }: { link: string }) => {
             </svg>
           </div>
           <div className="pr-8 leading-6 group-hover:underline">
-            View Example on GitHub
+            View Example on GitHub{" "}
+            <Var>{outdated ? <span>(outdated)</span> : null}</Var>
           </div>
         </div>
         <div className="flex-shrink-0 mt-[4px]">

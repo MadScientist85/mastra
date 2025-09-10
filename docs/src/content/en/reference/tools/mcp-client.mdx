@@ -291,6 +291,332 @@ mcpClient.resources.onListChanged("myWeatherServer", () => {
 });
 ```
 
+### `prompts` Property
+
+The `MCPClient` instance has a `prompts` property that provides access to prompt-related operations.
+
+```typescript
+const mcpClient = new MCPClient({
+  /* ...servers configuration... */
+});
+
+// Access prompt methods via mcpClient.prompts
+const allPromptsByServer = await mcpClient.prompts.list();
+const { prompt, messages } = await mcpClient.prompts.get({
+  serverName: "myWeatherServer",
+  name: "current",
+});
+```
+
+### `elicitation` Property
+
+The `MCPClient` instance has an `elicitation` property that provides access to elicitation-related operations. Elicitation allows MCP servers to request structured information from users.
+
+```typescript
+const mcpClient = new MCPClient({
+  /* ...servers configuration... */
+});
+
+// Set up elicitation handler
+mcpClient.elicitation.onRequest('serverName', async (request) => {
+  // Handle elicitation request from server
+  console.log('Server requests:', request.message);
+  console.log('Schema:', request.requestedSchema);
+  
+  // Return user response
+  return {
+    action: 'accept',
+    content: { name: 'John Doe', email: 'john@example.com' }
+  };
+});
+```
+
+#### `elicitation.onRequest(serverName: string, handler: ElicitationHandler)`
+
+Sets up a handler function that will be called when any connected MCP server sends an elicitation request. The handler receives the request and must return a response.
+
+**ElicitationHandler Function:**
+
+The handler function receives a request object with:
+- `message`: A human-readable message describing what information is needed
+- `requestedSchema`: A JSON schema defining the structure of the expected response
+
+The handler must return an `ElicitResult` with:
+- `action`: One of `'accept'`, `'decline'`, or `'cancel'`
+- `content`: The user's data (only when action is `'accept'`)
+
+**Example:**
+
+```typescript
+mcpClient.elicitation.onRequest('serverName', async (request) => {
+  console.log(`Server requests: ${request.message}`);
+  
+  // Example: Simple user input collection
+  if (request.requestedSchema.properties.name) {
+    // Simulate user accepting and providing data
+    return {
+      action: 'accept',
+      content: {
+        name: 'Alice Smith',
+        email: 'alice@example.com'
+      }
+    };
+  }
+  
+  // Simulate user declining the request
+  return { action: 'decline' };
+});
+```
+
+**Complete Interactive Example:**
+
+```typescript
+import { MCPClient } from '@mastra/mcp';
+import { createInterface } from 'readline';
+
+const readline = createInterface({
+  input: process.stdin,
+  output: process.stdout,
+});
+
+function askQuestion(question: string): Promise<string> {
+  return new Promise(resolve => {
+    readline.question(question, answer => resolve(answer.trim()));
+  });
+}
+
+const mcpClient = new MCPClient({
+  servers: {
+    interactiveServer: {
+      url: new URL('http://localhost:3000/mcp'),
+    },
+  },
+});
+
+// Set up interactive elicitation handler
+await mcpClient.elicitation.onRequest('interactiveServer', async (request) => {
+  console.log(`\n📋 Server Request: ${request.message}`);
+  console.log('Required information:');
+  
+  const schema = request.requestedSchema;
+  const properties = schema.properties || {};
+  const required = schema.required || [];
+  const content: Record<string, any> = {};
+  
+  // Collect input for each field
+  for (const [fieldName, fieldSchema] of Object.entries(properties)) {
+    const field = fieldSchema as any;
+    const isRequired = required.includes(fieldName);
+    
+    let prompt = `${field.title || fieldName}`;
+    if (field.description) prompt += ` (${field.description})`;
+    if (isRequired) prompt += ' *required*';
+    prompt += ': ';
+    
+    const answer = await askQuestion(prompt);
+    
+    // Handle cancellation
+    if (answer.toLowerCase() === 'cancel') {
+      return { action: 'cancel' };
+    }
+    
+    // Validate required fields
+    if (answer === '' && isRequired) {
+      console.log(`❌ ${fieldName} is required`);
+      return { action: 'decline' };
+    }
+    
+    if (answer !== '') {
+      content[fieldName] = answer;
+    }
+  }
+  
+  // Confirm submission
+  console.log('\n📝 You provided:');
+  console.log(JSON.stringify(content, null, 2));
+  
+  const confirm = await askQuestion('\nSubmit this information? (yes/no/cancel): ');
+  
+  if (confirm.toLowerCase() === 'yes' || confirm.toLowerCase() === 'y') {
+    return { action: 'accept', content };
+  } else if (confirm.toLowerCase() === 'cancel') {
+    return { action: 'cancel' };
+  } else {
+    return { action: 'decline' };
+  }
+});
+```
+
+#### `prompts.list()`
+
+Retrieves all available prompts from all connected MCP servers, grouped by server name.
+
+```typescript
+async list(): Promise<Record<string, Prompt[]>>
+```
+
+Example:
+
+```typescript
+const promptsByServer = await mcpClient.prompts.list();
+for (const serverName in promptsByServer) {
+  console.log(`Prompts from ${serverName}:`, promptsByServer[serverName]);
+}
+```
+
+#### `prompts.get({ serverName, name, args?, version? })`
+
+Retrieves a specific prompt and its messages from a server.
+
+```typescript
+async get({
+  serverName,
+  name,
+  args?,
+  version?,
+}: {
+  serverName: string;
+  name: string;
+  args?: Record<string, any>;
+  version?: string;
+}): Promise<{ prompt: Prompt; messages: PromptMessage[] }>
+```
+
+Example:
+
+```typescript
+const { prompt, messages } = await mcpClient.prompts.get({
+  serverName: "myWeatherServer",
+  name: "current",
+  args: { location: "London" },
+});
+console.log(prompt);
+console.log(messages);
+```
+
+#### `prompts.onListChanged(serverName: string, handler: () => void)`
+
+Sets a notification handler that will be called when the list of available prompts changes on a specific server.
+
+```typescript
+async onListChanged(serverName: string, handler: () => void): Promise<void>
+```
+
+Example:
+
+```typescript
+mcpClient.prompts.onListChanged("myWeatherServer", () => {
+  console.log("Prompt list changed on myWeatherServer.");
+  // You should re-fetch the list of prompts
+  // await mcpClient.prompts.list();
+});
+```
+
+## Elicitation
+
+Elicitation is a feature that allows MCP servers to request structured information from users. When a server needs additional data, it can send an elicitation request that the client handles by prompting the user. A common example is during a tool call.
+
+### How Elicitation Works
+
+1. **Server Request**: An MCP server tool calls `server.elicitation.sendRequest()` with a message and schema
+2. **Client Handler**: Your elicitation handler function is called with the request
+3. **User Interaction**: Your handler collects user input (via UI, CLI, etc.)
+4. **Response**: Your handler returns the user's response (accept/decline/cancel)
+5. **Tool Continuation**: The server tool receives the response and continues execution
+
+### Setting Up Elicitation
+
+You must set up an elicitation handler before tools that use elicitation are called:
+
+```typescript
+import { MCPClient } from '@mastra/mcp';
+
+const mcpClient = new MCPClient({
+  servers: {
+    interactiveServer: {
+      url: new URL('http://localhost:3000/mcp'),
+    },
+  },
+});
+
+// Set up elicitation handler
+mcpClient.elicitation.onRequest('interactiveServer', async (request) => {
+  // Handle the server's request for user input
+  console.log(`Server needs: ${request.message}`);
+  
+  // Your logic to collect user input
+  const userData = await collectUserInput(request.requestedSchema);
+  
+  return {
+    action: 'accept',
+    content: userData
+  };
+});
+```
+
+### Response Types
+
+Your elicitation handler must return one of three response types:
+
+- **Accept**: User provided data and confirmed submission
+  ```typescript
+  return {
+    action: 'accept',
+    content: { name: 'John Doe', email: 'john@example.com' }
+  };
+  ```
+
+- **Decline**: User explicitly declined to provide the information
+  ```typescript
+  return { action: 'decline' };
+  ```
+
+- **Cancel**: User dismissed or cancelled the request
+  ```typescript
+  return { action: 'cancel' };
+  ```
+
+### Schema-Based Input Collection
+
+The `requestedSchema` provides structure for the data the server needs:
+
+```typescript
+await mcpClient.elicitation.onRequest('interactiveServer', async (request) => {
+  const { properties, required = [] } = request.requestedSchema;
+  const content: Record<string, any> = {};
+  
+  for (const [fieldName, fieldSchema] of Object.entries(properties || {})) {
+    const field = fieldSchema as any;
+    const isRequired = required.includes(fieldName);
+    
+    // Collect input based on field type and requirements
+    const value = await promptUser({
+      name: fieldName,
+      title: field.title,
+      description: field.description,
+      type: field.type,
+      required: isRequired,
+      format: field.format,
+      enum: field.enum,
+    });
+    
+    if (value !== null) {
+      content[fieldName] = value;
+    }
+  }
+  
+  return { action: 'accept', content };
+});
+```
+
+### Best Practices
+
+- **Always handle elicitation**: Set up your handler before calling tools that might use elicitation
+- **Validate input**: Check that required fields are provided
+- **Respect user choice**: Handle decline and cancel responses gracefully
+- **Clear UI**: Make it obvious what information is being requested and why
+- **Security**: Never auto-accept requests for sensitive information
+
 ## Examples
 
 ### Static Tool Configuration
@@ -346,6 +672,26 @@ async function checkWeatherResource() {
   }
 }
 checkWeatherResource();
+
+// Example of using prompt methods
+async function checkWeatherPrompt() {
+  try {
+    const weatherPrompts = await mcp.prompts.list();
+    if (weatherPrompts.weather && weatherPrompts.weather.length > 0) {
+      const currentWeatherPrompt = weatherPrompts.weather.find(
+        (p) => p.name === "current"
+      );
+      if (currentWeatherPrompt) {
+        console.log("Weather prompt:", currentWeatherPrompt);
+      } else {
+        console.log("Current weather prompt not found");
+      }
+    }
+  } catch (error) {
+    console.error("Error fetching weather prompt:", error);
+  }
+}
+checkWeatherPrompt();
 ```
 
 ### Dynamic toolsets

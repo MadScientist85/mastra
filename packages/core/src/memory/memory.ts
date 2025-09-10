@@ -1,15 +1,22 @@
-import type { AssistantContent, UserContent, CoreMessage, EmbeddingModel, UIMessage } from 'ai';
-
+import type { EmbeddingModelV2 } from '@ai-sdk/provider-v5';
+import type { AssistantContent, UserContent, CoreMessage, EmbeddingModel } from 'ai';
 import { MessageList } from '../agent/message-list';
-import type { MastraMessageV2 } from '../agent/message-list';
+import type { MastraMessageV2, UIMessageWithMetadata } from '../agent/message-list';
 import { MastraBase } from '../base';
-import type { MastraStorage, StorageGetMessagesArg } from '../storage';
+import type { Mastra } from '../mastra';
+import type { MastraStorage, PaginationInfo, StorageGetMessagesArg, ThreadSortOptions } from '../storage';
 import { augmentWithInit } from '../storage/storageWithInit';
-import type { CoreTool } from '../tools';
+import type { ToolAction } from '../tools';
 import { deepMerge } from '../utils';
 import type { MastraVector } from '../vector';
 
-import type { SharedMemoryConfig, StorageThreadType, MemoryConfig, MastraMessageV1 } from './types';
+import type {
+  SharedMemoryConfig,
+  StorageThreadType,
+  MemoryConfig,
+  MastraMessageV1,
+  WorkingMemoryTemplate,
+} from './types';
 
 export type MemoryProcessorOpts = {
   systemMessage?: string;
@@ -26,7 +33,7 @@ export abstract class MemoryProcessor extends MastraBase {
    * @param messages The messages to process
    * @returns The processed messages
    */
-  process(messages: CoreMessage[], _opts: MemoryProcessorOpts): CoreMessage[] {
+  process(messages: CoreMessage[], _opts: MemoryProcessorOpts): CoreMessage[] | Promise<CoreMessage[]> {
     return messages;
   }
 }
@@ -63,9 +70,10 @@ export abstract class MastraMemory extends MastraBase {
 
   protected _storage?: MastraStorage;
   vector?: MastraVector;
-  embedder?: EmbeddingModel<string>;
+  embedder?: EmbeddingModel<string> | EmbeddingModelV2<string>;
   private processors: MemoryProcessor[] = [];
   protected threadConfig: MemoryConfig = { ...memoryDefaultOptions };
+  #mastra?: Mastra;
 
   constructor(config: { name: string } & SharedMemoryConfig) {
     super({ component: 'MEMORY', name: config.name });
@@ -92,6 +100,15 @@ export abstract class MastraMemory extends MastraBase {
       }
       this.embedder = config.embedder;
     }
+  }
+
+  /**
+   * Internal method used by Mastra to register itself with the memory.
+   * @param mastra The Mastra instance.
+   * @internal
+   */
+  __registerMastra(mastra: Mastra): void {
+    this.#mastra = mastra;
   }
 
   protected _hasOwnStorage = false;
@@ -125,7 +142,11 @@ export abstract class MastraMemory extends MastraBase {
    * This will be called before each conversation turn.
    * Implementations can override this to inject custom system messages.
    */
-  public async getSystemMessage(_input: { threadId: string; memoryConfig?: MemoryConfig }): Promise<string | null> {
+  public async getSystemMessage(_input: {
+    threadId: string;
+    resourceId?: string;
+    memoryConfig?: MemoryConfig;
+  }): Promise<string | null> {
     return null;
   }
 
@@ -134,7 +155,7 @@ export abstract class MastraMemory extends MastraBase {
    * This will be called when converting tools for the agent.
    * Implementations can override this to provide additional tools.
    */
-  public getTools(_config?: MemoryConfig): Record<string, CoreTool> {
+  public getTools(_config?: MemoryConfig): Record<string, ToolAction<any, any, any>> {
     return {};
   }
 
@@ -161,7 +182,15 @@ export abstract class MastraMemory extends MastraBase {
     if (config?.workingMemory && 'use' in config.workingMemory) {
       throw new Error('The workingMemory.use option has been removed. Working memory always uses tool-call mode.');
     }
-    return deepMerge(this.threadConfig, config || {});
+    const mergedConfig = deepMerge(this.threadConfig, config || {});
+
+    if (config?.workingMemory?.schema) {
+      if (mergedConfig.workingMemory) {
+        mergedConfig.workingMemory.schema = config.workingMemory.schema;
+      }
+    }
+
+    return mergedConfig;
   }
 
   /**
@@ -169,12 +198,12 @@ export abstract class MastraMemory extends MastraBase {
    * @param messages The messages to process
    * @returns The processed messages
    */
-  private applyProcessors(
+  protected async applyProcessors(
     messages: CoreMessage[],
     opts: {
       processors?: MemoryProcessor[];
     } & MemoryProcessorOpts,
-  ): CoreMessage[] {
+  ): Promise<CoreMessage[]> {
     const processors = opts.processors || this.processors;
     if (!processors || processors.length === 0) {
       return messages;
@@ -183,7 +212,7 @@ export abstract class MastraMemory extends MastraBase {
     let processedMessages = [...messages];
 
     for (const processor of processors) {
-      processedMessages = processor.process(processedMessages, {
+      processedMessages = await processor.process(processedMessages, {
         systemMessage: opts.systemMessage,
         newMessages: opts.newMessages,
         memorySystemMessage: opts.memorySystemMessage,
@@ -227,7 +256,29 @@ export abstract class MastraMemory extends MastraBase {
    */
   abstract getThreadById({ threadId }: { threadId: string }): Promise<StorageThreadType | null>;
 
-  abstract getThreadsByResourceId({ resourceId }: { resourceId: string }): Promise<StorageThreadType[]>;
+  /**
+   * Retrieves all threads that belong to the specified resource.
+   * @param resourceId - The unique identifier of the resource
+   * @param orderBy - Which timestamp field to sort by (`'createdAt'` or `'updatedAt'`);
+   *                  defaults to `'createdAt'`
+   * @param sortDirection - Sort order for the results (`'ASC'` or `'DESC'`);
+   *                        defaults to `'DESC'`
+   * @returns Promise resolving to an array of matching threads; resolves to an empty array
+   *          if the resource has no threads
+   */
+  abstract getThreadsByResourceId({
+    resourceId,
+    orderBy,
+    sortDirection,
+  }: { resourceId: string } & ThreadSortOptions): Promise<StorageThreadType[]>;
+
+  abstract getThreadsByResourceIdPaginated(
+    args: {
+      resourceId: string;
+      page: number;
+      perPage: number;
+    } & ThreadSortOptions,
+  ): Promise<PaginationInfo & { threads: StorageThreadType[] }>;
 
   /**
    * Saves or updates a thread
@@ -272,7 +323,7 @@ export abstract class MastraMemory extends MastraBase {
     threadId,
     resourceId,
     selectBy,
-  }: StorageGetMessagesArg): Promise<{ messages: CoreMessage[]; uiMessages: UIMessage[] }>;
+  }: StorageGetMessagesArg): Promise<{ messages: CoreMessage[]; uiMessages: UIMessageWithMetadata[] }>;
 
   /**
    * Helper method to create a new thread
@@ -286,12 +337,14 @@ export abstract class MastraMemory extends MastraBase {
     title,
     metadata,
     memoryConfig,
+    saveThread = true,
   }: {
     resourceId: string;
     threadId?: string;
     title?: string;
     metadata?: Record<string, unknown>;
     memoryConfig?: MemoryConfig;
+    saveThread?: boolean;
   }): Promise<StorageThreadType> {
     const thread: StorageThreadType = {
       id: threadId || this.generateId(),
@@ -302,7 +355,7 @@ export abstract class MastraMemory extends MastraBase {
       metadata,
     };
 
-    return this.saveThread({ thread, memoryConfig });
+    return saveThread ? this.saveThread({ thread, memoryConfig }) : thread;
   }
 
   /**
@@ -367,6 +420,70 @@ export abstract class MastraMemory extends MastraBase {
    * @returns A unique string ID
    */
   public generateId(): string {
-    return crypto.randomUUID();
+    return this.#mastra?.generateId() || crypto.randomUUID();
   }
+
+  /**
+   * Retrieves working memory for a specific thread
+   * @param threadId - The unique identifier of the thread
+   * @param resourceId - The unique identifier of the resource
+   * @param memoryConfig - Optional memory configuration
+   * @returns Promise resolving to working memory data or null if not found
+   */
+  abstract getWorkingMemory({
+    threadId,
+    resourceId,
+    memoryConfig,
+  }: {
+    threadId: string;
+    resourceId?: string;
+    memoryConfig?: MemoryConfig;
+  }): Promise<string | null>;
+
+  /**
+   * Retrieves working memory template for a specific thread
+   * @param memoryConfig - Optional memory configuration
+   * @returns Promise resolving to working memory template or null if not found
+   */
+  abstract getWorkingMemoryTemplate({
+    memoryConfig,
+  }?: {
+    memoryConfig?: MemoryConfig;
+  }): Promise<WorkingMemoryTemplate | null>;
+
+  abstract updateWorkingMemory({
+    threadId,
+    resourceId,
+    workingMemory,
+    memoryConfig,
+  }: {
+    threadId: string;
+    resourceId?: string;
+    workingMemory: string;
+    memoryConfig?: MemoryConfig;
+  }): Promise<void>;
+
+  /**
+   * @warning experimental! can be removed or changed at any time
+   */
+  abstract __experimental_updateWorkingMemoryVNext({
+    threadId,
+    resourceId,
+    workingMemory,
+    searchString,
+    memoryConfig,
+  }: {
+    threadId: string;
+    resourceId?: string;
+    workingMemory: string;
+    searchString?: string;
+    memoryConfig?: MemoryConfig;
+  }): Promise<{ success: boolean; reason: string }>;
+
+  /**
+   * Deletes multiple messages by their IDs
+   * @param messageIds - Array of message IDs to delete
+   * @returns Promise that resolves when all messages are deleted
+   */
+  abstract deleteMessages(messageIds: string[]): Promise<void>;
 }

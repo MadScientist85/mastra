@@ -1,16 +1,18 @@
 import { ExtendedLegacyWorkflowRunResult, ExtendedWorkflowWatchResult } from '@/hooks/use-workflows';
-import { WorkflowRunState } from '@mastra/core';
+import { WorkflowRunState } from '@mastra/core/workflows';
+import { WorkflowWatchResult } from '@mastra/client-js';
 import { createContext, useEffect, useState } from 'react';
 import { convertWorkflowRunStateToWatchResult } from '../utils';
 
 type WorkflowRunContextType = {
   legacyResult: ExtendedLegacyWorkflowRunResult | null;
   setLegacyResult: React.Dispatch<React.SetStateAction<any>>;
-  result: ExtendedWorkflowWatchResult | null;
+  result: WorkflowWatchResult | null;
   setResult: React.Dispatch<React.SetStateAction<any>>;
   payload: any;
   setPayload: React.Dispatch<React.SetStateAction<any>>;
   clearData: () => void;
+  snapshot?: WorkflowRunState;
 };
 
 export const WorkflowRunContext = createContext<WorkflowRunContextType>({} as WorkflowRunContextType);
@@ -23,7 +25,7 @@ export function WorkflowRunProvider({
   snapshot?: WorkflowRunState;
 }) {
   const [legacyResult, setLegacyResult] = useState<ExtendedLegacyWorkflowRunResult | null>(null);
-  const [result, setResult] = useState<ExtendedWorkflowWatchResult | null>(() =>
+  const [result, setResult] = useState<WorkflowWatchResult | null>(() =>
     snapshot ? convertWorkflowRunStateToWatchResult(snapshot) : null,
   );
   const [payload, setPayload] = useState<any>(null);
@@ -52,6 +54,7 @@ export function WorkflowRunProvider({
         payload,
         setPayload,
         clearData,
+        snapshot,
       }}
     >
       {children}

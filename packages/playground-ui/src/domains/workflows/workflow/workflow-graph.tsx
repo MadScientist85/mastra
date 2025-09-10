@@ -1,6 +1,5 @@
 import { Skeleton } from '@/components/ui/skeleton';
 
-import { useWorkflow } from '@/hooks/use-workflows';
 import '../../../index.css';
 
 import { lodashTitleCase } from '@/lib/string';
@@ -8,19 +7,26 @@ import { AlertCircleIcon } from 'lucide-react';
 import { ReactFlowProvider } from '@xyflow/react';
 import { WorkflowGraphInner } from './workflow-graph-inner';
 import { WorkflowNestedGraphProvider } from '../context/workflow-nested-graph-context';
+import { WorkflowRunContext } from '../context/workflow-run-context';
+import { useContext } from 'react';
+import { GetWorkflowResponse } from '@mastra/client-js';
+import { WorkflowSendEventFormProps } from './workflow-run-event-form';
 
 export interface WorkflowGraphProps {
   workflowId: string;
-  onShowTrace: ({ runId, stepName }: { runId: string; stepName: string }) => void;
+  isLoading?: boolean;
+  workflow?: GetWorkflowResponse;
+  onShowTrace?: ({ runId, stepName }: { runId: string; stepName: string }) => void;
+  onSendEvent?: WorkflowSendEventFormProps['onSendEvent'];
 }
 
-export function WorkflowGraph({ workflowId, onShowTrace }: WorkflowGraphProps) {
-  const { workflow, isLoading } = useWorkflow(workflowId);
+export function WorkflowGraph({ workflowId, onShowTrace, workflow, isLoading, onSendEvent }: WorkflowGraphProps) {
+  const { snapshot } = useContext(WorkflowRunContext);
 
   if (isLoading) {
     return (
       <div className="p-4">
-        <Skeleton className="h-[600px]" />
+        <Skeleton className="h-full" />
       </div>
     );
   }
@@ -37,9 +43,17 @@ export function WorkflowGraph({ workflowId, onShowTrace }: WorkflowGraphProps) {
   }
 
   return (
-    <WorkflowNestedGraphProvider>
+    <WorkflowNestedGraphProvider
+      key={snapshot?.runId ?? workflowId}
+      onShowTrace={onShowTrace}
+      onSendEvent={onSendEvent}
+    >
       <ReactFlowProvider>
-        <WorkflowGraphInner workflow={workflow} onShowTrace={onShowTrace} />
+        <WorkflowGraphInner
+          workflow={snapshot?.serializedStepGraph ? { stepGraph: snapshot?.serializedStepGraph } : workflow}
+          onShowTrace={onShowTrace}
+          onSendEvent={onSendEvent}
+        />
       </ReactFlowProvider>
     </WorkflowNestedGraphProvider>
   );

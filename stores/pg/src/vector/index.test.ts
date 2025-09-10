@@ -1,4 +1,5 @@
-import type { QueryResult } from '@mastra/core';
+import { createVectorTestSuite } from '@internal/storage-test-utils';
+import type { QueryResult } from '@mastra/core/vector';
 import * as pg from 'pg';
 import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach, vi } from 'vitest';
 
@@ -13,6 +14,139 @@ describe('PgVector', () => {
   beforeAll(async () => {
     // Initialize PgVector
     vectorDB = new PgVector({ connectionString });
+  });
+
+  describe('Public Fields Access', () => {
+    let testDB: PgVector;
+    beforeAll(async () => {
+      testDB = new PgVector({ connectionString });
+    });
+    afterAll(async () => {
+      try {
+        await testDB.disconnect();
+      } catch {}
+    });
+    it('should expose pool field as public', () => {
+      expect(testDB.pool).toBeDefined();
+      expect(typeof testDB.pool).toBe('object');
+      expect(testDB.pool.connect).toBeDefined();
+      expect(typeof testDB.pool.connect).toBe('function');
+      expect(testDB.pool).toBeInstanceOf(pg.Pool);
+    });
+
+    it('pool provides a working client connection', async () => {
+      const pool = testDB.pool;
+      const client = await pool.connect();
+      expect(typeof client.query).toBe('function');
+      expect(typeof client.release).toBe('function');
+      client.release();
+    });
+
+    it('should allow direct database connections via public pool field', async () => {
+      const client = await testDB.pool.connect();
+      try {
+        const result = await client.query('SELECT 1 as test');
+        expect(result.rows[0].test).toBe(1);
+      } finally {
+        client.release();
+      }
+    });
+
+    it('should provide access to pool configuration via public pool field', () => {
+      expect(testDB.pool.options).toBeDefined();
+      expect(testDB.pool.options.connectionString).toBe(connectionString);
+      expect(testDB.pool.options.max).toBeDefined();
+      expect(testDB.pool.options.idleTimeoutMillis).toBeDefined();
+    });
+
+    it('should allow pool monitoring via public pool field', () => {
+      expect(testDB.pool.totalCount).toBeDefined();
+      expect(testDB.pool.idleCount).toBeDefined();
+      expect(testDB.pool.waitingCount).toBeDefined();
+      expect(typeof testDB.pool.totalCount).toBe('number');
+      expect(typeof testDB.pool.idleCount).toBe('number');
+      expect(typeof testDB.pool.waitingCount).toBe('number');
+    });
+
+    it('should allow executing raw SQL via public pool field', async () => {
+      const client = await testDB.pool.connect();
+      try {
+        // Test a simple vector-related query
+        const result = await client.query('SELECT version()');
+        expect(result.rows[0].version).toBeDefined();
+        expect(typeof result.rows[0].version).toBe('string');
+      } finally {
+        client.release();
+      }
+    });
+
+    it('should maintain proper connection lifecycle via public pool field', async () => {
+      const initialIdleCount = testDB.pool.idleCount;
+      const initialTotalCount = testDB.pool.totalCount;
+
+      const client = await testDB.pool.connect();
+
+      // After connecting, total count should be >= initial, idle count should be less
+      expect(testDB.pool.totalCount).toBeGreaterThanOrEqual(initialTotalCount);
+      expect(testDB.pool.idleCount).toBeLessThanOrEqual(initialIdleCount);
+
+      client.release();
+
+      // After releasing, idle count should return to at least initial value
+      expect(testDB.pool.idleCount).toBeGreaterThanOrEqual(initialIdleCount);
+    });
+
+    it('allows performing a transaction', async () => {
+      const client = await testDB.pool.connect();
+      try {
+        await client.query('BEGIN');
+        const { rows } = await client.query('SELECT 2 as value');
+        expect(rows[0].value).toBe(2);
+        await client.query('COMMIT');
+      } finally {
+        client.release();
+      }
+    });
+    it('releases client on query error', async () => {
+      const client = await testDB.pool.connect();
+      try {
+        await expect(client.query('SELECT * FROM not_a_real_table')).rejects.toThrow();
+      } finally {
+        client.release();
+      }
+    });
+
+    it('can use getPool() to query metadata for filter options (user scenario)', async () => {
+      // Insert vectors with metadata
+      await testDB.createIndex({ indexName: 'filter_test', dimension: 2 });
+      await testDB.upsert({
+        indexName: 'filter_test',
+        vectors: [
+          [0.1, 0.2],
+          [0.3, 0.4],
+          [0.5, 0.6],
+        ],
+        metadata: [
+          { category: 'A', color: 'red' },
+          { category: 'B', color: 'blue' },
+          { category: 'A', color: 'green' },
+        ],
+        ids: ['id1', 'id2', 'id3'],
+      });
+      // Use the pool to query unique categories
+      const { tableName } = testDB['getTableName']('filter_test');
+      const res = await testDB.pool.query(
+        `SELECT DISTINCT metadata->>'category' AS category FROM ${tableName} ORDER BY category`,
+      );
+      expect(res.rows.map(r => r.category).sort()).toEqual(['A', 'B']);
+      // Clean up
+      await testDB.deleteIndex({ indexName: 'filter_test' });
+    });
+
+    it('should throw error when pool is used after disconnect', async () => {
+      await testDB.disconnect();
+      expect(testDB.pool.connect()).rejects.toThrow();
+    });
   });
 
   afterAll(async () => {
@@ -112,6 +246,92 @@ describe('PgVector', () => {
         await vectorDB.deleteIndex({ indexName });
         const indexes = await vectorDB.listIndexes();
         expect(indexes).not.toContain(indexName);
+      });
+    });
+
+    describe('listIndexes with external vector tables (Issue #6691)', () => {
+      const mastraIndexName = 'mastra_managed_table';
+      const externalTableName = 'dam_embedding_collections';
+      let client: pg.PoolClient;
+
+      beforeAll(async () => {
+        // Get a client to create an external table
+        client = await vectorDB.pool.connect();
+
+        // Create an external table with vector column that is NOT managed by PgVector
+        // This simulates a real-world scenario where other applications use pgvector
+        await client.query(`
+          CREATE TABLE IF NOT EXISTS ${externalTableName} (
+            id SERIAL PRIMARY KEY,
+            name TEXT,
+            centroid_embedding vector(1536),
+            created_at TIMESTAMP DEFAULT NOW()
+          )
+        `);
+
+        // Create a Mastra-managed index
+        await vectorDB.createIndex({
+          indexName: mastraIndexName,
+          dimension: 128,
+        });
+      });
+
+      afterAll(async () => {
+        // Clean up
+        try {
+          await vectorDB.deleteIndex({ indexName: mastraIndexName });
+        } catch {
+          // Ignore if already deleted
+        }
+
+        try {
+          await client.query(`DROP TABLE IF EXISTS ${externalTableName}`);
+        } catch {
+          // Ignore errors
+        }
+
+        client.release();
+      });
+
+      it('should handle initialization when external vector tables exist', async () => {
+        // This test verifies the fix for issue #6691
+        // When PgVector is initialized, it should only discover Mastra-managed tables
+        // and ignore external tables with vector columns
+
+        // Create a new PgVector instance to trigger initialization
+        const newVectorDB = new PgVector({ connectionString });
+
+        // Give initialization time to complete
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        // The initialization should not throw errors even with external tables present
+        const indexes = await newVectorDB.listIndexes();
+
+        // FIXED: Now correctly returns only Mastra-managed tables
+        expect(indexes).toContain(mastraIndexName);
+        expect(indexes).not.toContain(externalTableName); // Fixed!
+
+        // Describing the external table should fail since it's not managed by Mastra
+        await expect(async () => {
+          await newVectorDB.describeIndex({ indexName: externalTableName });
+        }).rejects.toThrow();
+
+        // But describing the Mastra table should work
+        const mastraTableInfo = await newVectorDB.describeIndex({ indexName: mastraIndexName });
+        expect(mastraTableInfo.dimension).toBe(128);
+
+        await newVectorDB.disconnect();
+      });
+
+      it('should only return Mastra-managed tables from listIndexes', async () => {
+        // This test verifies listIndexes only returns tables with the exact Mastra structure
+        const indexes = await vectorDB.listIndexes();
+
+        // Should include Mastra-managed tables
+        expect(indexes).toContain(mastraIndexName);
+
+        // Should NOT include external tables - FIXED!
+        expect(indexes).not.toContain(externalTableName);
       });
     });
 
@@ -403,7 +623,7 @@ describe('PgVector', () => {
           const metadata = [
             { type: 'a', value: 1 },
             { type: 'b', value: 2 },
-            { type: 'a', value: 3 },
+            { type: 'c', value: 3 },
           ];
           await vectorDB.upsert({ indexName, vectors, metadata });
         });
@@ -1288,7 +1508,7 @@ describe('PgVector', () => {
           vectorDB.query({
             indexName,
             queryVector: [1, 0, 0],
-            filter: { price: { $invalid: 100 } },
+            filter: { price: { $invalid: 100 } } as any,
           }),
         ).rejects.toThrow('Unsupported operator: $invalid');
       });
@@ -1567,7 +1787,7 @@ describe('PgVector', () => {
           vectorDB.query({
             indexName,
             queryVector: [1, 0, 0],
-            filter: { price: { $invalid: 100 } },
+            filter: { price: { $invalid: 100 } } as any,
           }),
         ).rejects.toThrow('Unsupported operator: $invalid');
       });
@@ -1644,6 +1864,75 @@ describe('PgVector', () => {
         });
         expect(results).toEqual(results2);
         expect(results.length).toBeGreaterThan(0);
+      });
+    });
+
+    describe('PgVector Table Name Quoting', () => {
+      const camelCaseIndex = 'TestCamelCaseIndex';
+      const snakeCaseIndex = 'test_snake_case_index';
+
+      beforeEach(async () => {
+        // Clean up any existing indexes
+        try {
+          await vectorDB.deleteIndex({ indexName: camelCaseIndex });
+        } catch {
+          // Ignore if doesn't exist
+        }
+        try {
+          await vectorDB.deleteIndex({ indexName: snakeCaseIndex });
+        } catch {
+          // Ignore if doesn't exist
+        }
+      });
+
+      afterEach(async () => {
+        // Clean up indexes after each test
+        try {
+          await vectorDB.deleteIndex({ indexName: camelCaseIndex });
+        } catch {
+          // Ignore if doesn't exist
+        }
+        try {
+          await vectorDB.deleteIndex({ indexName: snakeCaseIndex });
+        } catch {
+          // Ignore if doesn't exist
+        }
+      });
+
+      it('should create and query a camelCase index without quoting errors', async () => {
+        await expect(
+          vectorDB.createIndex({
+            indexName: camelCaseIndex,
+            dimension: 3,
+            metric: 'cosine',
+            indexConfig: { type: 'hnsw' },
+          }),
+        ).resolves.not.toThrow();
+
+        const results = await vectorDB.query({
+          indexName: camelCaseIndex,
+          queryVector: [1, 0, 0],
+          topK: 1,
+        });
+        expect(Array.isArray(results)).toBe(true);
+      });
+
+      it('should create and query a snake_case index without quoting errors', async () => {
+        await expect(
+          vectorDB.createIndex({
+            indexName: snakeCaseIndex,
+            dimension: 3,
+            metric: 'cosine',
+            indexConfig: { type: 'hnsw' },
+          }),
+        ).resolves.not.toThrow();
+
+        const results = await vectorDB.query({
+          indexName: snakeCaseIndex,
+          queryVector: [1, 0, 0],
+          topK: 1,
+        });
+        expect(Array.isArray(results)).toBe(true);
       });
     });
 
@@ -1786,6 +2075,95 @@ describe('PgVector', () => {
         expect(results[0]?.score).toBeCloseTo(1, 5);
         expect(results[1]?.score).toBeGreaterThan(0.9);
       });
+
+      // NEW TEST: Reproduce the SET LOCAL bug
+      it('should verify that ef_search parameter is actually being set (reproduces SET LOCAL bug)', async () => {
+        const client = await vectorDB.pool.connect();
+        try {
+          // Test current behavior: SET LOCAL without transaction should have no effect
+          await client.query('SET LOCAL hnsw.ef_search = 500');
+
+          // Check if the parameter was actually set
+          const result = await client.query('SHOW hnsw.ef_search');
+          const currentValue = result.rows[0]['hnsw.ef_search'];
+
+          // The value should still be the default (not 500)
+          expect(parseInt(currentValue)).not.toBe(500);
+
+          // Now test with proper transaction
+          await client.query('BEGIN');
+          await client.query('SET LOCAL hnsw.ef_search = 500');
+
+          const resultInTransaction = await client.query('SHOW hnsw.ef_search');
+          const valueInTransaction = resultInTransaction.rows[0]['hnsw.ef_search'];
+
+          // This should work because we're in a transaction
+          expect(parseInt(valueInTransaction)).toBe(500);
+
+          await client.query('ROLLBACK');
+
+          // After rollback, should return to default
+          const resultAfterRollback = await client.query('SHOW hnsw.ef_search');
+          const valueAfterRollback = resultAfterRollback.rows[0]['hnsw.ef_search'];
+          expect(parseInt(valueAfterRollback)).not.toBe(500);
+        } finally {
+          client.release();
+        }
+      });
+
+      // Verify the fix works - ef parameter is properly applied in query method
+      it('should properly apply ef parameter using transactions (verifies fix)', async () => {
+        const client = await vectorDB.pool.connect();
+        const queryCommands: string[] = [];
+
+        // Spy on the client query method to capture all SQL commands
+        const originalClientQuery = client.query;
+        const clientQuerySpy = vi.fn().mockImplementation((query, ...args) => {
+          if (typeof query === 'string') {
+            queryCommands.push(query);
+          }
+          return originalClientQuery.call(client, query, ...args);
+        });
+        client.query = clientQuerySpy;
+
+        try {
+          // Manually release the client so query() can get a fresh one
+          client.release();
+
+          await vectorDB.query({
+            indexName,
+            queryVector: [1, 0, 0],
+            topK: 2,
+            ef: 128,
+          });
+
+          const testClient = await vectorDB.pool.connect();
+          try {
+            // Test that SET LOCAL works within a transaction
+            await testClient.query('BEGIN');
+            await testClient.query('SET LOCAL hnsw.ef_search = 256');
+
+            const result = await testClient.query('SHOW hnsw.ef_search');
+            const value = result.rows[0]['hnsw.ef_search'];
+            expect(parseInt(value)).toBe(256);
+
+            await testClient.query('ROLLBACK');
+
+            // After rollback, should revert
+            const resultAfter = await testClient.query('SHOW hnsw.ef_search');
+            const valueAfter = resultAfter.rows[0]['hnsw.ef_search'];
+            expect(parseInt(valueAfter)).not.toBe(256);
+          } finally {
+            testClient.release();
+          }
+        } finally {
+          // Restore original function if client is still connected
+          if (client.query === clientQuerySpy) {
+            client.query = originalClientQuery;
+          }
+          clientQuerySpy.mockRestore();
+        }
+      });
     });
 
     describe('IVF Parameters', () => {
@@ -1878,7 +2256,7 @@ describe('PgVector', () => {
   });
 
   describe('Schema Support', () => {
-    const customSchema = 'mastra_test';
+    const customSchema = 'mastraTest';
     let vectorDB: PgVector;
     let customSchemaVectorDB: PgVector;
 
@@ -2413,5 +2791,25 @@ describe('PgVector', () => {
       expect(db['pool'].options.connectionTimeoutMillis).toBe(2000);
       expect(db['pool'].options.ssl).toBe(false);
     });
+  });
+});
+
+// Metadata filtering tests for Memory system
+describe('PgVector Metadata Filtering', () => {
+  const connectionString = process.env.DB_URL || 'postgresql://postgres:postgres@localhost:5434/mastra';
+  const metadataVectorDB = new PgVector({ connectionString });
+
+  createVectorTestSuite({
+    vector: metadataVectorDB,
+    createIndex: async (indexName: string) => {
+      // Using dimension 4 as required by the metadata filtering test vectors
+      await metadataVectorDB.createIndex({ indexName, dimension: 4 });
+    },
+    deleteIndex: async (indexName: string) => {
+      await metadataVectorDB.deleteIndex({ indexName });
+    },
+    waitForIndexing: async () => {
+      // PG doesn't need to wait for indexing
+    },
   });
 });

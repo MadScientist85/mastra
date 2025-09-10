@@ -3207,7 +3207,7 @@ export const codeowners_errorsSchema = {
             type: 'string',
           },
           path: {
-            description: 'The path of the file where the error occured.',
+            description: 'The path of the file where the error occurred.',
             example: '.github/CODEOWNERS',
             type: 'string',
           },
@@ -3304,7 +3304,7 @@ export const codespaceSchema = {
       type: 'integer',
     },
     idle_timeout_notice: {
-      description: 'Text to show user when codespace idle timeout minutes has been overriden by an organization policy',
+      description: 'Text to show user when codespace idle timeout minutes has been overridden by an organization policy',
       nullable: true,
       type: 'string',
     },
@@ -3659,7 +3659,7 @@ export const codespace_with_full_repositorySchema = {
       type: 'integer',
     },
     idle_timeout_notice: {
-      description: 'Text to show user when codespace idle timeout minutes has been overriden by an organization policy',
+      description: 'Text to show user when codespace idle timeout minutes has been overridden by an organization policy',
       nullable: true,
       type: 'string',
     },

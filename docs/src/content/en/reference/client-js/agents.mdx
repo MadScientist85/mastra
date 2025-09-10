@@ -7,20 +7,12 @@ description: Learn how to interact with Mastra AI agents, including generating r
 
 The Agents API provides methods to interact with Mastra AI agents, including generating responses, streaming interactions, and managing agent tools.
 
-## Initialize Mastra Client
-
-```typescript
-import { MastraClient } from "@mastra/client-js";
-
-const client = new MastraClient();
-```
-
 ## Getting All Agents
 
 Retrieve a list of all available agents:
 
 ```typescript
-const agents = await client.getAgents();
+const agents = await mastraClient.getAgents();
 ```
 
 ## Working with a Specific Agent
@@ -28,7 +20,7 @@ const agents = await client.getAgents();
 Get an instance of a specific agent:
 
 ```typescript
-const agent = client.getAgent("agent-id");
+const agent = mastraClient.getAgent("agent-id");
 ```
 
 ## Agent Methods
@@ -89,6 +81,14 @@ response.processDataStream({
   },
 });
 
+// Process text stream with the processTextStream util
+// (used with structured output)
+ response.processTextStream({
+      onTextPart: text => {
+        process.stdout.write(text);
+      },
+});
+
 // You can also read from response body directly
 const reader = response.body.getReader();
 while (true) {
@@ -96,6 +96,47 @@ while (true) {
   if (done) break;
   console.log(new TextDecoder().decode(value));
 }
+```
+
+### Client tools
+
+Client-side tools allow you to execute custom functions on the client side when the agent requests them.
+
+#### Basic Usage
+
+```typescript
+import { createTool } from '@mastra/core/tools';
+import { z } from 'zod';
+
+const colorChangeTool = createTool({
+  id: 'changeColor',
+  description: 'Changes the background color',
+  inputSchema: z.object({
+    color: z.string(),
+  }),
+  execute: async ({ context }) => {
+    document.body.style.backgroundColor = context.color;
+    return { success: true };
+  }
+})
+
+
+// Use with generate
+const response = await agent.generate({
+  messages: 'Change the background to blue',
+  clientTools: {colorChangeTool},
+});
+
+// Use with stream
+const response = await agent.stream({
+  messages: 'Change the background to green',
+  clientTools: {colorChangeTool},
+});
+
+response.processDataStream({
+  onTextPart: (text) => console.log(text),
+  onToolCallPart: (toolCall) => console.log('Tool called:', toolCall.toolName),
+});
 ```
 
 ### Get Agent Tool

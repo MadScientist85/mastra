@@ -3,8 +3,9 @@ import type { cors } from 'hono/cors';
 import type { DescribeRouteOptions } from 'hono-openapi';
 import type { Mastra } from '../mastra';
 import type { RuntimeContext } from '../runtime-context';
+import type { MastraAuthProvider } from './auth';
 
-export type Methods = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'ALL';
+export type Methods = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'ALL';
 
 export type ApiRoute =
   | {
@@ -32,6 +33,11 @@ export type ContextWithMastra = Context<{
 }>;
 
 export type MastraAuthConfig<TUser = unknown> = {
+  /**
+   * Protected paths for the server
+   */
+  protected?: (RegExp | string | [string, Methods | Methods[]])[];
+
   /**
    * Public paths for the server
    */
@@ -95,7 +101,7 @@ export type ServerConfig = {
   middleware?: Middleware | Middleware[];
   /**
    * CORS configuration for the server
-   * @default { origin: '*', allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], allowHeaders: ['Content-Type', 'Authorization', 'x-mastra-client-type'], exposeHeaders: ['Content-Length', 'X-Requested-With'], credentials: false }
+   * @default { origin: '*', allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], allowHeaders: ['Content-Type', 'Authorization', 'x-mastra-client-type'], exposeHeaders: ['Content-Length', 'X-Requested-With'], credentials: false }
    */
   cors?: Parameters<typeof cors>[0] | false;
   /**
@@ -127,5 +133,5 @@ export type ServerConfig = {
   /**
    * Authentication configuration for the server
    */
-  experimental_auth?: MastraAuthConfig<any>;
+  experimental_auth?: MastraAuthConfig<any> | MastraAuthProvider<any>;
 };

@@ -44,11 +44,13 @@ describe('createVectorQueryTool', () => {
       debug: vi.fn(),
       warn: vi.fn(),
       info: vi.fn(),
+      error: vi.fn(),
     },
     getLogger: vi.fn(() => ({
       debug: vi.fn(),
       warn: vi.fn(),
       info: vi.fn(),
+      error: vi.fn(),
     })),
   };
 
@@ -260,6 +262,93 @@ describe('createVectorQueryTool', () => {
         }),
       );
     });
+
+    it('Returns early when no Mastra server or vector store is provided', async () => {
+      const tool = createVectorQueryTool({
+        id: 'test',
+        model: mockModel,
+        indexName: 'testIndex',
+        vectorStoreName: 'testStore',
+      });
+
+      const runtimeContext = new RuntimeContext();
+      const result = await tool.execute({
+        context: { queryText: 'foo', topK: 1 },
+        runtimeContext,
+      });
+
+      expect(result).toEqual({ relevantContext: [], sources: [] });
+      expect(vectorQuerySearch).not.toHaveBeenCalled();
+    });
+
+    it('works without a mastra server if a vector store is passed as an argument', async () => {
+      const testStore = {
+        testStore: {},
+      };
+      const tool = createVectorQueryTool({
+        id: 'test',
+        model: mockModel,
+        indexName: 'testIndex',
+        vectorStoreName: 'testStore',
+        vectorStore: testStore as any,
+      });
+
+      const runtimeContext = new RuntimeContext();
+      const result = await tool.execute({
+        context: { queryText: 'foo', topK: 1 },
+        runtimeContext,
+      });
+
+      expect(result.relevantContext[0]).toEqual({ text: 'foo' });
+      expect(vectorQuerySearch).toHaveBeenCalledWith(
+        expect.objectContaining({
+          databaseConfig: undefined,
+          indexName: 'testIndex',
+          vectorStore: {
+            testStore: {},
+          },
+          queryText: 'foo',
+          model: mockModel,
+          queryFilter: undefined,
+          topK: 1,
+        }),
+      );
+    });
+
+    it('prefers the passed vector store over one from a passed Mastra server', async () => {
+      const thirdStore = {
+        thirdStore: {},
+      };
+      const tool = createVectorQueryTool({
+        id: 'test',
+        model: mockModel,
+        indexName: 'testIndex',
+        vectorStoreName: 'thirdStore',
+        vectorStore: thirdStore as any,
+      });
+
+      const runtimeContext = new RuntimeContext();
+      const result = await tool.execute({
+        context: { queryText: 'foo', topK: 1 },
+        mastra: mockMastra as any,
+        runtimeContext,
+      });
+
+      expect(result.relevantContext[0]).toEqual({ text: 'foo' });
+      expect(vectorQuerySearch).toHaveBeenCalledWith(
+        expect.objectContaining({
+          databaseConfig: undefined,
+          indexName: 'testIndex',
+          vectorStore: {
+            thirdStore: {},
+          },
+          queryText: 'foo',
+          model: mockModel,
+          queryFilter: undefined,
+          topK: 1,
+        }),
+      );
+    });
   });
 
   describe('runtimeContext', () => {
@@ -324,6 +413,65 @@ describe('createVectorQueryTool', () => {
         runtimeContext,
       });
       expect(result.relevantContext[0]).toEqual({ text: 'bar' });
+    });
+  });
+
+  describe('providerOptions', () => {
+    it('should pass providerOptions to vectorQuerySearch', async () => {
+      const tool = createVectorQueryTool({
+        indexName: 'testIndex',
+        model: mockModel,
+        vectorStoreName: 'testStore',
+        providerOptions: { google: { outputDimensionality: 1536 } },
+      });
+
+      await tool.execute({
+        context: { queryText: 'foo', topK: 10 },
+        mastra: mockMastra as any,
+        runtimeContext: new RuntimeContext(),
+      });
+
+      expect(vectorQuerySearch).toHaveBeenCalledWith({
+        indexName: 'testIndex',
+        vectorStore: { testStore: {} },
+        queryText: 'foo',
+        model: mockModel,
+        queryFilter: undefined,
+        topK: 10,
+        includeVectors: false,
+        databaseConfig: undefined,
+        providerOptions: { google: { outputDimensionality: 1536 } },
+      });
+    });
+
+    it('should allow providerOptions override via runtimeContext', async () => {
+      const tool = createVectorQueryTool({
+        indexName: 'testIndex',
+        model: mockModel,
+        vectorStoreName: 'testStore',
+        providerOptions: { google: { outputDimensionality: 1536 } },
+      });
+
+      const runtimeContext = new RuntimeContext();
+      runtimeContext.set('providerOptions', { google: { outputDimensionality: 768 } });
+
+      await tool.execute({
+        context: { queryText: 'foo', topK: 10 },
+        mastra: mockMastra as any,
+        runtimeContext,
+      });
+
+      expect(vectorQuerySearch).toHaveBeenCalledWith({
+        indexName: 'testIndex',
+        vectorStore: { testStore: {} },
+        queryText: 'foo',
+        model: mockModel,
+        queryFilter: undefined,
+        topK: 10,
+        includeVectors: false,
+        databaseConfig: undefined,
+        providerOptions: { google: { outputDimensionality: 768 } },
+      });
     });
   });
 });

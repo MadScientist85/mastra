@@ -1,8 +1,10 @@
 // To setup a Qdrant server, run:
 // docker run -p 6333:6333 qdrant/qdrant
-import type { QueryResult } from '@mastra/core';
+import { createVectorTestSuite } from '@internal/storage-test-utils';
+import type { QueryResult } from '@mastra/core/vector';
 import { describe, it, expect, beforeAll, afterAll, afterEach, vi, beforeEach } from 'vitest';
 
+import type { QdrantVectorFilter } from './filter';
 import { QdrantVector } from './index';
 
 const dimension = 3;
@@ -77,7 +79,7 @@ describe('QdrantVector', () => {
 
     it('should query vectors with metadata filter', async () => {
       const queryVector = [0.0, 1.0, 0.0];
-      const filter = {
+      const filter: QdrantVectorFilter = {
         label: 'y-axis',
       };
 
@@ -350,21 +352,21 @@ describe('QdrantVector', () => {
 
     describe('Basic Operators', () => {
       it('should filter by exact value match', async () => {
-        const filter = { name: 'item1' };
+        const filter: QdrantVectorFilter = { name: 'item1' };
         const results = await qdrant.query({ indexName: testCollectionName, queryVector: [1, 0, 0], filter });
         expect(results).toHaveLength(1);
         expect(results[0]?.metadata?.name).toBe('item1');
       });
 
       it('should filter using comparison operators', async () => {
-        const filter = { price: { $gt: 100, $lt: 600 } };
+        const filter: QdrantVectorFilter = { price: { $gt: 100, $lt: 600 } };
         const results = await qdrant.query({ indexName: testCollectionName, queryVector: [1, 0, 0], filter });
         expect(results).toHaveLength(1);
         expect(results[0]?.metadata?.price).toBe(500);
       });
 
       it('should filter using array operators', async () => {
-        const filter = { tags: { $in: ['premium', 'bestseller'] } };
+        const filter: QdrantVectorFilter = { tags: { $in: ['premium', 'bestseller'] } };
         const results = await qdrant.query({ indexName: testCollectionName, queryVector: [1, 0, 0], filter });
         expect(results).toHaveLength(2);
         const tags = results.flatMap(r => r.metadata?.tags || []);
@@ -373,14 +375,14 @@ describe('QdrantVector', () => {
       });
 
       it('should handle null values', async () => {
-        const filter = { price: null };
+        const filter: QdrantVectorFilter = { price: null };
         const results = await qdrant.query({ indexName: testCollectionName, queryVector: [1, 0, 0], filter });
         expect(results).toHaveLength(1);
         expect(results[0]?.metadata?.price).toBeNull();
       });
 
       it('should handle empty arrays', async () => {
-        const filter = {
+        const filter: QdrantVectorFilter = {
           tags: [],
         };
         const results = await qdrant.query({ indexName: testCollectionName, queryVector: [1, 0, 0], filter });
@@ -392,7 +394,7 @@ describe('QdrantVector', () => {
 
     describe('Logical Operators', () => {
       it('should combine conditions with $and', async () => {
-        const filter = {
+        const filter: QdrantVectorFilter = {
           $and: [{ tags: { $in: ['electronics'] } }, { price: { $gt: 700 } }],
         };
         const results = await qdrant.query({ indexName: testCollectionName, queryVector: [1, 0, 0], filter });
@@ -402,7 +404,7 @@ describe('QdrantVector', () => {
       });
 
       it('should combine conditions with $or', async () => {
-        const filter = {
+        const filter: QdrantVectorFilter = {
           $or: [{ price: { $gt: 900 } }, { tags: { $in: ['bestseller'] } }],
         };
         const results = await qdrant.query({ indexName: testCollectionName, queryVector: [1, 0, 0], filter });
@@ -413,7 +415,7 @@ describe('QdrantVector', () => {
       });
 
       it('should handle $not operator', async () => {
-        const filter = {
+        const filter: QdrantVectorFilter = {
           $not: { tags: { $in: ['electronics'] } },
         };
         const results = await qdrant.query({ indexName: testCollectionName, queryVector: [1, 0, 0], filter });
@@ -425,7 +427,7 @@ describe('QdrantVector', () => {
       });
 
       it('should handle nested logical operators', async () => {
-        const filter = {
+        const filter: QdrantVectorFilter = {
           $and: [
             { 'details.weight': { $lt: 2.0 } },
             {
@@ -442,7 +444,7 @@ describe('QdrantVector', () => {
       });
 
       it('should handle empty logical operators', async () => {
-        const filter = { $and: [] };
+        const filter: QdrantVectorFilter = { $and: [] };
         const results = await qdrant.query({ indexName: testCollectionName, queryVector: [1, 0, 0], filter });
         expect(results.length).toBeGreaterThan(0);
       });
@@ -450,7 +452,7 @@ describe('QdrantVector', () => {
 
     describe('Custom Operators', () => {
       it('should filter using $count operator', async () => {
-        const filter = { 'stock.locations': { $count: { $gt: 1 } } };
+        const filter: QdrantVectorFilter = { 'stock.locations': { $count: { $gt: 1 } } };
         const results = await qdrant.query({ indexName: testCollectionName, queryVector: [1, 0, 0], filter });
         expect(results).toHaveLength(2);
         results.forEach(result => {
@@ -459,7 +461,7 @@ describe('QdrantVector', () => {
       });
 
       it('should filter using $geo radius operator', async () => {
-        const filter = {
+        const filter: QdrantVectorFilter = {
           location: {
             $geo: {
               type: 'radius',
@@ -475,7 +477,7 @@ describe('QdrantVector', () => {
       });
 
       it('should filter using $geo box operator', async () => {
-        const filter = {
+        const filter: QdrantVectorFilter = {
           location: {
             $geo: {
               type: 'box',
@@ -491,7 +493,7 @@ describe('QdrantVector', () => {
       });
 
       it('should filter using $geo polygon operator', async () => {
-        const filter = {
+        const filter: QdrantVectorFilter = {
           location: {
             $geo: {
               type: 'polygon',
@@ -518,7 +520,7 @@ describe('QdrantVector', () => {
         const allResults = await qdrant.query({ indexName: testCollectionName, queryVector: [1, 0, 0], topK: 2 });
         const targetIds = allResults.map(r => r.id);
 
-        const filter = { $hasId: targetIds };
+        const filter: QdrantVectorFilter = { $hasId: targetIds };
         const results = await qdrant.query({ indexName: testCollectionName, queryVector: [1, 0, 0], filter });
         expect(results).toHaveLength(2);
         results.forEach(result => {
@@ -527,7 +529,7 @@ describe('QdrantVector', () => {
       });
 
       it('should filter using $hasVector operator', async () => {
-        const filter = { $hasVector: '' };
+        const filter: QdrantVectorFilter = { $hasVector: '' };
         const results = await qdrant.query({ indexName: testCollectionName, queryVector: [1, 0, 0], filter });
         expect(results.length).toBeGreaterThan(0);
       });
@@ -543,7 +545,7 @@ describe('QdrantVector', () => {
         };
         await qdrant.upsert({ indexName: testCollectionName, vectors: [vector], metadata: [metadata] });
 
-        const filter = {
+        const filter: QdrantVectorFilter = {
           created_at: {
             $datetime: {
               range: {
@@ -603,7 +605,7 @@ describe('QdrantVector', () => {
         expect(results.length).toBe(2);
       });
       it('should handle nested paths', async () => {
-        const filter = {
+        const filter: QdrantVectorFilter = {
           'details.color': 'red',
           'stock.quantity': { $gt: 0 },
         };
@@ -614,7 +616,7 @@ describe('QdrantVector', () => {
       });
 
       it('should handle multiple conditions on same field', async () => {
-        const filter = {
+        const filter: QdrantVectorFilter = {
           price: { $gt: 20, $lt: 30 },
         };
         const results = await qdrant.query({ indexName: testCollectionName, queryVector: [1, 0, 0], filter });
@@ -623,7 +625,7 @@ describe('QdrantVector', () => {
       });
 
       it('should handle complex combinations', async () => {
-        const filter = {
+        const filter: QdrantVectorFilter = {
           $and: [
             { 'details.weight': { $lt: 3.0 } },
             {
@@ -642,7 +644,7 @@ describe('QdrantVector', () => {
       });
 
       it('should handle array paths with nested objects', async () => {
-        const filter = {
+        const filter: QdrantVectorFilter = {
           'stock.locations[].warehouse': { $in: ['A'] },
         };
         const results = await qdrant.query({ indexName: testCollectionName, queryVector: [1, 0, 0], filter });
@@ -653,7 +655,7 @@ describe('QdrantVector', () => {
       });
 
       it('should handle multiple nested paths with array notation', async () => {
-        const filter = {
+        const filter: QdrantVectorFilter = {
           $and: [{ 'stock.locations[].warehouse': { $in: ['A'] } }, { 'stock.locations[].count': { $gt: 20 } }],
         };
         const results = await qdrant.query({ indexName: testCollectionName, queryVector: [1, 0, 0], filter });
@@ -677,7 +679,7 @@ describe('QdrantVector', () => {
         };
         await qdrant.upsert({ indexName: testCollectionName, vectors: [vector], metadata: [metadata] });
 
-        const filter = {
+        const filter: QdrantVectorFilter = {
           $and: [
             {
               'timestamps.created': {
@@ -696,7 +698,7 @@ describe('QdrantVector', () => {
       });
 
       it('should handle complex combinations with custom operators', async () => {
-        const filter = {
+        const filter: QdrantVectorFilter = {
           $and: [
             { 'stock.locations': { $count: { $gt: 0 } } },
             {
@@ -731,7 +733,7 @@ describe('QdrantVector', () => {
     describe('Performance Cases', () => {
       it('should handle deep nesting efficiently', async () => {
         const start = Date.now();
-        const filter = {
+        const filter: QdrantVectorFilter = {
           $and: Array(5)
             .fill(null)
             .map(() => ({
@@ -745,7 +747,11 @@ describe('QdrantVector', () => {
       });
 
       it('should handle multiple concurrent filtered queries', async () => {
-        const filters = [{ price: { $gt: 500 } }, { tags: { $in: ['electronics'] } }, { 'stock.quantity': { $gt: 0 } }];
+        const filters: QdrantVectorFilter[] = [
+          { price: { $gt: 500 } },
+          { tags: { $in: ['electronics'] } },
+          { 'stock.quantity': { $gt: 0 } },
+        ];
         const start = Date.now();
         const results = await Promise.all(
           filters.map(filter => qdrant.query({ indexName: testCollectionName, queryVector: [1, 0, 0], filter })),
@@ -948,5 +954,24 @@ describe('QdrantVector', () => {
       expect(results).toHaveLength(numQueries);
       console.log(`${numQueries} concurrent queries took ${duration}ms`);
     }, 50000);
+  });
+});
+
+// Metadata filtering tests for Memory system
+describe('Qdrant Metadata Filtering', () => {
+  const qdrantVector = new QdrantVector({ url: 'http://localhost:6333/' });
+
+  createVectorTestSuite({
+    vector: qdrantVector,
+    createIndex: async (indexName: string) => {
+      await qdrantVector.createIndex({ indexName, dimension: 4 });
+    },
+    deleteIndex: async (indexName: string) => {
+      await qdrantVector.deleteIndex({ indexName });
+    },
+    waitForIndexing: async () => {
+      // Qdrant indexes immediately
+      await new Promise(resolve => setTimeout(resolve, 100));
+    },
   });
 });

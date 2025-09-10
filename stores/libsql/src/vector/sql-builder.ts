@@ -6,8 +6,8 @@ import type {
   ArrayOperator,
   ElementOperator,
   LogicalOperator,
-  VectorFilter,
 } from '@mastra/core/vector/filter';
+import type { LibSQLVectorFilter } from './filter';
 
 type OperatorType =
   | BasicOperator
@@ -29,11 +29,11 @@ type OperatorFn = (key: string, value?: any) => FilterOperator;
 // Helper functions to create operators
 const createBasicOperator = (symbol: string) => {
   return (key: string, value: any): FilterOperator => {
-    const jsonPathKey = parseJsonPathKey(key);
+    const jsonPath = getJsonPath(key);
     return {
       sql: `CASE 
-        WHEN ? IS NULL THEN json_extract(metadata, '$."${jsonPathKey}"') IS ${symbol === '=' ? '' : 'NOT'} NULL
-        ELSE json_extract(metadata, '$."${jsonPathKey}"') ${symbol} ?
+        WHEN ? IS NULL THEN json_extract(metadata, ${jsonPath}) IS ${symbol === '=' ? '' : 'NOT'} NULL
+        ELSE json_extract(metadata, ${jsonPath}) ${symbol} ?
       END`,
       needsValue: true,
       transformValue: () => {
@@ -45,19 +45,21 @@ const createBasicOperator = (symbol: string) => {
 };
 const createNumericOperator = (symbol: string) => {
   return (key: string): FilterOperator => {
-    const jsonPathKey = parseJsonPathKey(key);
+    const jsonPath = getJsonPath(key);
     return {
-      sql: `CAST(json_extract(metadata, '$."${jsonPathKey}"') AS NUMERIC) ${symbol} ?`,
+      sql: `CAST(json_extract(metadata, ${jsonPath}) AS NUMERIC) ${symbol} ?`,
       needsValue: true,
     };
   };
 };
 
-const validateJsonArray = (key: string) =>
-  `json_valid(json_extract(metadata, '$."${key}"'))
-   AND json_type(json_extract(metadata, '$."${key}"')) = 'array'`;
+const validateJsonArray = (key: string) => {
+  const jsonPath = getJsonPath(key);
+  return `json_valid(json_extract(metadata, ${jsonPath}))
+   AND json_type(json_extract(metadata, ${jsonPath})) = 'array'`;
+};
 
-const pattern = /json_extract\(metadata, '\$\."[^"]*"(\."[^"]*")*'\)/g;
+const pattern = /json_extract\(metadata, '\$\.(?:"[^"]*"(?:\."[^"]*")*|[^']+)'\)/g;
 
 function buildElemMatchConditions(value: any) {
   const conditions = Object.entries(value).map(([field, fieldValue]) => {
@@ -71,13 +73,14 @@ function buildElemMatchConditions(value: any) {
       // Nested field with operators (count: { $gt: 20 })
       const { sql, values } = buildCondition(field, fieldValue, '');
       // Replace the field path with elem.value path
-      const elemSql = sql.replace(pattern, `json_extract(elem.value, '$."${field}"')`);
+      const jsonPath = parseJsonPathKey(field);
+      const elemSql = sql.replace(pattern, `json_extract(elem.value, '$.${jsonPath}')`);
       return { sql: elemSql, values };
     } else {
-      const parsedFieldKey = parseFieldKey(field);
+      const jsonPath = parseJsonPathKey(field);
       // Simple field equality (warehouse: 'A')
       return {
-        sql: `json_extract(elem.value, '$."${parsedFieldKey}"') = ?`,
+        sql: `json_extract(elem.value, '$.${jsonPath}') = ?`,
         values: [fieldValue],
       };
     }
@@ -97,7 +100,7 @@ const FILTER_OPERATORS: Record<OperatorType, OperatorFn> = {
 
   // Array Operators
   $in: (key: string, value: any) => {
-    const jsonPathKey = parseJsonPathKey(key);
+    const jsonPath = getJsonPath(key);
     const arr = Array.isArray(value) ? value : [value];
     if (arr.length === 0) {
       return { sql: '1 = 0', needsValue: true, transformValue: () => [] };
@@ -106,12 +109,12 @@ const FILTER_OPERATORS: Record<OperatorType, OperatorFn> = {
     return {
       sql: `(
       CASE
-        WHEN ${validateJsonArray(jsonPathKey)} THEN
+        WHEN ${validateJsonArray(key)} THEN
           EXISTS (
-            SELECT 1 FROM json_each(json_extract(metadata, '$."${jsonPathKey}"')) as elem
+            SELECT 1 FROM json_each(json_extract(metadata, ${jsonPath})) as elem
             WHERE elem.value IN (SELECT value FROM json_each(?))
           )
-        ELSE json_extract(metadata, '$."${jsonPathKey}"') IN (${paramPlaceholders})
+        ELSE json_extract(metadata, ${jsonPath}) IN (${paramPlaceholders})
       END
     )`,
       needsValue: true,
@@ -120,7 +123,7 @@ const FILTER_OPERATORS: Record<OperatorType, OperatorFn> = {
   },
 
   $nin: (key: string, value: any) => {
-    const jsonPathKey = parseJsonPathKey(key);
+    const jsonPath = getJsonPath(key);
     const arr = Array.isArray(value) ? value : [value];
     if (arr.length === 0) {
       return { sql: '1 = 1', needsValue: true, transformValue: () => [] };
@@ -129,12 +132,12 @@ const FILTER_OPERATORS: Record<OperatorType, OperatorFn> = {
     return {
       sql: `(
       CASE
-        WHEN ${validateJsonArray(jsonPathKey)} THEN
+        WHEN ${validateJsonArray(key)} THEN
           NOT EXISTS (
-            SELECT 1 FROM json_each(json_extract(metadata, '$."${jsonPathKey}"')) as elem
+            SELECT 1 FROM json_each(json_extract(metadata, ${jsonPath})) as elem
             WHERE elem.value IN (SELECT value FROM json_each(?))
           )
-        ELSE json_extract(metadata, '$."${jsonPathKey}"') NOT IN (${paramPlaceholders})
+        ELSE json_extract(metadata, ${jsonPath}) NOT IN (${paramPlaceholders})
       END
     )`,
       needsValue: true,
@@ -142,7 +145,7 @@ const FILTER_OPERATORS: Record<OperatorType, OperatorFn> = {
     };
   },
   $all: (key: string, value: any) => {
-    const jsonPathKey = parseJsonPathKey(key);
+    const jsonPath = getJsonPath(key);
     let sql: string;
     const arrayValue = Array.isArray(value) ? value : [value];
 
@@ -152,13 +155,13 @@ const FILTER_OPERATORS: Record<OperatorType, OperatorFn> = {
     } else {
       sql = `(
       CASE
-        WHEN ${validateJsonArray(jsonPathKey)} THEN
+        WHEN ${validateJsonArray(key)} THEN
           NOT EXISTS (
             SELECT value
             FROM json_each(?)
             WHERE value NOT IN (
               SELECT value
-              FROM json_each(json_extract(metadata, '$."${jsonPathKey}"'))
+              FROM json_each(json_extract(metadata, ${jsonPath}))
             )
           )
         ELSE FALSE
@@ -178,7 +181,7 @@ const FILTER_OPERATORS: Record<OperatorType, OperatorFn> = {
     };
   },
   $elemMatch: (key: string, value: any) => {
-    const jsonPathKey = parseJsonPathKey(key);
+    const jsonPath = getJsonPath(key);
     if (typeof value !== 'object' || Array.isArray(value)) {
       throw new Error('$elemMatch requires an object with conditions');
     }
@@ -189,10 +192,10 @@ const FILTER_OPERATORS: Record<OperatorType, OperatorFn> = {
     return {
       sql: `(
         CASE
-          WHEN ${validateJsonArray(jsonPathKey)} THEN
+          WHEN ${validateJsonArray(key)} THEN
             EXISTS (
               SELECT 1
-              FROM json_each(json_extract(metadata, '$."${jsonPathKey}"')) as elem
+              FROM json_each(json_extract(metadata, ${jsonPath})) as elem
               WHERE ${conditions.map(c => c.sql).join(' AND ')}
             )
           ELSE FALSE
@@ -205,9 +208,9 @@ const FILTER_OPERATORS: Record<OperatorType, OperatorFn> = {
 
   // Element Operators
   $exists: (key: string) => {
-    const jsonPathKey = parseJsonPathKey(key);
+    const jsonPath = getJsonPath(key);
     return {
-      sql: `json_extract(metadata, '$."${jsonPathKey}"') IS NOT NULL`,
+      sql: `json_extract(metadata, ${jsonPath}) IS NOT NULL`,
       needsValue: false,
     };
   },
@@ -227,12 +230,12 @@ const FILTER_OPERATORS: Record<OperatorType, OperatorFn> = {
     needsValue: false,
   }),
   $size: (key: string, paramIndex: number) => {
-    const jsonPathKey = parseJsonPathKey(key);
+    const jsonPath = getJsonPath(key);
     return {
       sql: `(
     CASE
-      WHEN json_type(json_extract(metadata, '$."${jsonPathKey}"')) = 'array' THEN 
-        json_array_length(json_extract(metadata, '$."${jsonPathKey}"')) = $${paramIndex}
+      WHEN json_type(json_extract(metadata, ${jsonPath})) = 'array' THEN 
+        json_array_length(json_extract(metadata, ${jsonPath})) = $${paramIndex}
       ELSE FALSE
     END
   )`,
@@ -365,14 +368,28 @@ function isFilterResult(obj: any): obj is FilterResult {
 
 const parseJsonPathKey = (key: string) => {
   const parsedKey = parseFieldKey(key);
-  return parsedKey.replace(/\./g, '"."');
+  // Only add quotes around path segments if they contain dots
+  if (parsedKey.includes('.')) {
+    return parsedKey
+      .split('.')
+      .map(segment => `"${segment}"`)
+      .join('.');
+  }
+  return parsedKey;
+};
+
+// Helper to generate the correct JSON path format for LibSQL
+const getJsonPath = (key: string) => {
+  const jsonPathKey = parseJsonPathKey(key);
+  // Always use quotes for consistency
+  return `'$.${jsonPathKey}'`;
 };
 
 function escapeLikePattern(str: string): string {
   return str.replace(/([%_\\])/g, '\\$1');
 }
 
-export function buildFilterQuery(filter: VectorFilter): FilterResult {
+export function buildFilterQuery(filter: LibSQLVectorFilter): FilterResult {
   if (!filter) {
     return { sql: '', values: [] };
   }
@@ -400,8 +417,9 @@ function buildCondition(key: string, value: any, parentPath: string): FilterResu
 
   // If condition is not a FilterCondition object, assume it's an equality check
   if (!value || typeof value !== 'object') {
+    const jsonPath = getJsonPath(key);
     return {
-      sql: `json_extract(metadata, '$."${key.replace(/\./g, '"."')}"') = ?`,
+      sql: `json_extract(metadata, ${jsonPath}) = ?`,
       values: [value],
     };
   }
@@ -428,11 +446,11 @@ function buildCondition(key: string, value: any, parentPath: string): FilterResu
 
 function handleLogicalOperator(
   key: '$and' | '$or' | '$not' | '$nor',
-  value: VectorFilter[] | VectorFilter,
+  value: LibSQLVectorFilter[] | LibSQLVectorFilter,
   parentPath: string,
 ): FilterResult {
   // Handle empty conditions
-  if (!value || value.length === 0) {
+  if (!value || (Array.isArray(value) && value.length === 0)) {
     switch (key) {
       case '$and':
       case '$nor':
@@ -460,7 +478,7 @@ function handleLogicalOperator(
   const joinOperator = key === '$or' || key === '$nor' ? 'OR' : 'AND';
   const conditions = Array.isArray(value)
     ? value.map(f => {
-        const entries = Object.entries(f);
+        const entries = !!f ? Object.entries(f) : [];
         return entries.map(([k, v]) => buildCondition(k, v, key));
       })
     : [buildCondition(key, value, parentPath)];

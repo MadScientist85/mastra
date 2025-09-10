@@ -4,7 +4,9 @@ import { Agent } from '@mastra/core/agent';
 import { RuntimeContext } from '@mastra/core/di';
 import { Mastra } from '@mastra/core/mastra';
 import type { EvalRow, MastraStorage } from '@mastra/core/storage';
+import { createWorkflow, createStep } from '@mastra/core/workflows';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { z } from 'zod';
 import { HTTPException } from '../http-exception';
 import {
   getAgentsHandler,
@@ -13,6 +15,7 @@ import {
   getLiveEvalsByAgentIdHandler,
   generateHandler,
   streamGenerateHandler,
+  updateAgentModelHandler,
 } from './agents';
 
 const mockEvals = [
@@ -53,6 +56,31 @@ class MockAgent extends Agent {
   }
 }
 
+const makeMockAgent = (config?: Partial<AgentConfig>) =>
+  new MockAgent({
+    name: 'test-agent',
+    instructions: 'test instructions',
+    model: openai('gpt-4o'),
+    ...(config || {}),
+  });
+
+const makeMastraMock = ({ agents }: { agents: Record<string, ReturnType<typeof makeMockAgent>> }) =>
+  new Mastra({
+    logger: false,
+    agents,
+    storage: {
+      init: vi.fn(),
+      __setTelemetry: vi.fn(),
+      __setLogger: vi.fn(),
+      getEvalsByAgentName: vi.fn(),
+      getStorage: () => {
+        return {
+          getEvalsByAgentName: vi.fn(),
+        };
+      },
+    } as unknown as MastraStorage,
+  });
+
 describe('Agent Handlers', () => {
   let mockMastra: Mastra;
   let mockAgent: Agent;
@@ -60,36 +88,18 @@ describe('Agent Handlers', () => {
   const runtimeContext = new RuntimeContext();
 
   beforeEach(() => {
-    mockAgent = new MockAgent({
-      name: 'test-agent',
-      instructions: 'test instructions',
-      model: openai('gpt-4o'),
-    });
+    mockAgent = makeMockAgent();
 
-    mockMastra = new Mastra({
-      logger: false,
+    mockMastra = makeMastraMock({
       agents: {
         'test-agent': mockAgent,
       },
-      storage: {
-        init: vi.fn(),
-        __setTelemetry: vi.fn(),
-        __setLogger: vi.fn(),
-        getEvalsByAgentName: vi.fn(),
-        getStorage: () => {
-          return {
-            getEvalsByAgentName: vi.fn(),
-          };
-        },
-      } as unknown as MastraStorage,
     });
   });
 
   describe('getAgentsHandler', () => {
     it('should return serialized agents', async () => {
       const result = await getAgentsHandler({ mastra: mockMastra, runtimeContext });
-
-      console.log(result);
 
       expect(result).toEqual({
         'test-agent': {
@@ -99,6 +109,7 @@ describe('Agent Handlers', () => {
           workflows: {},
           provider: 'openai.chat',
           modelId: 'gpt-4o',
+          modelVersion: 'v1',
           defaultGenerateOptions: {},
           defaultStreamOptions: {},
         },
@@ -108,15 +119,60 @@ describe('Agent Handlers', () => {
 
   describe('getAgentByIdHandler', () => {
     it('should return serialized agent', async () => {
+      const firstStep = createStep({
+        id: 'first',
+        description: 'First step',
+        inputSchema: z.object({ name: z.string() }),
+        outputSchema: z.object({}),
+        execute: async () => ({}),
+      });
+
+      const secondStep = createStep({
+        id: 'second',
+        description: 'Second step',
+        inputSchema: z.object({ name: z.string() }),
+        outputSchema: z.object({ greeting: z.string() }),
+        execute: async () => ({ greeting: 'Hello, world!' }),
+      });
+
+      const workflow = createWorkflow({
+        id: 'hello-world',
+        description: 'A simple hello world workflow with two steps',
+        inputSchema: z.object({
+          name: z.string(),
+        }),
+        outputSchema: z.object({
+          greeting: z.string(),
+        }),
+      });
+
+      workflow.then(firstStep).then(secondStep);
+      mockAgent = makeMockAgent({ workflows: { hello: workflow } });
+      mockMastra = makeMastraMock({ agents: { 'test-agent': mockAgent } });
       const result = await getAgentByIdHandler({ mastra: mockMastra, agentId: 'test-agent', runtimeContext });
 
       expect(result).toEqual({
         name: 'test-agent',
         instructions: 'test instructions',
         tools: {},
-        workflows: {},
+        workflows: {
+          hello: {
+            name: 'hello-world',
+            steps: {
+              first: {
+                id: 'first',
+                description: 'First step',
+              },
+              second: {
+                id: 'second',
+                description: 'Second step',
+              },
+            },
+          },
+        },
         provider: 'openai.chat',
         modelId: 'gpt-4o',
+        modelVersion: 'v1',
         defaultGenerateOptions: {},
         defaultStreamOptions: {},
       });
@@ -262,6 +318,51 @@ describe('Agent Handlers', () => {
           runtimeContext: new RuntimeContext(),
         }),
       ).rejects.toThrow(new HTTPException(404, { message: 'Agent with name non-existing not found' }));
+    });
+  });
+
+  describe('updateAgentModelHandler', () => {
+    it('should update agent model', async () => {
+      const mockStreamResult = {
+        toTextStreamResponse: vi.fn().mockReturnValue(new Response()),
+        toDataStreamResponse: vi.fn().mockReturnValue(new Response()),
+      };
+      (mockAgent.stream as any).mockResolvedValue(mockStreamResult);
+      const updateResult = await updateAgentModelHandler({
+        mastra: mockMastra,
+        agentId: 'test-agent',
+        body: {
+          modelId: 'gpt-4o-mini',
+          provider: 'openai',
+        },
+      });
+
+      const agent = mockMastra.getAgent('test-agent');
+      const llm = await agent.getLLM();
+      const modelId = llm.getModelId();
+      expect(updateResult).toEqual({ message: 'Agent model updated' });
+      expect(modelId).toEqual('gpt-4o-mini');
+      //confirm that stream works fine after the model update
+
+      const result = await streamGenerateHandler({
+        mastra: mockMastra,
+        agentId: 'test-agent',
+        body: {
+          messages: ['test message'],
+          resourceId: 'test-resource',
+          threadId: 'test-thread',
+          experimental_output: undefined,
+          // @ts-expect-error
+          runtimeContext: {
+            user: {
+              name: 'test-user',
+            },
+          },
+        },
+        runtimeContext: new RuntimeContext(),
+      });
+
+      expect(result).toBeInstanceOf(Response);
     });
   });
 });

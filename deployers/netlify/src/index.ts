@@ -1,42 +1,13 @@
-import { existsSync, mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
+import process from 'process';
 import { Deployer } from '@mastra/deployer';
 import { DepsService } from '@mastra/deployer/services';
-import { execa } from 'execa';
-import { getOrCreateSite } from './helpers.js';
+import { move, writeJson } from 'fs-extra/esm';
 
 export class NetlifyDeployer extends Deployer {
-  protected scope: string;
-  protected projectName: string;
-  protected token: string;
-
-  constructor({ scope, projectName, token }: { scope: string; projectName: string; token: string }) {
+  constructor() {
     super({ name: 'NETLIFY' });
-
-    this.scope = scope;
-    this.projectName = projectName;
-    this.token = token;
-  }
-
-  writeFiles({ dir }: { dir: string }): void {
-    if (!existsSync(join(dir, 'netlify/functions/api'))) {
-      mkdirSync(join(dir, 'netlify/functions/api'), { recursive: true });
-    }
-
-    // TODO ENV KEYS
-    writeFileSync(
-      join(dir, 'netlify.toml'),
-      `[functions]
-node_bundler = "esbuild"            
-directory = "netlify/functions"
-
-[[redirects]]
-force = true
-from = "/*"
-status = 200
-to = "/.netlify/functions/api/:splat"
-`,
-    );
+    this.outputDir = join('.netlify', 'v1', 'functions', 'api');
   }
 
   protected async installDependencies(outputDirectory: string, rootDir = process.cwd()) {
@@ -53,54 +24,47 @@ to = "/.netlify/functions/api/:splat"
     });
   }
 
-  async deploy(outputDirectory: string): Promise<void> {
-    const site = await getOrCreateSite({ token: this.token, name: this.projectName || `mastra`, scope: this.scope });
-
-    // @ts-expect-error - seems to be fine
-    const p2 = execa(
-      'npx',
-      [
-        'netlify-cli',
-        'deploy',
-        '--site',
-        site.id,
-        '--auth',
-        this.token,
-        '--dir',
-        '.',
-        '--functions',
-        './netlify/functions',
-      ],
-      {
-        cwd: join(outputDirectory, this.outputDir),
-      },
-    );
-
-    p2.stdout.pipe(process.stdout);
-    await p2;
+  async deploy(): Promise<void> {
+    this.logger?.info('Deploying to Netlify failed. Please use the Netlify dashboard to deploy.');
   }
 
   async prepare(outputDirectory: string): Promise<void> {
     await super.prepare(outputDirectory);
-
-    this.writeFiles({ dir: join(outputDirectory, this.outputDir) });
   }
 
-  async bundle(entryFile: string, outputDirectory: string, toolsPaths: string[]): Promise<void> {
-    return this._bundle(
+  async bundle(entryFile: string, outputDirectory: string, toolsPaths: (string | string[])[]): Promise<void> {
+    const result = await this._bundle(
       this.getEntry(),
       entryFile,
       outputDirectory,
       toolsPaths,
-      join(outputDirectory, this.outputDir, 'netlify', 'functions', 'api'),
+      join(outputDirectory, this.outputDir),
     );
+
+    await writeJson(join(outputDirectory, '.netlify', 'v1', 'config.json'), {
+      redirects: [
+        {
+          force: true,
+          from: '/*',
+          to: '/.netlify/functions/api/:splat',
+          status: 200,
+        },
+      ],
+    });
+
+    await move(join(outputDirectory, '.netlify', 'v1'), join(process.cwd(), '.netlify', 'v1'), {
+      overwrite: true,
+    });
+
+    return result;
   }
 
   private getEntry(): string {
     return `
     import { handle } from 'hono/netlify'
     import { mastra } from '#mastra';
-    import { createHonoServer } from '#server';
+    import { createHonoServer, getToolExports } from '#server';
+    import { tools } from '#tools';
     import { evaluate } from '@mastra/core/eval';
     import { AvailableHooks, registerHook } from '@mastra/core/hooks';
     import { TABLE_EVALS } from '@mastra/core/storage';
@@ -144,13 +108,13 @@ to = "/.netlify/functions/api/:splat"
       }
     });
 
-    const app = await createHonoServer(mastra);
+    const app = await createHonoServer(mastra, { tools: getToolExports(tools) });
 
     export default handle(app)
 `;
   }
 
-  async lint(entryFile: string, outputDirectory: string, toolsPaths: string[]): Promise<void> {
+  async lint(entryFile: string, outputDirectory: string, toolsPaths: (string | string[])[]): Promise<void> {
     await super.lint(entryFile, outputDirectory, toolsPaths);
 
     // Lint for netlify support

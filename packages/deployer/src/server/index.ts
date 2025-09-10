@@ -4,84 +4,35 @@ import { join } from 'path/posix';
 import { serve } from '@hono/node-server';
 import { serveStatic } from '@hono/node-server/serve-static';
 import { swaggerUI } from '@hono/swagger-ui';
-import type { Mastra } from '@mastra/core';
-import { Telemetry } from '@mastra/core';
+import type { Mastra } from '@mastra/core/mastra';
 import { RuntimeContext } from '@mastra/core/runtime-context';
+import { Telemetry } from '@mastra/core/telemetry';
+import { Tool } from '@mastra/core/tools';
+import { InMemoryTaskStore } from '@mastra/server/a2a/store';
 import type { Context, MiddlewareHandler } from 'hono';
 import { Hono } from 'hono';
-import { bodyLimit } from 'hono/body-limit';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import { timeout } from 'hono/timeout';
 import { describeRoute, openAPISpecs } from 'hono-openapi';
 import { getAgentCardByIdHandler, getAgentExecutionHandler } from './handlers/a2a';
-import {
-  generateHandler,
-  getAgentByIdHandler,
-  getAgentsHandler,
-  getEvalsByAgentIdHandler,
-  getLiveEvalsByAgentIdHandler,
-  setAgentInstructionsHandler,
-  streamGenerateHandler,
-} from './handlers/agents';
-import { authorizationMiddleware, authenticationMiddleware } from './handlers/auth';
-import { handleClientsRefresh, handleTriggerClientsRefresh } from './handlers/client';
+import { authenticationMiddleware, authorizationMiddleware } from './handlers/auth';
+import { handleClientsRefresh, handleTriggerClientsRefresh, isHotReloadDisabled } from './handlers/client';
 import { errorHandler } from './handlers/error';
-import {
-  createLegacyWorkflowRunHandler,
-  getLegacyWorkflowByIdHandler,
-  getLegacyWorkflowRunsHandler,
-  getLegacyWorkflowsHandler,
-  resumeAsyncLegacyWorkflowHandler,
-  resumeLegacyWorkflowHandler,
-  startAsyncLegacyWorkflowHandler,
-  startLegacyWorkflowRunHandler,
-  watchLegacyWorkflowHandler,
-} from './handlers/legacyWorkflows.js';
-import { getLogsByRunIdHandler, getLogsHandler, getLogTransports } from './handlers/logs';
-import {
-  getMcpServerMessageHandler,
-  getMcpServerSseHandler,
-  listMcpRegistryServersHandler,
-  getMcpRegistryServerDetailHandler,
-  listMcpServerToolsHandler,
-  getMcpServerToolDetailHandler,
-  executeMcpServerToolHandler,
-} from './handlers/mcp';
-import {
-  createThreadHandler,
-  deleteThreadHandler,
-  getMemoryStatusHandler,
-  getMessagesHandler,
-  getThreadByIdHandler,
-  getThreadsHandler,
-  saveMessagesHandler,
-  updateThreadHandler,
-} from './handlers/memory';
-import {
-  generateHandler as generateNetworkHandler,
-  getNetworkByIdHandler,
-  getNetworksHandler,
-  streamGenerateHandler as streamGenerateNetworkHandler,
-} from './handlers/network';
-import { generateSystemPromptHandler } from './handlers/prompt';
 import { rootHandler } from './handlers/root';
-import { getTelemetryHandler, storeTelemetryHandler } from './handlers/telemetry';
-import { executeAgentToolHandler, executeToolHandler, getToolByIdHandler, getToolsHandler } from './handlers/tools';
-import { createIndex, deleteIndex, describeIndex, listIndexes, queryVectors, upsertVectors } from './handlers/vector';
-import { getSpeakersHandler, getListenerHandler, listenHandler, speakHandler } from './handlers/voice';
-import {
-  createWorkflowRunHandler,
-  getWorkflowByIdHandler,
-  getWorkflowRunsHandler,
-  getWorkflowsHandler,
-  streamWorkflowHandler,
-  resumeAsyncWorkflowHandler,
-  resumeWorkflowHandler,
-  startAsyncWorkflowHandler,
-  startWorkflowRunHandler,
-  watchWorkflowHandler,
-} from './handlers/workflows.js';
+import { agentBuilderRouter } from './handlers/routes/agent-builder/router';
+import { getModelProvidersHandler } from './handlers/routes/agents/handlers';
+import { agentsRouterDev, agentsRouter } from './handlers/routes/agents/router';
+import { logsRouter } from './handlers/routes/logs/router';
+import { mcpRouter } from './handlers/routes/mcp/router';
+import { memoryRoutes } from './handlers/routes/memory/router';
+import { vNextNetworksRouter, networksRouter } from './handlers/routes/networks/router';
+import { observabilityRouter } from './handlers/routes/observability/router';
+import { scoresRouter } from './handlers/routes/scores/router';
+import { telemetryRouter } from './handlers/routes/telemetry/router';
+import { toolsRouter } from './handlers/routes/tools/router';
+import { vectorRouter } from './handlers/routes/vector/router';
+import { workflowsRouter } from './handlers/routes/workflows/router';
 import type { ServerBundleOptions } from './types';
 import { html } from './welcome.js';
 
@@ -91,38 +42,43 @@ type Variables = {
   mastra: Mastra;
   runtimeContext: RuntimeContext;
   clients: Set<{ controller: ReadableStreamDefaultController }>;
-  tools: Record<string, any>;
+  tools: Record<string, Tool>;
+  taskStore: InMemoryTaskStore;
   playground: boolean;
   isDev: boolean;
 };
 
-export async function createHonoServer(mastra: Mastra, options: ServerBundleOptions = {}) {
-  // Create typed Hono app
-  const app = new Hono<{ Bindings: Bindings; Variables: Variables }>();
-  const server = mastra.getServer();
-
-  let tools: Record<string, any> = {};
+export function getToolExports(tools: Record<string, Function>[]) {
   try {
-    const toolsPath = './tools.mjs';
-    const mastraToolsPaths = (await import(toolsPath)).tools;
-    const toolImports = mastraToolsPaths
-      ? await Promise.all(
-          // @ts-ignore
-          mastraToolsPaths.map(async toolPath => {
-            return import(toolPath);
-          }),
-        )
-      : [];
-
-    tools = toolImports.reduce((acc, toolModule) => {
+    return tools.reduce((acc, toolModule) => {
       Object.entries(toolModule).forEach(([key, tool]) => {
-        acc[key] = tool;
+        if (tool instanceof Tool) {
+          acc[key] = tool;
+        }
       });
       return acc;
     }, {});
-  } catch {
-    console.error('Failed to import tools');
+  } catch (err: any) {
+    console.error(
+      `Failed to import tools
+reason: ${err.message}
+${err.stack.split('\n').slice(1).join('\n')}
+    `,
+      err,
+    );
   }
+}
+
+export async function createHonoServer(
+  mastra: Mastra,
+  options: ServerBundleOptions = {
+    tools: {},
+  },
+) {
+  // Create typed Hono app
+  const app = new Hono<{ Bindings: Bindings; Variables: Variables }>();
+  const server = mastra.getServer();
+  const a2aTaskStore = new InMemoryTaskStore();
 
   // Middleware
   app.use('*', async function setTelemetryInfo(c, next) {
@@ -147,26 +103,30 @@ export async function createHonoServer(mastra: Mastra, options: ServerBundleOpti
     }
   });
 
-  app.onError(errorHandler);
+  app.onError((err, c) => errorHandler(err, c, options.isDev));
 
   // Add Mastra to context
-  app.use('*', function setContext(c, next) {
-    const runtimeContext = new RuntimeContext();
-    const proxyRuntimeContext = new Proxy(runtimeContext, {
-      get(target, prop) {
-        if (prop === 'get') {
-          return function (key: string) {
-            const value = target.get(key);
-            return value ?? `<${key}>`;
-          };
+  app.use('*', async function setContext(c, next) {
+    let runtimeContext = new RuntimeContext();
+    if (c.req.method === 'POST' || c.req.method === 'PUT') {
+      const contentType = c.req.header('content-type');
+      if (contentType?.includes('application/json')) {
+        try {
+          const clonedReq = c.req.raw.clone();
+          const body = (await clonedReq.json()) as { runtimeContext?: Record<string, any> };
+          if (body.runtimeContext) {
+            runtimeContext = new RuntimeContext(Object.entries(body.runtimeContext));
+          }
+        } catch {
+          // Body parsing failed, continue without body
         }
-        return Reflect.get(target, prop);
-      },
-    });
+      }
+    }
 
-    c.set('runtimeContext', proxyRuntimeContext);
+    c.set('runtimeContext', runtimeContext);
     c.set('mastra', mastra);
-    c.set('tools', tools);
+    c.set('tools', options.tools);
+    c.set('taskStore', a2aTaskStore);
     c.set('playground', options.playground === true);
     c.set('isDev', options.isDev === true);
     return next();
@@ -187,7 +147,7 @@ export async function createHonoServer(mastra: Mastra, options: ServerBundleOpti
   } else {
     const corsConfig = {
       origin: '*',
-      allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+      allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
       credentials: false,
       maxAge: 3600,
       ...server?.cors,
@@ -247,6 +207,8 @@ export async function createHonoServer(mastra: Mastra, options: ServerBundleOpti
         app.put(route.path, ...middlewares, handler);
       } else if (route.method === 'DELETE') {
         app.delete(route.path, ...middlewares, handler);
+      } else if (route.method === 'PATCH') {
+        app.patch(route.path, ...middlewares, handler);
       } else if (route.method === 'ALL') {
         app.all(route.path, ...middlewares, handler);
       }
@@ -262,7 +224,7 @@ export async function createHonoServer(mastra: Mastra, options: ServerBundleOpti
    */
 
   app.get(
-    '/.well-known/:agentId/agent.json',
+    '/.well-known/:agentId/agent-card.json',
     describeRoute({
       description: 'Get agent configuration',
       tags: ['agents'],
@@ -305,14 +267,14 @@ export async function createHonoServer(mastra: Mastra, options: ServerBundleOpti
               properties: {
                 method: {
                   type: 'string',
-                  enum: ['tasks/send', 'tasks/sendSubscribe', 'tasks/get', 'tasks/cancel'],
+                  enum: ['message/send', 'message/stream', 'tasks/get', 'tasks/cancel'],
                   description: 'The A2A protocol method to execute',
                 },
                 params: {
                   type: 'object',
                   oneOf: [
                     {
-                      // TaskSendParams
+                      // MessageSendParams
                       type: 'object',
                       properties: {
                         id: {
@@ -416,2620 +378,57 @@ export async function createHonoServer(mastra: Mastra, options: ServerBundleOpti
     rootHandler,
   );
 
-  // Agent routes
+  // Providers route
   app.get(
-    '/api/agents',
+    '/api/model-providers',
     describeRoute({
-      description: 'Get all available agents',
+      description: 'Get all model providers with available keys',
       tags: ['agents'],
       responses: {
         200: {
-          description: 'List of all agents',
+          description: 'All model providers with available keys',
         },
       },
     }),
-    getAgentsHandler,
+    getModelProvidersHandler,
   );
 
-  // Network routes
-  app.get(
-    '/api/networks',
-    describeRoute({
-      description: 'Get all available networks',
-      tags: ['networks'],
-      responses: {
-        200: {
-          description: 'List of all networks',
-        },
-      },
-    }),
-    getNetworksHandler,
-  );
-
-  app.get(
-    '/api/networks/:networkId',
-    describeRoute({
-      description: 'Get network by ID',
-      tags: ['networks'],
-      parameters: [
-        {
-          name: 'networkId',
-          in: 'path',
-          required: true,
-          schema: { type: 'string' },
-        },
-      ],
-      responses: {
-        200: {
-          description: 'Network details',
-        },
-        404: {
-          description: 'Network not found',
-        },
-      },
-    }),
-    getNetworkByIdHandler,
-  );
-
-  app.post(
-    '/api/networks/:networkId/generate',
-    bodyLimit(bodyLimitOptions),
-    describeRoute({
-      description: 'Generate a response from a network',
-      tags: ['networks'],
-      parameters: [
-        {
-          name: 'networkId',
-          in: 'path',
-          required: true,
-          schema: { type: 'string' },
-        },
-      ],
-      requestBody: {
-        required: true,
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                input: {
-                  oneOf: [
-                    { type: 'string' },
-                    {
-                      type: 'array',
-                      items: { type: 'object' },
-                    },
-                  ],
-                  description: 'Input for the network, can be a string or an array of CoreMessage objects',
-                },
-              },
-              required: ['input'],
-            },
-          },
-        },
-      },
-      responses: {
-        200: {
-          description: 'Generated response',
-        },
-        404: {
-          description: 'Network not found',
-        },
-      },
-    }),
-    generateNetworkHandler,
-  );
-
-  app.post(
-    '/api/networks/:networkId/stream',
-    bodyLimit(bodyLimitOptions),
-    describeRoute({
-      description: 'Generate a response from a network',
-      tags: ['networks'],
-      parameters: [
-        {
-          name: 'networkId',
-          in: 'path',
-          required: true,
-          schema: { type: 'string' },
-        },
-      ],
-      requestBody: {
-        required: true,
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                input: {
-                  oneOf: [
-                    { type: 'string' },
-                    {
-                      type: 'array',
-                      items: { type: 'object' },
-                    },
-                  ],
-                  description: 'Input for the network, can be a string or an array of CoreMessage objects',
-                },
-              },
-              required: ['input'],
-            },
-          },
-        },
-      },
-      responses: {
-        200: {
-          description: 'Generated response',
-        },
-        404: {
-          description: 'Network not found',
-        },
-      },
-    }),
-    streamGenerateNetworkHandler,
-  );
-
-  app.get(
-    '/api/agents/:agentId',
-    describeRoute({
-      description: 'Get agent by ID',
-      tags: ['agents'],
-      parameters: [
-        {
-          name: 'agentId',
-          in: 'path',
-          required: true,
-          schema: { type: 'string' },
-        },
-      ],
-      responses: {
-        200: {
-          description: 'Agent details',
-        },
-        404: {
-          description: 'Agent not found',
-        },
-      },
-    }),
-    getAgentByIdHandler,
-  );
-
-  app.get(
-    '/api/agents/:agentId/evals/ci',
-    describeRoute({
-      description: 'Get CI evals by agent ID',
-      tags: ['agents'],
-      parameters: [
-        {
-          name: 'agentId',
-          in: 'path',
-          required: true,
-          schema: { type: 'string' },
-        },
-      ],
-      responses: {
-        200: {
-          description: 'List of evals',
-        },
-      },
-    }),
-    getEvalsByAgentIdHandler,
-  );
-
-  app.get(
-    '/api/agents/:agentId/evals/live',
-    describeRoute({
-      description: 'Get live evals by agent ID',
-      tags: ['agents'],
-      parameters: [
-        {
-          name: 'agentId',
-          in: 'path',
-          required: true,
-          schema: { type: 'string' },
-        },
-      ],
-      responses: {
-        200: {
-          description: 'List of evals',
-        },
-      },
-    }),
-    getLiveEvalsByAgentIdHandler,
-  );
-
-  app.post(
-    '/api/agents/:agentId/generate',
-    bodyLimit(bodyLimitOptions),
-    describeRoute({
-      description: 'Generate a response from an agent',
-      tags: ['agents'],
-      parameters: [
-        {
-          name: 'agentId',
-          in: 'path',
-          required: true,
-          schema: { type: 'string' },
-        },
-      ],
-      requestBody: {
-        required: true,
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                messages: {
-                  type: 'array',
-                  items: { type: 'object' },
-                },
-                threadId: { type: 'string' },
-                resourceId: { type: 'string', description: 'The resource ID for the conversation' },
-                resourceid: {
-                  type: 'string',
-                  description: 'The resource ID for the conversation (deprecated, use resourceId instead)',
-                  deprecated: true,
-                },
-                runId: { type: 'string' },
-                output: { type: 'object' },
-              },
-              required: ['messages'],
-            },
-          },
-        },
-      },
-      responses: {
-        200: {
-          description: 'Generated response',
-        },
-        404: {
-          description: 'Agent not found',
-        },
-      },
-    }),
-    generateHandler,
-  );
-
-  app.post(
-    '/api/agents/:agentId/stream',
-    bodyLimit(bodyLimitOptions),
-    describeRoute({
-      description: 'Stream a response from an agent',
-      tags: ['agents'],
-      parameters: [
-        {
-          name: 'agentId',
-          in: 'path',
-          required: true,
-          schema: { type: 'string' },
-        },
-      ],
-      requestBody: {
-        required: true,
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                messages: {
-                  type: 'array',
-                  items: { type: 'object' },
-                },
-                threadId: { type: 'string' },
-                resourceId: { type: 'string', description: 'The resource ID for the conversation' },
-                resourceid: {
-                  type: 'string',
-                  description: 'The resource ID for the conversation (deprecated, use resourceId instead)',
-                  deprecated: true,
-                },
-                runId: { type: 'string' },
-                output: { type: 'object' },
-              },
-              required: ['messages'],
-            },
-          },
-        },
-      },
-      responses: {
-        200: {
-          description: 'Streamed response',
-        },
-        404: {
-          description: 'Agent not found',
-        },
-      },
-    }),
-    streamGenerateHandler,
-  );
+  // Agents routes
+  app.route('/api/agents', agentsRouter(bodyLimitOptions));
+  // Networks routes
+  app.route('/api/networks', vNextNetworksRouter(bodyLimitOptions));
+  app.route('/api/networks', networksRouter(bodyLimitOptions));
 
   if (options.isDev) {
-    app.post(
-      '/api/agents/:agentId/instructions',
-      bodyLimit(bodyLimitOptions),
-      describeRoute({
-        description: "Update an agent's instructions",
-        tags: ['agents'],
-        parameters: [
-          {
-            name: 'agentId',
-            in: 'path',
-            required: true,
-            schema: { type: 'string' },
-          },
-        ],
-        requestBody: {
-          required: true,
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  instructions: {
-                    type: 'string',
-                    description: 'New instructions for the agent',
-                  },
-                },
-                required: ['instructions'],
-              },
-            },
-          },
-        },
-        responses: {
-          200: {
-            description: 'Instructions updated successfully',
-          },
-          403: {
-            description: 'Not allowed in non-playground environment',
-          },
-          404: {
-            description: 'Agent not found',
-          },
-        },
-      }),
-      setAgentInstructionsHandler,
-    );
-
-    app.post(
-      '/api/agents/:agentId/instructions/enhance',
-      bodyLimit(bodyLimitOptions),
-      describeRoute({
-        description: 'Generate an improved system prompt from instructions',
-        tags: ['agents'],
-        parameters: [
-          {
-            name: 'agentId',
-            in: 'path',
-            required: true,
-            schema: { type: 'string' },
-            description: 'ID of the agent whose model will be used for prompt generation',
-          },
-        ],
-        requestBody: {
-          required: true,
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  instructions: {
-                    type: 'string',
-                    description: 'Instructions to generate a system prompt from',
-                  },
-                  comment: {
-                    type: 'string',
-                    description: 'Optional comment for the enhanced prompt',
-                  },
-                },
-                required: ['instructions'],
-              },
-            },
-          },
-        },
-        responses: {
-          200: {
-            description: 'Generated system prompt and analysis',
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  properties: {
-                    explanation: {
-                      type: 'string',
-                      description: 'Detailed analysis of the instructions',
-                    },
-                    new_prompt: {
-                      type: 'string',
-                      description: 'The enhanced system prompt',
-                    },
-                  },
-                },
-              },
-            },
-          },
-          400: {
-            description: 'Missing or invalid request parameters',
-          },
-          404: {
-            description: 'Agent not found',
-          },
-          500: {
-            description: 'Internal server error or model response parsing error',
-          },
-        },
-      }),
-      generateSystemPromptHandler,
-    );
+    app.route('/api/agents', agentsRouterDev(bodyLimitOptions));
   }
 
-  app.get(
-    '/api/agents/:agentId/speakers',
-    async (c, next) => {
-      c.header('Deprecation', 'true');
-      c.header('Warning', '299 - "This endpoint is deprecated, use /api/agents/:agentId/voice/speakers instead"');
-      c.header('Link', '</api/agents/:agentId/voice/speakers>; rel="successor-version"');
-      return next();
-    },
-    describeRoute({
-      description: '[DEPRECATED] Use /api/agents/:agentId/voice/speakers instead. Get available speakers for an agent',
-      tags: ['agents'],
-      parameters: [
-        {
-          name: 'agentId',
-          in: 'path',
-          required: true,
-          schema: { type: 'string' },
-        },
-      ],
-      responses: {
-        200: {
-          description: 'List of available speakers',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'array',
-                items: {
-                  type: 'object',
-                  description: 'Speaker information depending on the voice provider',
-                  properties: {
-                    voiceId: { type: 'string' },
-                  },
-                  additionalProperties: true,
-                },
-              },
-            },
-          },
-        },
-        400: {
-          description: 'Agent does not have voice capabilities',
-        },
-        404: {
-          description: 'Agent not found',
-        },
-      },
-    }),
-    getSpeakersHandler,
-  );
-
-  app.get(
-    '/api/agents/:agentId/voice/speakers',
-    describeRoute({
-      description: 'Get available speakers for an agent',
-      tags: ['agents'],
-      parameters: [
-        {
-          name: 'agentId',
-          in: 'path',
-          required: true,
-          schema: { type: 'string' },
-        },
-      ],
-      responses: {
-        200: {
-          description: 'List of available speakers',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'array',
-                items: {
-                  type: 'object',
-                  description: 'Speaker information depending on the voice provider',
-                  properties: {
-                    voiceId: { type: 'string' },
-                  },
-                  additionalProperties: true,
-                },
-              },
-            },
-          },
-        },
-        400: {
-          description: 'Agent does not have voice capabilities',
-        },
-        404: {
-          description: 'Agent not found',
-        },
-      },
-    }),
-    getSpeakersHandler,
-  );
-
-  app.post(
-    '/api/agents/:agentId/speak',
-    bodyLimit(bodyLimitOptions),
-    async (c, next) => {
-      c.header('Deprecation', 'true');
-      c.header('Warning', '299 - "This endpoint is deprecated, use /api/agents/:agentId/voice/speak instead"');
-      c.header('Link', '</api/agents/:agentId/voice/speak>; rel="successor-version"');
-      return next();
-    },
-    describeRoute({
-      description:
-        "[DEPRECATED] Use /api/agents/:agentId/voice/speak instead. Convert text to speech using the agent's voice provider",
-      tags: ['agents'],
-      parameters: [
-        {
-          name: 'agentId',
-          in: 'path',
-          required: true,
-          schema: { type: 'string' },
-        },
-      ],
-      requestBody: {
-        required: true,
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                text: {
-                  type: 'string',
-                  description: 'Text to convert to speech',
-                },
-                options: {
-                  type: 'object',
-                  description: 'Provider-specific options for speech generation',
-                  properties: {
-                    speaker: {
-                      type: 'string',
-                      description: 'Speaker ID to use for speech generation',
-                    },
-                  },
-                  additionalProperties: true,
-                },
-              },
-              required: ['text'],
-            },
-          },
-        },
-      },
-      responses: {
-        200: {
-          description: 'Audio stream',
-          content: {
-            'audio/mpeg': {
-              schema: {
-                format: 'binary',
-                description: 'Audio stream containing the generated speech',
-              },
-            },
-            'audio/*': {
-              schema: {
-                format: 'binary',
-                description: 'Audio stream depending on the provider',
-              },
-            },
-          },
-        },
-        400: {
-          description: 'Agent does not have voice capabilities or invalid request',
-        },
-        404: {
-          description: 'Agent not found',
-        },
-      },
-    }),
-    speakHandler,
-  );
-
-  app.post(
-    '/api/agents/:agentId/voice/speak',
-    bodyLimit(bodyLimitOptions),
-    describeRoute({
-      description: "Convert text to speech using the agent's voice provider",
-      tags: ['agents'],
-      parameters: [
-        {
-          name: 'agentId',
-          in: 'path',
-          required: true,
-          schema: { type: 'string' },
-        },
-      ],
-      requestBody: {
-        required: true,
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                input: {
-                  type: 'string',
-                  description: 'Text to convert to speech',
-                },
-                options: {
-                  type: 'object',
-                  description: 'Provider-specific options for speech generation',
-                  properties: {
-                    speaker: {
-                      type: 'string',
-                      description: 'Speaker ID to use for speech generation',
-                    },
-                    options: {
-                      type: 'object',
-                      description: 'Provider-specific options for speech generation',
-                      additionalProperties: true,
-                    },
-                  },
-                  additionalProperties: true,
-                },
-              },
-              required: ['text'],
-            },
-          },
-        },
-      },
-      responses: {
-        200: {
-          description: 'Audio stream',
-          content: {
-            'audio/mpeg': {
-              schema: {
-                format: 'binary',
-                description: 'Audio stream containing the generated speech',
-              },
-            },
-            'audio/*': {
-              schema: {
-                format: 'binary',
-                description: 'Audio stream depending on the provider',
-              },
-            },
-          },
-        },
-        400: {
-          description: 'Agent does not have voice capabilities or invalid request',
-        },
-        404: {
-          description: 'Agent not found',
-        },
-      },
-    }),
-    speakHandler,
-  );
-
-  app.get(
-    '/api/agents/:agentId/voice/listener',
-    describeRoute({
-      description: 'Get available listener for an agent',
-      tags: ['agents'],
-      parameters: [
-        {
-          name: 'agentId',
-          in: 'path',
-          required: true,
-          schema: { type: 'string' },
-        },
-      ],
-      responses: {
-        200: {
-          description: 'Checks if listener is available for the agent',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                description: 'Listener information depending on the voice provider',
-                properties: {
-                  enabled: { type: 'boolean' },
-                },
-                additionalProperties: true,
-              },
-            },
-          },
-        },
-        400: {
-          description: 'Agent does not have voice capabilities',
-        },
-        404: {
-          description: 'Agent not found',
-        },
-      },
-    }),
-    getListenerHandler,
-  );
-
-  app.post(
-    '/api/agents/:agentId/listen',
-    bodyLimit({
-      ...bodyLimitOptions,
-      maxSize: 10 * 1024 * 1024, // 10 MB for audio files
-    }),
-    async (c, next) => {
-      c.header('Deprecation', 'true');
-      c.header('Warning', '299 - "This endpoint is deprecated, use /api/agents/:agentId/voice/listen instead"');
-      c.header('Link', '</api/agents/:agentId/voice/listen>; rel="successor-version"');
-      return next();
-    },
-    describeRoute({
-      description:
-        "[DEPRECATED] Use /api/agents/:agentId/voice/listen instead. Convert speech to text using the agent's voice provider. Additional provider-specific options can be passed as query parameters.",
-      tags: ['agents'],
-      parameters: [
-        {
-          name: 'agentId',
-          in: 'path',
-          required: true,
-          schema: { type: 'string' },
-        },
-      ],
-      requestBody: {
-        required: true,
-        content: {
-          'audio/mpeg': {
-            schema: {
-              format: 'binary',
-              description:
-                'Audio data stream to transcribe (supports various formats depending on provider like mp3, wav, webm, flac)',
-            },
-          },
-        },
-      },
-      responses: {
-        200: {
-          description: 'Transcription result',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  text: {
-                    type: 'string',
-                    description: 'Transcribed text',
-                  },
-                },
-              },
-            },
-          },
-        },
-        400: {
-          description: 'Agent does not have voice capabilities or invalid request',
-        },
-        404: {
-          description: 'Agent not found',
-        },
-      },
-    }),
-    listenHandler,
-  );
-
-  app.post(
-    '/api/agents/:agentId/voice/listen',
-    bodyLimit({
-      ...bodyLimitOptions,
-      maxSize: 10 * 1024 * 1024, // 10 MB for audio files
-    }),
-    describeRoute({
-      description:
-        "Convert speech to text using the agent's voice provider. Additional provider-specific options can be passed as query parameters.",
-      tags: ['agents'],
-      parameters: [
-        {
-          name: 'agentId',
-          in: 'path',
-          required: true,
-          schema: { type: 'string' },
-        },
-      ],
-      requestBody: {
-        required: true,
-        content: {
-          'multipart/form-data': {
-            schema: {
-              type: 'object',
-              required: ['audio'],
-              properties: {
-                audio: {
-                  type: 'string',
-                  format: 'binary',
-                  description:
-                    'Audio data stream to transcribe (supports various formats depending on provider like mp3, wav, webm, flac)',
-                },
-                options: {
-                  type: 'object',
-                  description: 'Provider-specific options for speech-to-text',
-                  additionalProperties: true,
-                },
-              },
-            },
-          },
-        },
-      },
-      responses: {
-        200: {
-          description: 'Transcription result',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  text: {
-                    type: 'string',
-                    description: 'Transcribed text',
-                  },
-                },
-              },
-            },
-          },
-        },
-        400: {
-          description: 'Agent does not have voice capabilities or invalid request',
-        },
-        404: {
-          description: 'Agent not found',
-        },
-      },
-    }),
-    listenHandler,
-  );
-
-  app.post(
-    '/api/agents/:agentId/tools/:toolId/execute',
-    bodyLimit(bodyLimitOptions),
-    describeRoute({
-      description: 'Execute a tool through an agent',
-      tags: ['agents'],
-      parameters: [
-        {
-          name: 'agentId',
-          in: 'path',
-          required: true,
-          schema: { type: 'string' },
-        },
-        {
-          name: 'toolId',
-          in: 'path',
-          required: true,
-          schema: { type: 'string' },
-        },
-      ],
-      requestBody: {
-        required: true,
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                data: { type: 'object' },
-                runtimeContext: { type: 'object' },
-              },
-              required: ['data'],
-            },
-          },
-        },
-      },
-      responses: {
-        200: {
-          description: 'Tool execution result',
-        },
-        404: {
-          description: 'Tool or agent not found',
-        },
-      },
-    }),
-    executeAgentToolHandler,
-  );
-
   // MCP server routes
-  app.post(
-    '/api/mcp/:serverId/mcp',
-    bodyLimit(bodyLimitOptions),
-    describeRoute({
-      description: 'Send a message to an MCP server using Streamable HTTP',
-      tags: ['mcp'],
-      parameters: [
-        {
-          name: 'serverId',
-          in: 'path',
-          required: true,
-          schema: { type: 'string' },
-        },
-      ],
-      requestBody: {
-        content: { 'application/json': { schema: { type: 'object' } } },
-      },
-      responses: {
-        200: {
-          description: 'Streamable HTTP connection processed',
-        },
-        404: {
-          description: 'MCP server not found',
-        },
-      },
-    }),
-    getMcpServerMessageHandler,
-  );
-
-  // New MCP server routes for SSE
-  const mcpSseBasePath = '/api/mcp/:serverId/sse';
-  const mcpSseMessagePath = '/api/mcp/:serverId/messages';
-
-  // Route for establishing SSE connection
-  app.get(
-    mcpSseBasePath,
-    describeRoute({
-      description: 'Establish an MCP Server-Sent Events (SSE) connection with a server instance.',
-      tags: ['mcp'],
-      parameters: [
-        {
-          name: 'serverId',
-          in: 'path',
-          required: true,
-          schema: { type: 'string' },
-          description: 'The ID of the MCP server instance.',
-        },
-      ],
-      responses: {
-        200: {
-          description:
-            'SSE connection established. The client will receive events over this connection. (Content-Type: text/event-stream)',
-        },
-        404: { description: 'MCP server instance not found.' },
-        500: { description: 'Internal server error establishing SSE connection.' },
-      },
-    }),
-    getMcpServerSseHandler,
-  );
-
-  // Route for POSTing messages over an established SSE connection
-  app.post(
-    mcpSseMessagePath,
-    bodyLimit(bodyLimitOptions), // Apply body limit for messages
-    describeRoute({
-      description: 'Send a message to an MCP server over an established SSE connection.',
-      tags: ['mcp'],
-      parameters: [
-        {
-          name: 'serverId',
-          in: 'path',
-          required: true,
-          schema: { type: 'string' },
-          description: 'The ID of the MCP server instance.',
-        },
-      ],
-      requestBody: {
-        description: 'JSON-RPC message to send to the MCP server.',
-        required: true,
-        content: { 'application/json': { schema: { type: 'object' } } }, // MCP messages are typically JSON
-      },
-      responses: {
-        200: {
-          description:
-            'Message received and is being processed by the MCP server. The actual result or error will be sent as an SSE event over the established connection.',
-        },
-        400: { description: 'Bad request (e.g., invalid JSON payload or missing body).' },
-        404: { description: 'MCP server instance not found or SSE connection path incorrect.' },
-        503: { description: 'SSE connection not established with this server, or server unable to process message.' },
-      },
-    }),
-    getMcpServerSseHandler,
-  );
-
-  app.get(
-    '/api/mcp/v0/servers',
-    describeRoute({
-      description: 'List all available MCP server instances with basic information.',
-      tags: ['mcp'],
-      parameters: [
-        {
-          name: 'limit',
-          in: 'query',
-          description: 'Number of results per page.',
-          required: false,
-          schema: { type: 'integer', default: 50, minimum: 1, maximum: 5000 },
-        },
-        {
-          name: 'offset',
-          in: 'query',
-          description: 'Number of results to skip for pagination.',
-          required: false,
-          schema: { type: 'integer', default: 0, minimum: 0 },
-        },
-      ],
-      responses: {
-        200: {
-          description: 'A list of MCP server instances.',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  servers: {
-                    type: 'array',
-                    items: {
-                      type: 'object',
-                      properties: {
-                        id: { type: 'string' },
-                        name: { type: 'string' },
-                        description: { type: 'string' },
-                        repository: {
-                          type: 'object',
-                          properties: {
-                            url: { type: 'string', description: 'The URL of the repository (e.g., a GitHub URL)' },
-                            source: {
-                              type: 'string',
-                              description: "The source control platform (e.g., 'github', 'gitlab')",
-                              enum: ['github', 'gitlab'],
-                            },
-                            id: { type: 'string', description: 'A unique identifier for the repository at the source' },
-                          },
-                        },
-                        version_detail: {
-                          type: 'object',
-                          properties: {
-                            version: { type: 'string', description: 'The semantic version string (e.g., "1.0.2")' },
-                            release_date: {
-                              type: 'string',
-                              description: 'The ISO 8601 date-time string when this version was released or registered',
-                            },
-                            is_latest: {
-                              type: 'boolean',
-                              description: 'Indicates if this version is the latest available',
-                            },
-                          },
-                        },
-                      },
-                    },
-                  },
-                  next: { type: 'string', format: 'uri', nullable: true },
-                  total_count: { type: 'integer' },
-                },
-              },
-            },
-          },
-        },
-      },
-    }),
-    listMcpRegistryServersHandler,
-  );
-
-  app.get(
-    '/api/mcp/v0/servers/:id',
-    describeRoute({
-      description: 'Get detailed information about a specific MCP server instance.',
-      tags: ['mcp'],
-      parameters: [
-        {
-          name: 'id',
-          in: 'path',
-          required: true,
-          description: 'Unique ID of the MCP server instance.',
-          schema: { type: 'string' },
-        },
-        {
-          name: 'version',
-          in: 'query',
-          required: false,
-          description: 'Desired MCP server version (currently informational, server returns its actual version).',
-          schema: { type: 'string' },
-        },
-      ],
-      responses: {
-        200: {
-          description: 'Detailed information about the MCP server instance.',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  id: { type: 'string' },
-                  name: { type: 'string' },
-                  description: { type: 'string' },
-                  repository: {
-                    type: 'object',
-                    properties: {
-                      url: { type: 'string' },
-                      source: { type: 'string' },
-                      id: { type: 'string' },
-                    },
-                  },
-                  version_detail: {
-                    type: 'object',
-                    properties: {
-                      version: { type: 'string' },
-                      release_date: { type: 'string' },
-                      is_latest: { type: 'boolean' },
-                    },
-                  },
-                  package_canonical: { type: 'string' },
-                  packages: {
-                    type: 'array',
-                    items: {
-                      type: 'object',
-                      properties: {
-                        registry_name: { type: 'string' },
-                        name: { type: 'string' },
-                        version: { type: 'string' },
-                        command: {
-                          type: 'object',
-                          properties: {
-                            name: { type: 'string' },
-                            subcommands: {
-                              type: 'array',
-                              items: {
-                                type: 'object',
-                                properties: {
-                                  name: { type: 'string' },
-                                  description: { type: 'string' },
-                                  is_required: { type: 'boolean' },
-                                  subcommands: {
-                                    type: 'array',
-                                    items: { type: 'object' },
-                                  },
-                                  positional_arguments: {
-                                    type: 'array',
-                                    items: { type: 'object' },
-                                  },
-                                  named_arguments: {
-                                    type: 'array',
-                                    items: { type: 'object' },
-                                  },
-                                },
-                              },
-                            },
-                            positional_arguments: {
-                              type: 'array',
-                              items: { type: 'object' },
-                            },
-                            named_arguments: {
-                              type: 'array',
-                              items: { type: 'object' },
-                            },
-                          },
-                        },
-                        environment_variables: {
-                          type: 'array',
-                          items: {
-                            type: 'object',
-                            properties: {
-                              name: { type: 'string' },
-                              description: { type: 'string' },
-                              required: { type: 'boolean' },
-                              default_value: { type: 'string' },
-                            },
-                          },
-                        },
-                      },
-                    },
-                  },
-                  remotes: {
-                    type: 'array',
-                    items: {
-                      type: 'object',
-                      properties: {
-                        transport_type: { type: 'string' },
-                        url: { type: 'string' },
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-        404: {
-          description: 'MCP server instance not found.',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  error: { type: 'string' },
-                },
-              },
-            },
-          },
-        },
-      },
-    }),
-    getMcpRegistryServerDetailHandler,
-  );
-
-  app.get(
-    '/api/mcp/:serverId/tools',
-    describeRoute({
-      description: 'List all tools available on a specific MCP server instance.',
-      tags: ['mcp'],
-      parameters: [
-        {
-          name: 'serverId',
-          in: 'path',
-          required: true,
-          description: 'Unique ID of the MCP server instance.',
-          schema: { type: 'string' },
-        },
-      ],
-      responses: {
-        200: { description: 'A list of tools for the MCP server.' }, // Define schema if you have one for McpServerToolListResponse
-        404: { description: 'MCP server instance not found.' },
-        501: { description: 'Server does not support listing tools.' },
-      },
-    }),
-    listMcpServerToolsHandler,
-  );
-
-  app.get(
-    '/api/mcp/:serverId/tools/:toolId',
-    describeRoute({
-      description: 'Get details for a specific tool on an MCP server.',
-      tags: ['mcp'],
-      parameters: [
-        { name: 'serverId', in: 'path', required: true, schema: { type: 'string' } },
-        { name: 'toolId', in: 'path', required: true, schema: { type: 'string' } },
-      ],
-      responses: {
-        200: { description: 'Details of the specified tool.' }, // Define schema for McpToolInfo
-        404: { description: 'MCP server or tool not found.' },
-        501: { description: 'Server does not support getting tool details.' },
-      },
-    }),
-    getMcpServerToolDetailHandler,
-  );
-
-  app.post(
-    '/api/mcp/:serverId/tools/:toolId/execute',
-    bodyLimit(bodyLimitOptions),
-    describeRoute({
-      description: 'Execute a specific tool on an MCP server.',
-      tags: ['mcp'],
-      parameters: [
-        { name: 'serverId', in: 'path', required: true, schema: { type: 'string' } },
-        { name: 'toolId', in: 'path', required: true, schema: { type: 'string' } },
-      ],
-      requestBody: {
-        required: true,
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                data: { type: 'object' },
-                runtimeContext: { type: 'object' },
-              },
-            },
-          },
-        }, // Simplified schema
-      },
-      responses: {
-        200: { description: 'Result of the tool execution.' },
-        400: { description: 'Invalid tool arguments.' },
-        404: { description: 'MCP server or tool not found.' },
-        501: { description: 'Server does not support tool execution.' },
-      },
-    }),
-    executeMcpServerToolHandler,
-  );
-
-  // Memory routes
-  app.get(
-    '/api/memory/status',
-    describeRoute({
-      description: 'Get memory status',
-      tags: ['memory'],
-      parameters: [
-        {
-          name: 'agentId',
-          in: 'query',
-          required: true,
-          schema: { type: 'string' },
-        },
-      ],
-      responses: {
-        200: {
-          description: 'Memory status',
-        },
-      },
-    }),
-    getMemoryStatusHandler,
-  );
-
-  app.get(
-    '/api/memory/threads',
-    describeRoute({
-      description: 'Get all threads',
-      tags: ['memory'],
-      parameters: [
-        {
-          name: 'resourceid',
-          in: 'query',
-          required: true,
-          schema: { type: 'string' },
-        },
-        {
-          name: 'agentId',
-          in: 'query',
-          required: true,
-          schema: { type: 'string' },
-        },
-      ],
-      responses: {
-        200: {
-          description: 'List of all threads',
-        },
-      },
-    }),
-    getThreadsHandler,
-  );
-
-  app.get(
-    '/api/memory/threads/:threadId',
-    describeRoute({
-      description: 'Get thread by ID',
-      tags: ['memory'],
-      parameters: [
-        {
-          name: 'threadId',
-          in: 'path',
-          required: true,
-          schema: { type: 'string' },
-        },
-        {
-          name: 'agentId',
-          in: 'query',
-          required: true,
-          schema: { type: 'string' },
-        },
-      ],
-      responses: {
-        200: {
-          description: 'Thread details',
-        },
-        404: {
-          description: 'Thread not found',
-        },
-      },
-    }),
-    getThreadByIdHandler,
-  );
-
-  app.get(
-    '/api/memory/threads/:threadId/messages',
-    describeRoute({
-      description: 'Get messages for a thread',
-      tags: ['memory'],
-      parameters: [
-        {
-          name: 'threadId',
-          in: 'path',
-          required: true,
-          schema: { type: 'string' },
-        },
-        {
-          name: 'agentId',
-          in: 'query',
-          required: true,
-          schema: { type: 'string' },
-        },
-        {
-          name: 'limit',
-          in: 'query',
-          required: false,
-          schema: { type: 'number' },
-          description: 'Limit the number of messages to retrieve (default: 40)',
-        },
-      ],
-      responses: {
-        200: {
-          description: 'List of messages',
-        },
-      },
-    }),
-    getMessagesHandler,
-  );
-
-  app.post(
-    '/api/memory/threads',
-    bodyLimit(bodyLimitOptions),
-    describeRoute({
-      description: 'Create a new thread',
-      tags: ['memory'],
-      parameters: [
-        {
-          name: 'agentId',
-          in: 'query',
-          required: true,
-          schema: { type: 'string' },
-        },
-      ],
-      requestBody: {
-        required: true,
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                title: { type: 'string' },
-                metadata: { type: 'object' },
-                resourceId: { type: 'string' },
-                threadId: { type: 'string' },
-              },
-            },
-          },
-        },
-      },
-      responses: {
-        200: {
-          description: 'Created thread',
-        },
-      },
-    }),
-    createThreadHandler,
-  );
-
-  app.patch(
-    '/api/memory/threads/:threadId',
-    describeRoute({
-      description: 'Update a thread',
-      tags: ['memory'],
-      parameters: [
-        {
-          name: 'threadId',
-          in: 'path',
-          required: true,
-          schema: { type: 'string' },
-        },
-        {
-          name: 'agentId',
-          in: 'query',
-          required: true,
-          schema: { type: 'string' },
-        },
-      ],
-      requestBody: {
-        required: true,
-        content: {
-          'application/json': {
-            schema: { type: 'object' },
-          },
-        },
-      },
-      responses: {
-        200: {
-          description: 'Updated thread',
-        },
-        404: {
-          description: 'Thread not found',
-        },
-      },
-    }),
-    updateThreadHandler,
-  );
-
-  app.delete(
-    '/api/memory/threads/:threadId',
-    describeRoute({
-      description: 'Delete a thread',
-      tags: ['memory'],
-      parameters: [
-        {
-          name: 'threadId',
-          in: 'path',
-          required: true,
-          schema: { type: 'string' },
-        },
-        {
-          name: 'agentId',
-          in: 'query',
-          required: true,
-          schema: { type: 'string' },
-        },
-      ],
-      responses: {
-        200: {
-          description: 'Thread deleted',
-        },
-        404: {
-          description: 'Thread not found',
-        },
-      },
-    }),
-    deleteThreadHandler,
-  );
-
-  app.post(
-    '/api/memory/save-messages',
-    bodyLimit(bodyLimitOptions),
-    describeRoute({
-      description: 'Save messages',
-      tags: ['memory'],
-      parameters: [
-        {
-          name: 'agentId',
-          in: 'query',
-          required: true,
-          schema: { type: 'string' },
-        },
-      ],
-      requestBody: {
-        required: true,
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                messages: {
-                  type: 'array',
-                  items: { type: 'object' },
-                },
-              },
-              required: ['messages'],
-            },
-          },
-        },
-      },
-      responses: {
-        200: {
-          description: 'Messages saved',
-        },
-      },
-    }),
-    saveMessagesHandler,
-  );
-
+  app.route('/api/mcp', mcpRouter(bodyLimitOptions));
+  // Network Memory routes
+  app.route('/api/memory', memoryRoutes(bodyLimitOptions));
   // Telemetry routes
-  app.get(
-    '/api/telemetry',
-    describeRoute({
-      description: 'Get all traces',
-      tags: ['telemetry'],
-      responses: {
-        200: {
-          description: 'List of all traces (paged)',
-        },
-      },
-    }),
-    getTelemetryHandler,
-  );
-
-  app.post(
-    '/api/telemetry',
-    describeRoute({
-      description: 'Store telemetry',
-      tags: ['telemetry'],
-      responses: {
-        200: {
-          description: 'Traces stored',
-        },
-      },
-    }),
-    storeTelemetryHandler,
-  );
-
+  app.route('/api/telemetry', telemetryRouter());
+  // Observability routes
+  app.route('/api/observability', observabilityRouter());
   // Legacy Workflow routes
-  app.get(
-    '/api/workflows/legacy',
-    describeRoute({
-      description: 'Get all legacy workflows',
-      tags: ['legacyWorkflows'],
-      responses: {
-        200: {
-          description: 'List of all legacy workflows',
-        },
-      },
-    }),
-    getLegacyWorkflowsHandler,
-  );
-
-  app.get(
-    '/api/workflows/legacy/:workflowId',
-    describeRoute({
-      description: 'Get legacy workflow by ID',
-      tags: ['legacyWorkflows'],
-      parameters: [
-        {
-          name: 'workflowId',
-          in: 'path',
-          required: true,
-          schema: { type: 'string' },
-        },
-      ],
-      responses: {
-        200: {
-          description: 'Legacy Workflow details',
-        },
-        404: {
-          description: 'Legacy Workflow not found',
-        },
-      },
-    }),
-    getLegacyWorkflowByIdHandler,
-  );
-
-  app.get(
-    '/api/workflows/legacy/:workflowId/runs',
-    describeRoute({
-      description: 'Get all runs for a legacy workflow',
-      tags: ['legacyWorkflows'],
-      parameters: [
-        {
-          name: 'workflowId',
-          in: 'path',
-          required: true,
-          schema: { type: 'string' },
-        },
-        { name: 'fromDate', in: 'query', required: false, schema: { type: 'string', format: 'date-time' } },
-        { name: 'toDate', in: 'query', required: false, schema: { type: 'string', format: 'date-time' } },
-        { name: 'limit', in: 'query', required: false, schema: { type: 'number' } },
-        { name: 'offset', in: 'query', required: false, schema: { type: 'number' } },
-        { name: 'resourceId', in: 'query', required: false, schema: { type: 'string' } },
-      ],
-      responses: {
-        200: {
-          description: 'List of legacy workflow runs from storage',
-        },
-      },
-    }),
-    getLegacyWorkflowRunsHandler,
-  );
-
-  app.post(
-    '/api/workflows/legacy/:workflowId/resume',
-    describeRoute({
-      description: 'Resume a suspended legacy workflow step',
-      tags: ['legacyWorkflows'],
-      parameters: [
-        {
-          name: 'workflowId',
-          in: 'path',
-          required: true,
-          schema: { type: 'string' },
-        },
-        {
-          name: 'runId',
-          in: 'query',
-          required: true,
-          schema: { type: 'string' },
-        },
-      ],
-      requestBody: {
-        required: true,
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                stepId: { type: 'string' },
-                context: { type: 'object' },
-              },
-            },
-          },
-        },
-      },
-    }),
-    resumeLegacyWorkflowHandler,
-  );
-
-  app.post(
-    '/api/workflows/legacy/:workflowId/resume-async',
-    bodyLimit(bodyLimitOptions),
-    describeRoute({
-      description: 'Resume a suspended legacy workflow step',
-      tags: ['legacyWorkflows'],
-      parameters: [
-        {
-          name: 'workflowId',
-          in: 'path',
-          required: true,
-          schema: { type: 'string' },
-        },
-        {
-          name: 'runId',
-          in: 'query',
-          required: true,
-          schema: { type: 'string' },
-        },
-      ],
-      requestBody: {
-        required: true,
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                stepId: { type: 'string' },
-                context: { type: 'object' },
-              },
-            },
-          },
-        },
-      },
-    }),
-    resumeAsyncLegacyWorkflowHandler,
-  );
-
-  app.post(
-    '/api/workflows/legacy/:workflowId/create-run',
-    describeRoute({
-      description: 'Create a new legacy workflow run',
-      tags: ['legacyWorkflows'],
-      parameters: [
-        {
-          name: 'workflowId',
-          in: 'path',
-          required: true,
-          schema: { type: 'string' },
-        },
-        {
-          name: 'runId',
-          in: 'query',
-          required: false,
-          schema: { type: 'string' },
-        },
-      ],
-      responses: {
-        200: {
-          description: 'New legacy workflow run created',
-        },
-      },
-    }),
-    createLegacyWorkflowRunHandler,
-  );
-
-  app.post(
-    '/api/workflows/legacy/:workflowId/start-async',
-    bodyLimit(bodyLimitOptions),
-    describeRoute({
-      description: 'Execute/Start a legacy workflow',
-      tags: ['legacyWorkflows'],
-      parameters: [
-        {
-          name: 'workflowId',
-          in: 'path',
-          required: true,
-          schema: { type: 'string' },
-        },
-        {
-          name: 'runId',
-          in: 'query',
-          required: false,
-          schema: { type: 'string' },
-        },
-      ],
-      requestBody: {
-        required: true,
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                input: { type: 'object' },
-              },
-            },
-          },
-        },
-      },
-      responses: {
-        200: {
-          description: 'Legacy Workflow execution result',
-        },
-        404: {
-          description: 'Legacy Workflow not found',
-        },
-      },
-    }),
-    startAsyncLegacyWorkflowHandler,
-  );
-
-  app.post(
-    '/api/workflows/legacy/:workflowId/start',
-    describeRoute({
-      description: 'Create and start a new legacy workflow run',
-      tags: ['legacyWorkflows'],
-      parameters: [
-        {
-          name: 'workflowId',
-          in: 'path',
-          required: true,
-          schema: { type: 'string' },
-        },
-        {
-          name: 'runId',
-          in: 'query',
-          required: true,
-          schema: { type: 'string' },
-        },
-      ],
-      requestBody: {
-        required: true,
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                input: { type: 'object' },
-              },
-            },
-          },
-        },
-      },
-      responses: {
-        200: {
-          description: 'Legacy Workflow run started',
-        },
-        404: {
-          description: 'Legacy Workflow not found',
-        },
-      },
-    }),
-    startLegacyWorkflowRunHandler,
-  );
-
-  app.get(
-    '/api/workflows/legacy/:workflowId/watch',
-    describeRoute({
-      description: 'Watch legacy workflow transitions in real-time',
-      parameters: [
-        {
-          name: 'workflowId',
-          in: 'path',
-          required: true,
-          schema: { type: 'string' },
-        },
-        {
-          name: 'runId',
-          in: 'query',
-          required: false,
-          schema: { type: 'string' },
-        },
-      ],
-      tags: ['legacyWorkflows'],
-      responses: {
-        200: {
-          description: 'Legacy Workflow transitions in real-time',
-        },
-      },
-    }),
-    watchLegacyWorkflowHandler,
-  );
-
-  app.post(
-    '/api/workflows/:workflowId/stream',
-    describeRoute({
-      description: 'Stream workflow in real-time',
-      parameters: [
-        {
-          name: 'workflowId',
-          in: 'path',
-          required: true,
-          schema: { type: 'string' },
-        },
-        {
-          name: 'runId',
-          in: 'query',
-          required: false,
-          schema: { type: 'string' },
-        },
-      ],
-      requestBody: {
-        required: true,
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                inputData: { type: 'object' },
-                runtimeContext: {
-                  type: 'object',
-                  description: 'Runtime context for the workflow execution',
-                },
-              },
-            },
-          },
-        },
-      },
-      responses: {
-        200: {
-          description: 'vNext workflow run started',
-        },
-        404: {
-          description: 'vNext workflow not found',
-        },
-      },
-      tags: ['vNextWorkflows'],
-    }),
-    streamWorkflowHandler,
-  );
-
-  // Workflow routes
-  app.get(
-    '/api/workflows',
-    describeRoute({
-      description: 'Get all workflows',
-      tags: ['workflows'],
-      responses: {
-        200: {
-          description: 'List of all workflows',
-        },
-      },
-    }),
-    getWorkflowsHandler,
-  );
-
-  app.get(
-    '/api/workflows/:workflowId',
-    describeRoute({
-      description: 'Get workflow by ID',
-      tags: ['workflows'],
-      parameters: [
-        {
-          name: 'workflowId',
-          in: 'path',
-          required: true,
-          schema: { type: 'string' },
-        },
-      ],
-      responses: {
-        200: {
-          description: 'Workflow details',
-        },
-        404: {
-          description: 'Workflow not found',
-        },
-      },
-    }),
-    getWorkflowByIdHandler,
-  );
-
-  app.get(
-    '/api/workflows/:workflowId/runs',
-    describeRoute({
-      description: 'Get all runs for a workflow',
-      tags: ['workflows'],
-      parameters: [
-        {
-          name: 'workflowId',
-          in: 'path',
-          required: true,
-          schema: { type: 'string' },
-        },
-        { name: 'fromDate', in: 'query', required: false, schema: { type: 'string', format: 'date-time' } },
-        { name: 'toDate', in: 'query', required: false, schema: { type: 'string', format: 'date-time' } },
-        { name: 'limit', in: 'query', required: false, schema: { type: 'number' } },
-        { name: 'offset', in: 'query', required: false, schema: { type: 'number' } },
-        { name: 'resourceId', in: 'query', required: false, schema: { type: 'string' } },
-      ],
-      responses: {
-        200: {
-          description: 'List of workflow runs from storage',
-        },
-      },
-    }),
-    getWorkflowRunsHandler,
-  );
-
-  app.post(
-    '/api/workflows/:workflowId/resume',
-    describeRoute({
-      description: 'Resume a suspended workflow step',
-      tags: ['workflows'],
-      parameters: [
-        {
-          name: 'workflowId',
-          in: 'path',
-          required: true,
-          schema: { type: 'string' },
-        },
-        {
-          name: 'runId',
-          in: 'query',
-          required: true,
-          schema: { type: 'string' },
-        },
-      ],
-      requestBody: {
-        required: true,
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                step: {
-                  oneOf: [{ type: 'string' }, { type: 'array', items: { type: 'string' } }],
-                },
-                resumeData: { type: 'object' },
-                runtimeContext: {
-                  type: 'object',
-                  description: 'Runtime context for the workflow execution',
-                },
-              },
-              required: ['step'],
-            },
-          },
-        },
-      },
-    }),
-    resumeWorkflowHandler,
-  );
-
-  app.post(
-    '/api/workflows/:workflowId/resume-async',
-    bodyLimit(bodyLimitOptions),
-    describeRoute({
-      description: 'Resume a suspended workflow step',
-      tags: ['workflows'],
-      parameters: [
-        {
-          name: 'workflowId',
-          in: 'path',
-          required: true,
-          schema: { type: 'string' },
-        },
-        {
-          name: 'runId',
-          in: 'query',
-          required: true,
-          schema: { type: 'string' },
-        },
-      ],
-      requestBody: {
-        required: true,
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                step: {
-                  oneOf: [{ type: 'string' }, { type: 'array', items: { type: 'string' } }],
-                },
-                resumeData: { type: 'object' },
-                runtimeContext: {
-                  type: 'object',
-                  description: 'Runtime context for the workflow execution',
-                },
-              },
-              required: ['step'],
-            },
-          },
-        },
-      },
-    }),
-    resumeAsyncWorkflowHandler,
-  );
-
-  app.post(
-    '/api/workflows/:workflowId/create-run',
-    bodyLimit(bodyLimitOptions),
-    describeRoute({
-      description: 'Create a new workflow run',
-      tags: ['workflows'],
-      parameters: [
-        {
-          name: 'workflowId',
-          in: 'path',
-          required: true,
-          schema: { type: 'string' },
-        },
-        {
-          name: 'runId',
-          in: 'query',
-          required: false,
-          schema: { type: 'string' },
-        },
-      ],
-      responses: {
-        200: {
-          description: 'New workflow run created',
-        },
-      },
-    }),
-    createWorkflowRunHandler,
-  );
-
-  app.post(
-    '/api/workflows/:workflowId/start-async',
-    bodyLimit(bodyLimitOptions),
-    describeRoute({
-      description: 'Execute/Start a workflow',
-      tags: ['workflows'],
-      parameters: [
-        {
-          name: 'workflowId',
-          in: 'path',
-          required: true,
-          schema: { type: 'string' },
-        },
-        {
-          name: 'runId',
-          in: 'query',
-          required: false,
-          schema: { type: 'string' },
-        },
-      ],
-      requestBody: {
-        required: true,
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                inputData: { type: 'object' },
-                runtimeContext: {
-                  type: 'object',
-                  description: 'Runtime context for the workflow execution',
-                },
-              },
-            },
-          },
-        },
-      },
-      responses: {
-        200: {
-          description: 'workflow execution result',
-        },
-        404: {
-          description: 'workflow not found',
-        },
-      },
-    }),
-    startAsyncWorkflowHandler,
-  );
-
-  app.post(
-    '/api/workflows/:workflowId/start',
-    describeRoute({
-      description: 'Create and start a new workflow run',
-      tags: ['workflows'],
-      parameters: [
-        {
-          name: 'workflowId',
-          in: 'path',
-          required: true,
-          schema: { type: 'string' },
-        },
-        {
-          name: 'runId',
-          in: 'query',
-          required: true,
-          schema: { type: 'string' },
-        },
-      ],
-      requestBody: {
-        required: true,
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                inputData: { type: 'object' },
-                runtimeContext: {
-                  type: 'object',
-                  description: 'Runtime context for the workflow execution',
-                },
-              },
-            },
-          },
-        },
-      },
-      responses: {
-        200: {
-          description: 'workflow run started',
-        },
-        404: {
-          description: 'workflow not found',
-        },
-      },
-    }),
-    startWorkflowRunHandler,
-  );
-
-  app.get(
-    '/api/workflows/:workflowId/watch',
-    describeRoute({
-      description: 'Watch workflow transitions in real-time',
-      parameters: [
-        {
-          name: 'workflowId',
-          in: 'path',
-          required: true,
-          schema: { type: 'string' },
-        },
-        {
-          name: 'runId',
-          in: 'query',
-          required: false,
-          schema: { type: 'string' },
-        },
-      ],
-      tags: ['workflows'],
-      responses: {
-        200: {
-          description: 'workflow transitions in real-time',
-        },
-      },
-    }),
-    watchWorkflowHandler,
-  );
+  app.route('/api/workflows', workflowsRouter(bodyLimitOptions));
   // Log routes
-  app.get(
-    '/api/logs',
-    describeRoute({
-      description: 'Get all logs',
-      tags: ['logs'],
-      parameters: [
-        {
-          name: 'transportId',
-          in: 'query',
-          required: true,
-          schema: { type: 'string' },
-        },
-      ],
-      responses: {
-        200: {
-          description: 'List of all logs',
-        },
-      },
-    }),
-    getLogsHandler,
-  );
-
-  app.get(
-    '/api/logs/transports',
-    describeRoute({
-      description: 'List of all log transports',
-      tags: ['logs'],
-      responses: {
-        200: {
-          description: 'List of all log transports',
-        },
-      },
-    }),
-    getLogTransports,
-  );
-
-  app.get(
-    '/api/logs/:runId',
-    describeRoute({
-      description: 'Get logs by run ID',
-      tags: ['logs'],
-      parameters: [
-        {
-          name: 'runId',
-          in: 'path',
-          required: true,
-          schema: { type: 'string' },
-        },
-        {
-          name: 'transportId',
-          in: 'query',
-          required: true,
-          schema: { type: 'string' },
-        },
-      ],
-      responses: {
-        200: {
-          description: 'List of logs for run ID',
-        },
-      },
-    }),
-    getLogsByRunIdHandler,
-  );
-
+  app.route('/api/logs', logsRouter());
+  // Scores routes
+  app.route('/api/scores', scoresRouter(bodyLimitOptions));
+  // Agent builder routes
+  app.route('/api/agent-builder', agentBuilderRouter(bodyLimitOptions));
   // Tool routes
-  app.get(
-    '/api/tools',
-    describeRoute({
-      description: 'Get all tools',
-      tags: ['tools'],
-      responses: {
-        200: {
-          description: 'List of all tools',
-        },
-      },
-    }),
-    getToolsHandler,
-  );
-
-  app.get(
-    '/api/tools/:toolId',
-    describeRoute({
-      description: 'Get tool by ID',
-      tags: ['tools'],
-      parameters: [
-        {
-          name: 'toolId',
-          in: 'path',
-          required: true,
-          schema: { type: 'string' },
-        },
-      ],
-      responses: {
-        200: {
-          description: 'Tool details',
-        },
-        404: {
-          description: 'Tool not found',
-        },
-      },
-    }),
-    getToolByIdHandler,
-  );
-
-  app.post(
-    '/api/tools/:toolId/execute',
-    bodyLimit(bodyLimitOptions),
-    describeRoute({
-      description: 'Execute a tool',
-      tags: ['tools'],
-      parameters: [
-        {
-          name: 'toolId',
-          in: 'path',
-          required: true,
-          schema: { type: 'string' },
-        },
-        {
-          name: 'runId',
-          in: 'query',
-          required: false,
-          schema: { type: 'string' },
-        },
-      ],
-      requestBody: {
-        required: true,
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                data: { type: 'object' },
-                runtimeContext: { type: 'object' },
-              },
-              required: ['data'],
-            },
-          },
-        },
-      },
-      responses: {
-        200: {
-          description: 'Tool execution result',
-        },
-        404: {
-          description: 'Tool not found',
-        },
-      },
-    }),
-    executeToolHandler(tools),
-  );
-
+  app.route('/api/tools', toolsRouter(bodyLimitOptions, options.tools));
   // Vector routes
-  app.post(
-    '/api/vector/:vectorName/upsert',
-    bodyLimit(bodyLimitOptions),
-    describeRoute({
-      description: 'Upsert vectors into an index',
-      tags: ['vector'],
-      parameters: [
-        {
-          name: 'vectorName',
-          in: 'path',
-          required: true,
-          schema: { type: 'string' },
-        },
-      ],
-      requestBody: {
-        required: true,
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                indexName: { type: 'string' },
-                vectors: {
-                  type: 'array',
-                  items: {
-                    type: 'array',
-                    items: { type: 'number' },
-                  },
-                },
-                metadata: {
-                  type: 'array',
-                  items: { type: 'object' },
-                },
-                ids: {
-                  type: 'array',
-                  items: { type: 'string' },
-                },
-              },
-              required: ['indexName', 'vectors'],
-            },
-          },
-        },
-      },
-      responses: {
-        200: {
-          description: 'Vectors upserted successfully',
-        },
-      },
-    }),
-    upsertVectors,
-  );
-
-  app.post(
-    '/api/vector/:vectorName/create-index',
-    bodyLimit(bodyLimitOptions),
-    describeRoute({
-      description: 'Create a new vector index',
-      tags: ['vector'],
-      parameters: [
-        {
-          name: 'vectorName',
-          in: 'path',
-          required: true,
-          schema: { type: 'string' },
-        },
-      ],
-      requestBody: {
-        required: true,
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                indexName: { type: 'string' },
-                dimension: { type: 'number' },
-                metric: {
-                  type: 'string',
-                  enum: ['cosine', 'euclidean', 'dotproduct'],
-                },
-              },
-              required: ['indexName', 'dimension'],
-            },
-          },
-        },
-      },
-      responses: {
-        200: {
-          description: 'Index created successfully',
-        },
-      },
-    }),
-    createIndex,
-  );
-
-  app.post(
-    '/api/vector/:vectorName/query',
-    bodyLimit(bodyLimitOptions),
-    describeRoute({
-      description: 'Query vectors from an index',
-      tags: ['vector'],
-      parameters: [
-        {
-          name: 'vectorName',
-          in: 'path',
-          required: true,
-          schema: { type: 'string' },
-        },
-      ],
-      requestBody: {
-        required: true,
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                indexName: { type: 'string' },
-                queryVector: {
-                  type: 'array',
-                  items: { type: 'number' },
-                },
-                topK: { type: 'number' },
-                filter: { type: 'object' },
-                includeVector: { type: 'boolean' },
-              },
-              required: ['indexName', 'queryVector'],
-            },
-          },
-        },
-      },
-      responses: {
-        200: {
-          description: 'Query results',
-        },
-      },
-    }),
-    queryVectors,
-  );
-
-  app.get(
-    '/api/vector/:vectorName/indexes',
-    describeRoute({
-      description: 'List all indexes for a vector store',
-      tags: ['vector'],
-      parameters: [
-        {
-          name: 'vectorName',
-          in: 'path',
-          required: true,
-          schema: { type: 'string' },
-        },
-      ],
-      responses: {
-        200: {
-          description: 'List of indexes',
-        },
-      },
-    }),
-    listIndexes,
-  );
-
-  app.get(
-    '/api/vector/:vectorName/indexes/:indexName',
-    describeRoute({
-      description: 'Get details about a specific index',
-      tags: ['vector'],
-      parameters: [
-        {
-          name: 'vectorName',
-          in: 'path',
-          required: true,
-          schema: { type: 'string' },
-        },
-        {
-          name: 'indexName',
-          in: 'path',
-          required: true,
-          schema: { type: 'string' },
-        },
-      ],
-      responses: {
-        200: {
-          description: 'Index details',
-        },
-      },
-    }),
-    describeIndex,
-  );
-
-  app.delete(
-    '/api/vector/:vectorName/indexes/:indexName',
-    describeRoute({
-      description: 'Delete a specific index',
-      tags: ['vector'],
-      parameters: [
-        {
-          name: 'vectorName',
-          in: 'path',
-          required: true,
-          schema: { type: 'string' },
-        },
-        {
-          name: 'indexName',
-          in: 'path',
-          required: true,
-          schema: { type: 'string' },
-        },
-      ],
-      responses: {
-        200: {
-          description: 'Index deleted successfully',
-        },
-      },
-    }),
-    deleteIndex,
-  );
+  app.route('/api/vector', vectorRouter(bodyLimitOptions));
 
   if (options?.isDev || server?.build?.openAPIDocs || server?.build?.swaggerUI) {
     app.get(
       '/openapi.json',
       openAPISpecs(app, {
+        includeEmptyPaths: true,
         documentation: {
           info: { title: 'Mastra API', version: '1.0.0', description: 'Mastra API' },
         },
@@ -3038,15 +437,47 @@ export async function createHonoServer(mastra: Mastra, options: ServerBundleOpti
   }
 
   if (options?.isDev || server?.build?.swaggerUI) {
-    app.get('/swagger-ui', swaggerUI({ url: '/openapi.json' }));
+    app.get(
+      '/swagger-ui',
+      describeRoute({
+        hide: true,
+      }),
+      swaggerUI({ url: '/openapi.json' }),
+    );
   }
 
   if (options?.playground) {
     // SSE endpoint for refresh notifications
-    app.get('/refresh-events', handleClientsRefresh);
+    app.get(
+      '/refresh-events',
+      describeRoute({
+        hide: true,
+      }),
+      handleClientsRefresh,
+    );
 
     // Trigger refresh for all clients
-    app.post('/__refresh', handleTriggerClientsRefresh);
+    app.post(
+      '/__refresh',
+      describeRoute({
+        hide: true,
+      }),
+      handleTriggerClientsRefresh,
+    );
+
+    // Check hot reload status
+    app.get(
+      '/__hot-reload-status',
+      describeRoute({
+        hide: true,
+      }),
+      (c: Context) => {
+        return c.json({
+          disabled: isHotReloadDisabled(),
+          timestamp: new Date().toISOString(),
+        });
+      },
+    );
     // Playground routes - these should come after API routes
     // Serve assets with specific MIME types
     app.use('/assets/*', async (c, next) => {
@@ -3066,17 +497,9 @@ export async function createHonoServer(mastra: Mastra, options: ServerBundleOpti
         root: './playground/assets',
       }),
     );
-
-    // Serve extra static files from playground directory
-    app.use(
-      '*',
-      serveStatic({
-        root: './playground',
-      }),
-    );
   }
 
-  // Catch-all route to serve index.html for any non-API routes
+  // Dynamic HTML handler - this must come before static file serving
   app.get('*', async (c, next) => {
     // Skip if it's an API route
     if (
@@ -3087,23 +510,48 @@ export async function createHonoServer(mastra: Mastra, options: ServerBundleOpti
       return await next();
     }
 
+    // Skip if it's an asset file (has extension other than .html)
+    const path = c.req.path;
+    if (path.includes('.') && !path.endsWith('.html')) {
+      return await next();
+    }
+
     if (options?.playground) {
-      // For all other routes, serve index.html
+      // For HTML routes, serve index.html with dynamic replacements
       let indexHtml = await readFile(join(process.cwd(), './playground/index.html'), 'utf-8');
       indexHtml = indexHtml.replace(
         `'%%MASTRA_TELEMETRY_DISABLED%%'`,
         `${Boolean(process.env.MASTRA_TELEMETRY_DISABLED)}`,
       );
+
+      // Inject the server port information
+      const serverOptions = mastra.getServer();
+      const port = serverOptions?.port ?? (Number(process.env.PORT) || 4111);
+      const host = serverOptions?.host ?? 'localhost';
+
+      indexHtml = indexHtml.replace(`'%%MASTRA_SERVER_HOST%%'`, `'${host}'`);
+      indexHtml = indexHtml.replace(`'%%MASTRA_SERVER_PORT%%'`, `'${port}'`);
+
       return c.newResponse(indexHtml, 200, { 'Content-Type': 'text/html' });
     }
 
     return c.newResponse(html, 200, { 'Content-Type': 'text/html' });
   });
 
+  if (options?.playground) {
+    // Serve extra static files from playground directory (this comes after HTML handler)
+    app.use(
+      '*',
+      serveStatic({
+        root: './playground',
+      }),
+    );
+  }
+
   return app;
 }
 
-export async function createNodeServer(mastra: Mastra, options: ServerBundleOptions = {}) {
+export async function createNodeServer(mastra: Mastra, options: ServerBundleOptions = { tools: {} }) {
   const app = await createHonoServer(mastra, options);
   const serverOptions = mastra.getServer();
 
@@ -3119,17 +567,22 @@ export async function createNodeServer(mastra: Mastra, options: ServerBundleOpti
       const logger = mastra.getLogger();
       const host = serverOptions?.host ?? 'localhost';
       logger.info(` Mastra API running on port http://${host}:${port}/api`);
-      if (options?.isDev) {
-        logger.info(`🔗 Open API documentation available at http://${host}:${port}/openapi.json`);
-      }
-      if (options?.isDev) {
-        logger.info(`🧪 Swagger UI available at http://${host}:${port}/swagger-ui`);
-      }
       if (options?.playground) {
-        logger.info(`👨‍💻 Playground available at http://${host}:${port}/`);
+        const playgroundUrl = `http://${host}:${port}`;
+        logger.info(`👨‍💻 Playground available at ${playgroundUrl}`);
+      }
+
+      if (process.send) {
+        process.send({
+          type: 'server-ready',
+          port,
+          host,
+        });
       }
     },
   );
+
+  await mastra.startEventEngine();
 
   return server;
 }

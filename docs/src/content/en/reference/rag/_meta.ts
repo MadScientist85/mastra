@@ -1,10 +1,12 @@
 export default {
+  document: "MDocument",
   chunk: ".chunk()",
   embeddings: ".embed()",
   "extract-params": "ExtractParams",
   rerank: "rerank()",
-  document: "MDocument",
+  rerankWithScorer: "rerankWithScorer()",
   "metadata-filters": "Metadata Filters",
+  "database-config": "DatabaseConfig",
   "graph-rag": "GraphRAG",
   astra: "AstraVector",
   chroma: "ChromaVector",
@@ -18,4 +20,6 @@ export default {
   qdrant: "QdrantVector",
   turbopuffer: "TurboPuffer",
   upstash: "UpstashVector",
+  lance: "LanceVector",
+  s3vectors: "S3Vectors",
 };

@@ -1,5 +1,7 @@
 const meta = {
   index: "Overview",
+  "arize-ax": "Arize AX",
+  "arize-phoenix": "Arize Phoenix",
   dash0: "Dash0",
   signoz: "SigNoz",
   braintrust: "Braintrust",
@@ -9,6 +11,7 @@ const meta = {
   "new-relic": "New Relic",
   traceloop: "Traceloop",
   laminar: "Laminar",
+  keywordsai: "Keywords AI",
 };
 
 export default meta;

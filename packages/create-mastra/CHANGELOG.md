@@ -1,5 +1,603 @@
 # create-mastra
 
+## 0.12.2
+
+## 0.12.2-alpha.0
+
+## 0.12.1
+
+### Patch Changes
+
+- dependencies updates: ([#7544](https://github.com/mastra-ai/mastra/pull/7544))
+  - Updated dependency [`fs-extra@^11.3.1` ↗︎](https://www.npmjs.com/package/fs-extra/v/11.3.1) (from `^11.3.0`, in `dependencies`)
+
+- add workflow streaming in agent thread ([#7506](https://github.com/mastra-ai/mastra/pull/7506))
+
+- Fix template slug when getting template environment variables ([#7650](https://github.com/mastra-ai/mastra/pull/7650))
+
+- Update cli dev copy from "Local" - ([#7579](https://github.com/mastra-ai/mastra/pull/7579))
+
+## 0.12.1-alpha.2
+
+### Patch Changes
+
+- Fix template slug when getting template environment variables ([#7650](https://github.com/mastra-ai/mastra/pull/7650))
+
+## 0.12.1-alpha.1
+
+### Patch Changes
+
+- add workflow streaming in agent thread ([#7506](https://github.com/mastra-ai/mastra/pull/7506))
+
+## 0.12.1-alpha.0
+
+### Patch Changes
+
+- dependencies updates: ([#7544](https://github.com/mastra-ai/mastra/pull/7544))
+  - Updated dependency [`fs-extra@^11.3.1` ↗︎](https://www.npmjs.com/package/fs-extra/v/11.3.1) (from `^11.3.0`, in `dependencies`)
+
+- Update cli dev copy from "Local" - ([#7579](https://github.com/mastra-ai/mastra/pull/7579))
+
+## 0.12.0
+
+### Minor Changes
+
+- a01cf14: Add workflow graph in agent (workflow as tool in agent)
+
+### Patch Changes
+
+- 788e612: Fix playground workflow graph is broken when workflow starts with a branch
+- 5397eb4: Add public URL support when adding files in Multi Modal
+
+## 0.12.0-alpha.1
+
+## 0.12.0-alpha.0
+
+### Minor Changes
+
+- a01cf14: Add workflow graph in agent (workflow as tool in agent)
+
+### Patch Changes
+
+- 788e612: Fix playground workflow graph is broken when workflow starts with a branch
+- 5397eb4: Add public URL support when adding files in Multi Modal
+
+## 0.11.3
+
+### Patch Changes
+
+- 64152fd: Improve output of Cli Dev command
+- de3cbc6: Update the `package.json` file to include additional fields like `repository`, `homepage` or `files`.
+- 8e4fe90: Unify focus outlines
+- f539199: mastra start - load env files, custom env. Deperecate --env flag for mastra build
+- 87de958: fix chat outline
+- 6f715fe: Fix plyground baseUrl, default api baseUrl to playground baseUrl
+- 01264f1: Mastra dev- load env vars before watch
+- 3308c9f: fix dev:playground command
+- d99baf6: change outline
+
+## 0.11.3-alpha.4
+
+### Patch Changes
+
+- [#7357](https://github.com/mastra-ai/mastra/pull/7357) [`01264f1`](https://github.com/mastra-ai/mastra/commit/01264f1280db040d1bd1ac9b8d29cfcaac3d6cbc) Thanks [@TheIsrael1](https://github.com/TheIsrael1)! - Mastra dev- load env vars before watch
+
+## 0.11.3-alpha.3
+
+### Patch Changes
+
+- [#7343](https://github.com/mastra-ai/mastra/pull/7343) [`de3cbc6`](https://github.com/mastra-ai/mastra/commit/de3cbc61079211431bd30487982ea3653517278e) Thanks [@LekoArts](https://github.com/LekoArts)! - Update the `package.json` file to include additional fields like `repository`, `homepage` or `files`.
+
+## 0.11.3-alpha.2
+
+### Patch Changes
+
+- [#7218](https://github.com/mastra-ai/mastra/pull/7218) [`f539199`](https://github.com/mastra-ai/mastra/commit/f53919950a9320b292732e0cfcdf61cdae6c8742) Thanks [@TheIsrael1](https://github.com/TheIsrael1)! - mastra start - load env files, custom env. Deperecate --env flag for mastra build
+
+## 0.11.3-alpha.1
+
+### Patch Changes
+
+- [#7210](https://github.com/mastra-ai/mastra/pull/7210) [`87de958`](https://github.com/mastra-ai/mastra/commit/87de95832a7bdfa9ecb14473c84dc874331f1a7d) Thanks [@mfrachet](https://github.com/mfrachet)! - fix chat outline
+
+## 0.11.3-alpha.0
+
+### Patch Changes
+
+- [#7046](https://github.com/mastra-ai/mastra/pull/7046) [`64152fd`](https://github.com/mastra-ai/mastra/commit/64152fd4e8f8c76612b82a2e4981ee09b22674d7) Thanks [@adeleke5140](https://github.com/adeleke5140)! - Improve output of Cli Dev command
+
+- [#7076](https://github.com/mastra-ai/mastra/pull/7076) [`8e4fe90`](https://github.com/mastra-ai/mastra/commit/8e4fe90605ee4dfcfd911a7f07e1355fe49205ba) Thanks [@mfrachet](https://github.com/mfrachet)! - Unify focus outlines
+
+- [#7115](https://github.com/mastra-ai/mastra/pull/7115) [`6f715fe`](https://github.com/mastra-ai/mastra/commit/6f715fe524296e1138a319e56bcf8e4214bd5dd5) Thanks [@TheIsrael1](https://github.com/TheIsrael1)! - Fix plyground baseUrl, default api baseUrl to playground baseUrl
+
+- [#7044](https://github.com/mastra-ai/mastra/pull/7044) [`3308c9f`](https://github.com/mastra-ai/mastra/commit/3308c9ff1da7594925d193a825f33da2880fb9c1) Thanks [@mfrachet](https://github.com/mfrachet)! - fix dev:playground command
+
+- [#7101](https://github.com/mastra-ai/mastra/pull/7101) [`d99baf6`](https://github.com/mastra-ai/mastra/commit/d99baf6e69bbf83e9a286fbd18c47543de12cb58) Thanks [@mfrachet](https://github.com/mfrachet)! - change outline
+
+## 0.11.2
+
+### Patch Changes
+
+- [`c6113ed`](https://github.com/mastra-ai/mastra/commit/c6113ed7f9df297e130d94436ceee310273d6430) Thanks [@wardpeet](https://github.com/wardpeet)! - Fix peerdpes for @mastra/core
+
+## 0.11.1
+
+### Patch Changes
+
+- [#6948](https://github.com/mastra-ai/mastra/pull/6948) [`a8070e6`](https://github.com/mastra-ai/mastra/commit/a8070e63ab384ae14a214faaf8634c53b7064bc3) Thanks [@taofeeq-deru](https://github.com/taofeeq-deru)! - Preserve run state in workflows after viewing traces
+
+## 0.11.0-alpha.3
+
+## 0.10.24-alpha.2
+
+## 0.10.24-alpha.1
+
+## 0.10.24-alpha.0
+
+### Patch Changes
+
+- [#6948](https://github.com/mastra-ai/mastra/pull/6948) [`a8070e6`](https://github.com/mastra-ai/mastra/commit/a8070e63ab384ae14a214faaf8634c53b7064bc3) Thanks [@taofeeq-deru](https://github.com/taofeeq-deru)! - Preserve run state in workflows after viewing traces
+
+## 0.10.23
+
+## 0.10.23-alpha.0
+
+## 0.10.22
+
+### Patch Changes
+
+- 8f8409a: Inject analytics instance into create cmd
+- 97c1d5e: Add new `scorers` subcommand for managing scorers.
+  Refactor cli to be more modular.
+- 6313063: Implement model switcher in playground
+- 36928f0: Use right icon for anthropic in model switcher
+
+## 0.10.22-alpha.6
+
+## 0.10.22-alpha.5
+
+## 0.10.22-alpha.4
+
+## 0.10.22-alpha.3
+
+## 0.10.22-alpha.2
+
+### Patch Changes
+
+- 36928f0: Use right icon for anthropic in model switcher
+
+## 0.10.22-alpha.1
+
+### Patch Changes
+
+- 8f8409a: Inject analytics instance into create cmd
+- 6313063: Implement model switcher in playground
+
+## 0.10.22-alpha.0
+
+### Patch Changes
+
+- 97c1d5e: Add new `scorers` subcommand for managing scorers.
+  Refactor cli to be more modular.
+
+## 0.10.21
+
+### Patch Changes
+
+- 77b6cfe: Use just modelId for gpt-5 check
+- 96169cc: Create handler that returns providers user has keys for in their env
+- 33da97c: Set temperature to 1 for gpt-5 model in playground
+- c6d2603: Properly set baseUrl in playground when user sets the host or port in Mastra instance.
+- 7aad750: Fix tool ui showing after message when chat is refreshed
+- ce04175: Add update agent model handler
+
+## 0.10.21-alpha.2
+
+### Patch Changes
+
+- 77b6cfe: Use just modelId for gpt-5 check
+- 96169cc: Create handler that returns providers user has keys for in their env
+- 33da97c: Set temperature to 1 for gpt-5 model in playground
+- c6d2603: Properly set baseUrl in playground when user sets the host or port in Mastra instance.
+- ce04175: Add update agent model handler
+
+## 0.10.21-alpha.1
+
+## 0.10.21-alpha.0
+
+### Patch Changes
+
+- 7aad750: Fix tool ui showing after message when chat is refreshed
+
+## 0.10.20
+
+## 0.10.20-alpha.0
+
+## 0.10.19
+
+## 0.10.19-alpha.2
+
+## 0.10.19-alpha.1
+
+## 0.10.19-alpha.0
+
+## 0.10.15
+
+### Patch Changes
+
+- ad04455: Missed changeset in last release, needed to include create-mastra
+
+## 0.10.15-alpha.0
+
+### Patch Changes
+
+- ad04455: Missed changeset in last release, needed to include create-mastra
+
+## 0.10.14
+
+### Patch Changes
+
+- f442224: speech to text using voice config
+- d8dec5e: add a cta to invite to deploy to cloud
+- 6336993: Fix workflow input form overflow
+- 89d2f4e: add TTS to the playground
+
+## 0.10.14-alpha.1
+
+### Patch Changes
+
+- 6336993: Fix workflow input form overflow
+
+## 0.10.14-alpha.0
+
+### Patch Changes
+
+- f442224: speech to text using voice config
+- d8dec5e: add a cta to invite to deploy to cloud
+- 89d2f4e: add TTS to the playground
+
+## 0.10.13
+
+### Patch Changes
+
+- dd2a4c9: change the way we start the dev process of playground
+- af1f902: share thread list between agent, network and cloud
+- 8f89bcd: fix traces pagination + sharing trace view with cloud
+- 0bf0bc8: fix link in shared components + add e2e tests
+- 2affc57: Fix output type of network loop
+- f6c4d75: fix date picker on change
+- 59f0dcd: Add light background color for step statuses
+- 698518b: Allow external templates from github
+- cf8d497: factorize tabs component between cloud and core
+- 7827943: Handle streaming large data
+- 808b493: wrap runtime context with tooltip provider for usage in cloud
+- 09464dd: Share AgentMetadata component with cloud
+- 80692d5: refactor: sharing only the UI and not data fetching for traces
+
+## 0.10.13-alpha.2
+
+### Patch Changes
+
+- dd2a4c9: change the way we start the dev process of playground
+- af1f902: share thread list between agent, network and cloud
+- 2affc57: Fix output type of network loop
+- f6c4d75: fix date picker on change
+- 698518b: Allow external templates from github
+- 09464dd: Share AgentMetadata component with cloud
+
+## 0.10.13-alpha.1
+
+### Patch Changes
+
+- 8f89bcd: fix traces pagination + sharing trace view with cloud
+- 59f0dcd: Add light background color for step statuses
+- cf8d497: factorize tabs component between cloud and core
+- 80692d5: refactor: sharing only the UI and not data fetching for traces
+
+## 0.10.13-alpha.0
+
+### Patch Changes
+
+- 0bf0bc8: fix link in shared components + add e2e tests
+- 7827943: Handle streaming large data
+- 808b493: wrap runtime context with tooltip provider for usage in cloud
+
+## 0.10.12
+
+### Patch Changes
+
+- 984887a: dependencies updates:
+  - Updated dependency [`prettier@^3.6.2` ↗︎](https://www.npmjs.com/package/prettier/v/3.6.2) (from `^3.5.3`, in `dependencies`)
+- 593631d: allow to pass ref to the link abstraction
+- 5237998: Fix foreach output
+- 1aa60b1: Pipe runtimeContext to vNext network agent stream and generate steps, wire up runtimeContext for vNext Networks in cliet SDK & playground
+- d49334d: export tool list for usage in cloud
+- 9cdfcb5: fix infinite rerenders on agents table + share runtime context for cloud
+- 794d9f3: Fix thread creation in playground
+- aa9528a: Display reasoning in playground
+- 45174f3: share network list between core and cloud
+- 48f5532: export workflow list for usage in cloud
+- e1d0080: abstract Link component between cloud and core
+- f9b1508: add the same agent table as in cloud and export it from the playground
+- dfbeec6: Fix navigation to vnext AgentNetwork agents
+
+## 0.10.12-alpha.2
+
+### Patch Changes
+
+- 794d9f3: Fix thread creation in playground
+- dfbeec6: Fix navigation to vnext AgentNetwork agents
+
+## 0.10.12-alpha.1
+
+### Patch Changes
+
+- d49334d: export tool list for usage in cloud
+- 9cdfcb5: fix infinite rerenders on agents table + share runtime context for cloud
+- 45174f3: share network list between core and cloud
+- 48f5532: export workflow list for usage in cloud
+
+## 0.10.12-alpha.0
+
+### Patch Changes
+
+- 984887a: dependencies updates:
+  - Updated dependency [`prettier@^3.6.2` ↗︎](https://www.npmjs.com/package/prettier/v/3.6.2) (from `^3.5.3`, in `dependencies`)
+- 593631d: allow to pass ref to the link abstraction
+- 5237998: Fix foreach output
+- 1aa60b1: Pipe runtimeContext to vNext network agent stream and generate steps, wire up runtimeContext for vNext Networks in cliet SDK & playground
+- aa9528a: Display reasoning in playground
+- e1d0080: abstract Link component between cloud and core
+- f9b1508: add the same agent table as in cloud and export it from the playground
+
+## 0.10.11
+
+### Patch Changes
+
+- 640f47e: move agent model settings into agent settings
+
+## 0.10.11-alpha.0
+
+### Patch Changes
+
+- 640f47e: move agent model settings into agent settings
+
+## 0.10.10
+
+### Patch Changes
+
+- af9e40e: Map log level number to string value
+- f457d86: reset localstorage when resetting model settings
+- 8722d53: Fix multi modal remaining steps
+- 4219597: add JSON input close to form input
+- b790fd1: Use SerializedStepFlowEntry in playground
+- a7a836a: Highlight send event button
+- 18ca936: Update rollup config for create-mastra
+
+## 0.10.10-alpha.3
+
+### Patch Changes
+
+- f457d86: reset localstorage when resetting model settings
+- 8722d53: Fix multi modal remaining steps
+
+## 0.10.10-alpha.2
+
+### Patch Changes
+
+- 4219597: add JSON input close to form input
+- 18ca936: Update rollup config for create-mastra
+
+## 0.10.10-alpha.1
+
+### Patch Changes
+
+- a7a836a: Highlight send event button
+
+## 0.10.10-alpha.0
+
+### Patch Changes
+
+- af9e40e: Map log level number to string value
+- b790fd1: Use SerializedStepFlowEntry in playground
+
+## 0.10.9
+
+### Patch Changes
+
+- 6997af1: add send event to server, deployer, client-js and playground-ui
+
+## 0.10.9-alpha.0
+
+### Patch Changes
+
+- 6997af1: add send event to server, deployer, client-js and playground-ui
+
+## 0.10.8
+
+### Patch Changes
+
+- 4e06e3f: timing not displayed correctly in traces
+- 7e801dd: [MASTRA-4118] fixes issue with agent network loopStream where subsequent messages aren't present in playground on refresh
+- a606c75: show right suspend schema for nested workflow on playground
+- 1760a1c: Use workflow stream in playground instead of watch
+- 038e5ae: Add cancel workflow run
+- ac369c6: Show resume data on workflow graph
+- 976a62b: remove persistence capabilities in model settings components
+- 4e809ad: Visualizations for .sleep()/.sleepUntil()/.waitForEvent()
+- f78f399: Make AgentModelSettings shareable between cloud and playground
+- 57929df: agent network display
+
+## 0.10.8-alpha.0
+
+### Patch Changes
+
+- 4e06e3f: timing not displayed correctly in traces
+- 7e801dd: [MASTRA-4118] fixes issue with agent network loopStream where subsequent messages aren't present in playground on refresh
+- a606c75: show right suspend schema for nested workflow on playground
+- 1760a1c: Use workflow stream in playground instead of watch
+- 038e5ae: Add cancel workflow run
+- ac369c6: Show resume data on workflow graph
+- 976a62b: remove persistence capabilities in model settings components
+- 4e809ad: Visualizations for .sleep()/.sleepUntil()/.waitForEvent()
+- f78f399: Make AgentModelSettings shareable between cloud and playground
+- 57929df: agent network display
+
+## 0.10.7
+
+### Patch Changes
+
+- a344ac7: Fix tool streaming in agent network
+
+## 0.10.7-alpha.0
+
+### Patch Changes
+
+- a344ac7: Fix tool streaming in agent network
+
+## 0.10.6
+
+### Patch Changes
+
+- 5d74aab: vNext network in playground
+- 9102d89: Fix final output not showing on playground for previously suspended steps
+- 21ffb97: Make dynamic form handle schema better
+- f9b4350: fix icons not showing on all agents
+
+## 0.10.6-alpha.3
+
+### Patch Changes
+
+- f9b4350: fix icons not showing on all agents
+
+## 0.10.6-alpha.2
+
+### Patch Changes
+
+- 5d74aab: vNext network in playground
+
+## 0.10.6-alpha.1
+
+### Patch Changes
+
+- 21ffb97: Make dynamic form handle schema better
+
+## 0.10.6-alpha.0
+
+### Patch Changes
+
+- 9102d89: Fix final output not showing on playground for previously suspended steps
+
+## 0.10.5
+
+### Patch Changes
+
+- 02560d4: lift evals fetching to the playground package instead
+- 63f6b7d: dependencies updates:
+  - Updated dependency [`execa@^9.6.0` ↗︎](https://www.npmjs.com/package/execa/v/9.6.0) (from `^9.5.2`, in `dependencies`)
+  - Updated dependency [`pino@^9.7.0` ↗︎](https://www.npmjs.com/package/pino/v/9.7.0) (from `^9.6.0`, in `dependencies`)
+  - Updated dependency [`posthog-node@^4.18.0` ↗︎](https://www.npmjs.com/package/posthog-node/v/4.18.0) (from `^4.10.1`, in `dependencies`)
+- 5f2aa3e: Move workflow hooks to playground
+- 44ba52d: Add proper error message when installation of mastra fails
+- 311132e: move useWorkflow to playground instead of playground-ui
+- 3270d9d: Fix runtime context being undefined
+- 53d3c37: Get workflows from an agent if not found from Mastra instance #5083
+- fc677d7: For final result for a workflow
+
+## 0.10.5-alpha.2
+
+### Patch Changes
+
+- 5f2aa3e: Move workflow hooks to playground
+
+## 0.10.5-alpha.1
+
+### Patch Changes
+
+- 44ba52d: Add proper error message when installation of mastra fails
+- 3270d9d: Fix runtime context being undefined
+- fc677d7: For final result for a workflow
+
+## 0.10.5-alpha.0
+
+### Patch Changes
+
+- 02560d4: lift evals fetching to the playground package instead
+- 63f6b7d: dependencies updates:
+  - Updated dependency [`execa@^9.6.0` ↗︎](https://www.npmjs.com/package/execa/v/9.6.0) (from `^9.5.2`, in `dependencies`)
+  - Updated dependency [`pino@^9.7.0` ↗︎](https://www.npmjs.com/package/pino/v/9.7.0) (from `^9.6.0`, in `dependencies`)
+  - Updated dependency [`posthog-node@^4.18.0` ↗︎](https://www.npmjs.com/package/posthog-node/v/4.18.0) (from `^4.10.1`, in `dependencies`)
+- 311132e: move useWorkflow to playground instead of playground-ui
+- 53d3c37: Get workflows from an agent if not found from Mastra instance #5083
+
+## 0.10.4
+
+### Patch Changes
+
+- 1ba421d: fix the tools not showing on workflows attached to agents
+- 8725d02: Improve cli by reducing the amount of setups during interactive prompt
+- 13c97f9: Save run status, result and error in storage snapshot
+
+## 0.10.3
+
+### Patch Changes
+
+- e719504: don't start posthog when the browser is Brave
+- 8f60de4: fix workflow output when the schema is a primitive
+
+## 0.10.3-alpha.1
+
+### Patch Changes
+
+- e719504: don't start posthog when the browser is Brave
+
+## 0.10.3-alpha.0
+
+### Patch Changes
+
+- 8f60de4: fix workflow output when the schema is a primitive
+
+## 0.10.2
+
+### Patch Changes
+
+- 73fec0b: Mastra start cli command"
+- 401bbae: Show workflow graph from stepGraph of previous runs when viewing a previous run
+- f73e11b: fix telemetry disabled not working on playground
+- 9666468: move the fetch traces call to the playground instead of playground-ui
+- 90e96de: Fix: prevent default flag from triggering interactive prompt
+- 89a69d0: add a way to go to the given trace of a workflow step
+- 6fd77b5: add docs and txt support for multi modal
+- 9faee5b: small fixes in the workflows graph
+- 631683f: move workflow runs list in playground-ui instead of playground
+- f6ddf55: fix traces not showing and reduce API surface from playground ui
+- 9a31c09: Highlight steps in nested workflows on workflow graph
+
+## 0.10.2-alpha.6
+
+### Patch Changes
+
+- 90e96de: Fix: prevent default flag from triggering interactive prompt
+
+## 0.10.2-alpha.5
+
+### Patch Changes
+
+- 6fd77b5: add docs and txt support for multi modal
+- 631683f: move workflow runs list in playground-ui instead of playground
+
+## 0.10.2-alpha.4
+
+### Patch Changes
+
+- 9666468: move the fetch traces call to the playground instead of playground-ui
+
+## 0.10.2-alpha.3
+
+### Patch Changes
+
+- 401bbae: Show workflow graph from stepGraph of previous runs when viewing a previous run
+
 ## 0.10.2-alpha.2
 
 ### Patch Changes

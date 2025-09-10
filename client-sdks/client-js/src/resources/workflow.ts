@@ -6,6 +6,8 @@ import type {
   GetWorkflowRunsParams,
   WorkflowRunResult,
   WorkflowWatchResult,
+  GetWorkflowRunByIdResponse,
+  GetWorkflowRunExecutionResultResponse,
 } from '../types';
 
 import { parseClientRuntimeContext } from '../utils';
@@ -113,10 +115,10 @@ export class Workflow extends BaseResource {
     if (params?.toDate) {
       searchParams.set('toDate', params.toDate.toISOString());
     }
-    if (params?.limit) {
+    if (params?.limit !== null && params?.limit !== undefined && !isNaN(Number(params?.limit))) {
       searchParams.set('limit', String(params.limit));
     }
-    if (params?.offset) {
+    if (params?.offset !== null && params?.offset !== undefined && !isNaN(Number(params?.offset))) {
       searchParams.set('offset', String(params.offset));
     }
     if (params?.resourceId) {
@@ -128,6 +130,47 @@ export class Workflow extends BaseResource {
     } else {
       return this.request(`/api/workflows/${this.workflowId}/runs`);
     }
+  }
+
+  /**
+   * Retrieves a specific workflow run by its ID
+   * @param runId - The ID of the workflow run to retrieve
+   * @returns Promise containing the workflow run details
+   */
+  runById(runId: string): Promise<GetWorkflowRunByIdResponse> {
+    return this.request(`/api/workflows/${this.workflowId}/runs/${runId}`);
+  }
+
+  /**
+   * Retrieves the execution result for a specific workflow run by its ID
+   * @param runId - The ID of the workflow run to retrieve the execution result for
+   * @returns Promise containing the workflow run execution result
+   */
+  runExecutionResult(runId: string): Promise<GetWorkflowRunExecutionResultResponse> {
+    return this.request(`/api/workflows/${this.workflowId}/runs/${runId}/execution-result`);
+  }
+
+  /**
+   * Cancels a specific workflow run by its ID
+   * @param runId - The ID of the workflow run to cancel
+   * @returns Promise containing a success message
+   */
+  cancelRun(runId: string): Promise<{ message: string }> {
+    return this.request(`/api/workflows/${this.workflowId}/runs/${runId}/cancel`, {
+      method: 'POST',
+    });
+  }
+
+  /**
+   * Sends an event to a specific workflow run by its ID
+   * @param params - Object containing the runId, event and data
+   * @returns Promise containing a success message
+   */
+  sendRunEvent(params: { runId: string; event: string; data: unknown }): Promise<{ message: string }> {
+    return this.request(`/api/workflows/${this.workflowId}/runs/${params.runId}/send-event`, {
+      method: 'POST',
+      body: { event: params.event, data: params.data },
+    });
   }
 
   /**
@@ -145,6 +188,15 @@ export class Workflow extends BaseResource {
     return this.request(`/api/workflows/${this.workflowId}/create-run?${searchParams.toString()}`, {
       method: 'POST',
     });
+  }
+
+  /**
+   * Creates a new workflow run (alias for createRun)
+   * @param params - Optional object containing the optional runId
+   * @returns Promise containing the runId of the created run
+   */
+  createRunAsync(params?: { runId?: string }): Promise<{ runId: string }> {
+    return this.createRun(params);
   }
 
   /**
@@ -217,9 +269,9 @@ export class Workflow extends BaseResource {
   }
 
   /**
-   * Starts a vNext workflow run and returns a stream
+   * Starts a workflow run and returns a stream
    * @param params - Object containing the optional runId, inputData and runtimeContext
-   * @returns Promise containing the vNext workflow execution results
+   * @returns Promise containing the workflow execution results
    */
   async stream(params: { runId?: string; inputData: Record<string, any>; runtimeContext?: RuntimeContext }) {
     const searchParams = new URLSearchParams();
@@ -228,7 +280,7 @@ export class Workflow extends BaseResource {
       searchParams.set('runId', params.runId);
     }
 
-    const runtimeContext = params.runtimeContext ? Object.fromEntries(params.runtimeContext.entries()) : undefined;
+    const runtimeContext = parseClientRuntimeContext(params.runtimeContext);
     const response: Response = await this.request(
       `/api/workflows/${this.workflowId}/stream?${searchParams.toString()}`,
       {
@@ -246,8 +298,11 @@ export class Workflow extends BaseResource {
       throw new Error('Response body is null');
     }
 
+    //using undefined instead of empty string to avoid parsing errors
+    let failedChunk: string | undefined = undefined;
+
     // Create a transform stream that processes the response body
-    const transformStream = new TransformStream<ArrayBuffer, WorkflowWatchResult>({
+    const transformStream = new TransformStream<ArrayBuffer, { type: string; payload: any }>({
       start() {},
       async transform(chunk, controller) {
         try {
@@ -260,11 +315,83 @@ export class Workflow extends BaseResource {
           // Process each chunk
           for (const chunk of chunks) {
             if (chunk) {
+              const newChunk: string = failedChunk ? failedChunk + chunk : chunk;
               try {
-                const parsedChunk = JSON.parse(chunk);
+                const parsedChunk = JSON.parse(newChunk);
                 controller.enqueue(parsedChunk);
+                failedChunk = undefined;
               } catch {
-                // Silently ignore parsing errors
+                failedChunk = newChunk;
+              }
+            }
+          }
+        } catch {
+          // Silently ignore processing errors
+        }
+      },
+    });
+
+    // Pipe the response body through the transform stream
+    return response.body.pipeThrough(transformStream);
+  }
+
+  /**
+   * Starts a workflow run and returns a stream
+   * @param params - Object containing the optional runId, inputData and runtimeContext
+   * @returns Promise containing the workflow execution results
+   */
+  async streamVNext(params: { runId?: string; inputData: Record<string, any>; runtimeContext?: RuntimeContext }) {
+    const searchParams = new URLSearchParams();
+
+    if (!!params?.runId) {
+      searchParams.set('runId', params.runId);
+    }
+
+    const runtimeContext = parseClientRuntimeContext(params.runtimeContext);
+    const response: Response = await this.request(
+      `/api/workflows/${this.workflowId}/streamVNext?${searchParams.toString()}`,
+      {
+        method: 'POST',
+        body: { inputData: params.inputData, runtimeContext },
+        stream: true,
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error(`Failed to stream vNext workflow: ${response.statusText}`);
+    }
+
+    if (!response.body) {
+      throw new Error('Response body is null');
+    }
+
+    //using undefined instead of empty string to avoid parsing errors
+    let failedChunk: string | undefined = undefined;
+
+    // Create a transform stream that processes the response body
+    const transformStream = new TransformStream<
+      ArrayBuffer,
+      { type: string; payload: any; runId: string; from: 'AGENT' | 'WORKFLOW' }
+    >({
+      start() {},
+      async transform(chunk, controller) {
+        try {
+          // Decode binary data to text
+          const decoded = new TextDecoder().decode(chunk);
+
+          // Split by record separator
+          const chunks = decoded.split(RECORD_SEPARATOR);
+
+          // Process each chunk
+          for (const chunk of chunks) {
+            if (chunk) {
+              const newChunk: string = failedChunk ? failedChunk + chunk : chunk;
+              try {
+                const parsedChunk = JSON.parse(newChunk);
+                controller.enqueue(parsedChunk);
+                failedChunk = undefined;
+              } catch {
+                failedChunk = newChunk;
               }
             }
           }

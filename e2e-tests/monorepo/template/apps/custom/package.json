@@ -13,10 +13,14 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@ai-sdk/openai": "^1.2.1",
+    "@ai-sdk/openai": "^2.0.23",
     "@mastra/core": "monorepo-test",
     "@inner/inner-tools": "workspace:*",
-    "zod": "^3.24.3"
+    "@inner/hello-world": "workspace:*",
+    "date-fns": "^4.1.0",
+    "lodash": "^4.17.21",
+    "hono": "^4.9.6",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "mastra": "monorepo-test"

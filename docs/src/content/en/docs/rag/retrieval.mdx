@@ -166,6 +166,97 @@ This is particularly useful when:
 - The retrieval process requires complex decision-making
 - You want the agent to combine multiple retrieval strategies based on context
 
+#### Database-Specific Configurations
+
+The Vector Query Tool supports database-specific configurations that enable you to leverage unique features and optimizations of different vector stores:
+
+```ts showLineNumbers copy
+// Pinecone with namespace
+const pineconeQueryTool = createVectorQueryTool({
+  vectorStoreName: "pinecone",
+  indexName: "docs",
+  model: openai.embedding("text-embedding-3-small"),
+  databaseConfig: {
+    pinecone: {
+      namespace: "production"  // Isolate data by environment
+    }
+  }
+});
+
+// pgVector with performance tuning
+const pgVectorQueryTool = createVectorQueryTool({
+  vectorStoreName: "postgres",
+  indexName: "embeddings", 
+  model: openai.embedding("text-embedding-3-small"),
+  databaseConfig: {
+    pgvector: {
+      minScore: 0.7,    // Filter low-quality results
+      ef: 200,          // HNSW search parameter
+      probes: 10        // IVFFlat probe parameter
+    }
+  }
+});
+
+// Chroma with advanced filtering
+const chromaQueryTool = createVectorQueryTool({
+  vectorStoreName: "chroma",
+  indexName: "documents",
+  model: openai.embedding("text-embedding-3-small"),
+  databaseConfig: {
+    chroma: {
+      where: { "category": "technical" },
+      whereDocument: { "$contains": "API" }
+    }
+  }
+});
+
+// LanceDB with table specificity
+const lanceQueryTool = createVectorQueryTool({
+  vectorStoreName: "lance",
+  indexName: "documents",
+  model: openai.embedding("text-embedding-3-small"),
+  databaseConfig: {
+    lance: {
+      tableName: "myVectors",     // Specify which table to query
+      includeAllColumns: true     // Include all metadata columns in results
+    }
+  }
+});
+```
+
+**Key Benefits:**
+- **Pinecone namespaces**: Organize vectors by tenant, environment, or data type
+- **pgVector optimization**: Control search accuracy and speed with ef/probes parameters
+- **Quality filtering**: Set minimum similarity thresholds to improve result relevance
+- **LanceDB tables**: Separate data into tables for better organization and performance
+- **Runtime flexibility**: Override configurations dynamically based on context
+
+**Common Use Cases:**
+- Multi-tenant applications using Pinecone namespaces
+- Performance optimization in high-load scenarios
+- Environment-specific configurations (dev/staging/prod)
+- Quality-gated search results
+- Embedded, file-based vector storage with LanceDB for edge deployment scenarios
+
+You can also override these configurations at runtime using the runtime context:
+
+```ts showLineNumbers copy
+import { RuntimeContext } from '@mastra/core/runtime-context';
+
+const runtimeContext = new RuntimeContext();
+runtimeContext.set('databaseConfig', {
+  pinecone: {
+    namespace: 'runtime-namespace'
+  }
+});
+
+await pineconeQueryTool.execute({
+  context: { queryText: 'search query' },
+  mastra,
+  runtimeContext
+});
+```
+
 For detailed configuration options and advanced usage, see the [Vector Query Tool Reference](/reference/tools/vector-query-tool).
 
 ### Vector Store Prompts
@@ -178,9 +269,9 @@ LLM CONTEXT: This Tabs component displays vector store configuration examples fo
 Each tab shows how to configure a RAG agent with the appropriate prompt for that specific vector store.
 The tabs demonstrate the consistent pattern of importing the store-specific prompt and adding it to agent instructions.
 This helps users understand how to properly configure their RAG agents for different vector database backends.
-The providers include Pg Vector, Pinecone, Qdrant, Chroma, Astra, LibSQL, Upstash, Cloudflare, MongoDB, and OpenSearch.
+The providers include Pg Vector, Pinecone, Qdrant, Chroma, Astra, LibSQL, Upstash, Cloudflare, MongoDB, OpenSearch and S3 Vectors.
 */}
-<Tabs items={['Pg Vector', 'Pinecone', 'Qdrant', 'Chroma', 'Astra', 'LibSQL', 'Upstash', 'Cloudflare', 'MongoDB', 'OpenSearch']}>
+<Tabs items={['Pg Vector', 'Pinecone', 'Qdrant', 'Chroma', 'Astra', 'LibSQL', 'Upstash', 'Cloudflare', 'MongoDB', 'OpenSearch', 'S3 Vectors']}>
   <Tabs.Tab>
 ```ts showLineNumbers copy
 import { openai } from '@ai-sdk/openai';
@@ -351,6 +442,23 @@ export const ragAgent = new Agent({
 ```
 </Tabs.Tab>
 
+<Tabs.Tab>
+```ts filename="vector-store.ts" showLineNumbers copy
+import { openai } from '@ai-sdk/openai';
+import { S3VECTORS_PROMPT } from "@mastra/s3vectors";
+
+export const ragAgent = new Agent({
+  name: 'RAG Agent',
+  model: openai('gpt-4o-mini'),
+  instructions: `
+  Process queries using the provided context. Structure responses to be concise and relevant.
+  ${S3VECTORS_PROMPT}
+  `,
+  tools: { vectorQueryTool },
+});
+```
+</Tabs.Tab>
+
 </Tabs>
 
 ### Re-ranking
@@ -365,7 +473,10 @@ Here's how to use re-ranking:
 
 ```ts showLineNumbers copy
 import { openai } from "@ai-sdk/openai";
-import { rerank } from "@mastra/rag";
+import { 
+  rerankWithScorer as rerank, 
+  MastraAgentRelevanceScorer 
+} from "@mastra/rag";
 
 // Get initial results from vector search
 const initialResults = await pgVector.query({
@@ -374,19 +485,35 @@ const initialResults = await pgVector.query({
   topK: 10,
 });
 
+// Create a relevance scorer
+const relevanceProvider = new MastraAgentRelevanceScorer('relevance-scorer', openai("gpt-4o-mini"));
+
 // Re-rank the results
-const rerankedResults = await rerank(
-  initialResults,
+const rerankedResults = await rerank({
+  results: initialResults,
   query,
-  openai("gpt-4o-mini"),
+  provider: relevanceProvider,
+  options: {
+    topK: 10,
+  },
 );
 ```
 
 > **Note:** For semantic scoring to work properly during re-ranking, each result must include the text content in its `metadata.text` field.
 
+You can also use other relevance score providers like Cohere or ZeroEntropy:
+
+```ts showLineNumbers copy
+const relevanceProvider = new CohereRelevanceScorer('rerank-v3.5');
+```
+
+```ts showLineNumbers copy
+const relevanceProvider = new ZeroEntropyRelevanceScorer('zerank-1');
+```
+
 The re-ranked results combine vector similarity with semantic understanding to improve retrieval quality.
 
-For more details about re-ranking, see the [rerank()](/reference/rag/rerank) method.
+For more details about re-ranking, see the [rerank()](/reference/rag/rerankWithScorer) method.
 
 For an example of how to use the re-ranking method, see the [Re-ranking Results](../../examples/rag/rerank/rerank.mdx) example.
 

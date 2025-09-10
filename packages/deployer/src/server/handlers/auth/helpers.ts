@@ -1,11 +1,33 @@
 import type { MastraAuthConfig } from '@mastra/core/server';
+import type { HonoRequest } from 'hono';
 import { defaultAuthConfig } from './defaults';
+
+export const isDevPlaygroundRequest = (req: HonoRequest): boolean => {
+  return req.header('x-mastra-dev-playground') === 'true' && process.env.MASTRA_DEV === 'true';
+};
+
+export const isProtectedPath = (path: string, method: string, authConfig: MastraAuthConfig): boolean => {
+  const protectedAccess = [...(defaultAuthConfig.protected || []), ...(authConfig.protected || [])];
+  return isAnyMatch(path, method, protectedAccess);
+};
 
 export const canAccessPublicly = (path: string, method: string, authConfig: MastraAuthConfig): boolean => {
   // Check if this path+method combination is publicly accessible
   const publicAccess = [...(defaultAuthConfig.public || []), ...(authConfig.public || [])];
 
-  for (const patternPathOrMethod of publicAccess) {
+  return isAnyMatch(path, method, publicAccess);
+};
+
+const isAnyMatch = (
+  path: string,
+  method: string,
+  patterns: MastraAuthConfig['protected'] | MastraAuthConfig['public'],
+): boolean => {
+  if (!patterns) {
+    return false;
+  }
+
+  for (const patternPathOrMethod of patterns) {
     if (patternPathOrMethod instanceof RegExp) {
       if (patternPathOrMethod.test(path)) {
         return true;

@@ -62,13 +62,6 @@ export const registryData: RegistryFile = {
       count: '1800+',
     },
     {
-      id: 'dextermcp',
-      name: 'Dexter MCP',
-      description: 'Enhance your AI with specialized MCP servers for various tasks',
-      url: 'https://www.dextermcp.net/',
-      tags: ['verified'],
-    },
-    {
       id: 'fleur',
       name: 'Fleur',
       description: 'Fleur is the app store for Claude',
@@ -114,6 +107,14 @@ export const registryData: RegistryFile = {
       url: 'https://mcp.composio.dev/',
       tags: ['verified'],
       count: '100+',
+    },
+    {
+      id: 'mcpbar',
+      name: 'MCP Bar',
+      description: 'Open Registry & Package Manager for MCP Servers',
+      url: 'https://www.mcp.bar/',
+      tags: ['open-source'],
+      count: 4429,
     },
     {
       id: 'mcpget',

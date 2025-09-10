@@ -1,72 +1,219 @@
-import { MessageList } from '../agent';
 import type { MastraMessageV2 } from '../agent';
 import type { MastraMessageV1, StorageThreadType } from '../memory/types';
+import type { ScoreRowData, ScoringSource } from '../scores/types';
+import type { Trace } from '../telemetry';
+import type { StepResult, WorkflowRunState } from '../workflows/types';
 import { MastraStorage } from './base';
+import type { StorageDomains } from './base';
 import type { TABLE_NAMES } from './constants';
-import type { EvalRow, StorageColumn, StorageGetMessagesArg, WorkflowRun, WorkflowRuns } from './types';
+import { InMemoryLegacyEvals } from './domains/legacy-evals/inmemory';
+import type { InMemoryEvals } from './domains/legacy-evals/inmemory';
+import { InMemoryMemory } from './domains/memory/inmemory';
+import type { InMemoryThreads, InMemoryResources, InMemoryMessages } from './domains/memory/inmemory';
+import { ObservabilityInMemory } from './domains/observability/inmemory';
+import type { InMemoryObservability } from './domains/observability/inmemory';
+import { StoreOperationsInMemory } from './domains/operations/inmemory';
+import { ScoresInMemory } from './domains/scores/inmemory';
+import type { InMemoryScores } from './domains/scores/inmemory';
+import { TracesInMemory } from './domains/traces/inmemory';
+import type { InMemoryTraces } from './domains/traces/inmemory';
+import { WorkflowsInMemory } from './domains/workflows';
+import type { InMemoryWorkflows } from './domains/workflows/inmemory';
 
-export class MockStore extends MastraStorage {
-  private data: Record<TABLE_NAMES, Record<string, any>> = {
-    mastra_workflow_snapshot: {},
-    mastra_evals: {},
-    mastra_messages: {},
-    mastra_threads: {},
-    mastra_traces: {},
-  };
+import type {
+  AISpanRecord,
+  AITraceRecord,
+  EvalRow,
+  PaginationArgs,
+  PaginationInfo,
+  StorageColumn,
+  StorageGetMessagesArg,
+  StorageGetTracesPaginatedArg,
+  StoragePagination,
+  StorageResourceType,
+  ThreadSortOptions,
+  WorkflowRun,
+  WorkflowRuns,
+} from './types';
+
+export class InMemoryStore extends MastraStorage {
+  stores: StorageDomains;
 
   constructor() {
-    super({ name: 'MockStore' });
+    super({ name: 'InMemoryStorage' });
     // MockStore doesn't need async initialization
     this.hasInitialized = Promise.resolve(true);
+
+    const operationsStorage = new StoreOperationsInMemory();
+
+    const database = operationsStorage.getDatabase();
+
+    const scoresStorage = new ScoresInMemory({
+      collection: database.mastra_scorers as InMemoryScores,
+    });
+
+    const workflowsStorage = new WorkflowsInMemory({
+      collection: database.mastra_workflow_snapshot as InMemoryWorkflows,
+      operations: operationsStorage,
+    });
+
+    const tracesStorage = new TracesInMemory({
+      collection: database.mastra_traces as InMemoryTraces,
+      operations: operationsStorage,
+    });
+
+    const memoryStorage = new InMemoryMemory({
+      collection: {
+        threads: database.mastra_threads as InMemoryThreads,
+        resources: database.mastra_resources as InMemoryResources,
+        messages: database.mastra_messages as InMemoryMessages,
+      },
+      operations: operationsStorage,
+    });
+
+    const legacyEvalsStorage = new InMemoryLegacyEvals({
+      collection: database.mastra_evals as InMemoryEvals,
+    });
+
+    const observabilityStorage = new ObservabilityInMemory({
+      collection: database.mastra_ai_spans as InMemoryObservability,
+      operations: operationsStorage,
+    });
+
+    this.stores = {
+      legacyEvals: legacyEvalsStorage,
+      operations: operationsStorage,
+      workflows: workflowsStorage,
+      traces: tracesStorage,
+      scores: scoresStorage,
+      memory: memoryStorage,
+      observability: observabilityStorage,
+    };
   }
 
-  async createTable({ tableName }: { tableName: TABLE_NAMES; schema: Record<string, StorageColumn> }): Promise<void> {
-    this.logger.debug(`MockStore: createTable called for ${tableName}`);
-    // In-memory mock, no actual table creation needed
+  public get supports() {
+    return {
+      selectByIncludeResourceScope: false,
+      resourceWorkingMemory: false,
+      hasColumn: false,
+      createTable: false,
+      deleteMessages: true,
+      aiTracing: true,
+    };
+  }
+
+  async persistWorkflowSnapshot({
+    workflowName,
+    runId,
+    snapshot,
+  }: {
+    workflowName: string;
+    runId: string;
+    snapshot: WorkflowRunState;
+  }): Promise<void> {
+    await this.stores.workflows.persistWorkflowSnapshot({ workflowName, runId, snapshot });
+  }
+
+  async loadWorkflowSnapshot({
+    workflowName,
+    runId,
+  }: {
+    workflowName: string;
+    runId: string;
+  }): Promise<WorkflowRunState | null> {
+    return this.stores.workflows.loadWorkflowSnapshot({ workflowName, runId });
+  }
+
+  async createTable({
+    tableName,
+    schema,
+  }: {
+    tableName: TABLE_NAMES;
+    schema: Record<string, StorageColumn>;
+  }): Promise<void> {
+    await this.stores.operations.createTable({ tableName, schema });
+  }
+
+  async alterTable({
+    tableName,
+    schema,
+    ifNotExists,
+  }: {
+    tableName: TABLE_NAMES;
+    schema: Record<string, StorageColumn>;
+    ifNotExists: string[];
+  }): Promise<void> {
+    await this.stores.operations.alterTable({ tableName, schema, ifNotExists });
   }
 
   async clearTable({ tableName }: { tableName: TABLE_NAMES }): Promise<void> {
-    this.logger.debug(`MockStore: clearTable called for ${tableName}`);
-    this.data[tableName] = {};
+    await this.stores.operations.clearTable({ tableName });
+  }
+
+  async dropTable({ tableName }: { tableName: TABLE_NAMES }): Promise<void> {
+    await this.stores.operations.dropTable({ tableName });
   }
 
   async insert({ tableName, record }: { tableName: TABLE_NAMES; record: Record<string, any> }): Promise<void> {
-    this.logger.debug(`MockStore: insert called for ${tableName}`, record);
-    this.data[tableName][record.run_id] = JSON.parse(JSON.stringify(record)); // simple clone - fine for mocking
+    await this.stores.operations.insert({ tableName, record });
+  }
+
+  async updateWorkflowResults({
+    workflowName,
+    runId,
+    stepId,
+    result,
+    runtimeContext,
+  }: {
+    workflowName: string;
+    runId: string;
+    stepId: string;
+    result: StepResult<any, any, any, any>;
+    runtimeContext: Record<string, any>;
+  }): Promise<Record<string, StepResult<any, any, any, any>>> {
+    return this.stores.workflows.updateWorkflowResults({ workflowName, runId, stepId, result, runtimeContext });
+  }
+
+  async updateWorkflowState({
+    workflowName,
+    runId,
+    opts,
+  }: {
+    workflowName: string;
+    runId: string;
+    opts: {
+      status: string;
+      result?: StepResult<any, any, any, any>;
+      error?: string;
+      suspendedPaths?: Record<string, number[]>;
+      waitingPaths?: Record<string, number[]>;
+    };
+  }): Promise<WorkflowRunState | undefined> {
+    return this.stores.workflows.updateWorkflowState({ workflowName, runId, opts });
   }
 
   async batchInsert({ tableName, records }: { tableName: TABLE_NAMES; records: Record<string, any>[] }): Promise<void> {
-    this.logger.debug(`MockStore: batchInsert called for ${tableName} with ${records.length} records`);
-    for (const record of records) {
-      this.data[tableName][record.run_id] = JSON.parse(JSON.stringify(record)); // simple clone - fine for mocking
-    }
+    await this.stores.operations.batchInsert({ tableName, records });
   }
 
   async load<R>({ tableName, keys }: { tableName: TABLE_NAMES; keys: Record<string, string> }): Promise<R | null> {
-    this.logger.debug(`MockStore: load called for ${tableName} with keys`, keys);
-    const record = this.data[tableName][keys.run_id!];
-    return record ? (record as R) : null;
+    return this.stores.operations.load({ tableName, keys });
   }
 
   async getThreadById({ threadId }: { threadId: string }): Promise<StorageThreadType | null> {
-    this.logger.debug(`MockStore: getThreadById called for ${threadId}`);
-    // Mock implementation - find thread by id
-    const thread = Object.values(this.data.mastra_threads).find((t: any) => t.id === threadId);
-    return thread ? (thread as StorageThreadType) : null;
+    return this.stores.memory.getThreadById({ threadId });
   }
 
-  async getThreadsByResourceId({ resourceId }: { resourceId: string }): Promise<StorageThreadType[]> {
-    this.logger.debug(`MockStore: getThreadsByResourceId called for ${resourceId}`);
-    // Mock implementation - find threads by resourceId
-    const threads = Object.values(this.data.mastra_threads).filter((t: any) => t.resourceId === resourceId);
-    return threads as StorageThreadType[];
+  async getThreadsByResourceId({
+    resourceId,
+    orderBy,
+    sortDirection,
+  }: { resourceId: string } & ThreadSortOptions): Promise<StorageThreadType[]> {
+    return this.stores.memory.getThreadsByResourceId({ resourceId, orderBy, sortDirection });
   }
 
   async saveThread({ thread }: { thread: StorageThreadType }): Promise<StorageThreadType> {
-    this.logger.debug(`MockStore: saveThread called for ${thread.id}`);
-    const key = thread.id;
-    this.data.mastra_threads[key] = thread;
-    return thread;
+    return this.stores.memory.saveThread({ thread });
   }
 
   async updateThread({
@@ -78,39 +225,56 @@ export class MockStore extends MastraStorage {
     title: string;
     metadata: Record<string, unknown>;
   }): Promise<StorageThreadType> {
-    this.logger.debug(`MockStore: updateThread called for ${id}`);
-    const thread = this.data.mastra_threads[id];
-    if (thread) {
-      thread.title = title;
-      thread.metadata = { ...thread.metadata, ...metadata };
-      thread.updatedAt = new Date();
-    }
-    return thread;
+    return this.stores.memory.updateThread({ id, title, metadata });
   }
 
   async deleteThread({ threadId }: { threadId: string }): Promise<void> {
-    this.logger.debug(`MockStore: deleteThread called for ${threadId}`);
-    delete this.data.mastra_threads[threadId];
-    // Also delete associated messages
-    this.data.mastra_messages = Object.fromEntries(
-      Object.entries(this.data.mastra_messages).filter(([, msg]: any) => msg.threadId !== threadId),
-    );
+    return this.stores.memory.deleteThread({ threadId });
   }
 
-  async getMessages<T extends MastraMessageV2[]>({ threadId, selectBy }: StorageGetMessagesArg): Promise<T> {
-    this.logger.debug(`MockStore: getMessages called for thread ${threadId}`);
-    // Mock implementation - filter messages by threadId
-    let messages = Object.values(this.data.mastra_messages).filter((msg: any) => msg.threadId === threadId);
+  async getResourceById({ resourceId }: { resourceId: string }): Promise<StorageResourceType | null> {
+    return this.stores.memory.getResourceById({ resourceId });
+  }
 
-    // Apply selectBy logic (simplified)
-    if (selectBy?.last) {
-      messages = messages.slice(-selectBy.last);
-    }
+  async saveResource({ resource }: { resource: StorageResourceType }): Promise<StorageResourceType> {
+    return this.stores.memory.saveResource({ resource });
+  }
 
-    // Sort by createdAt
-    messages.sort((a: any, b: any) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+  async updateResource({
+    resourceId,
+    workingMemory,
+    metadata,
+  }: {
+    resourceId: string;
+    workingMemory?: string;
+    metadata?: Record<string, unknown>;
+  }): Promise<StorageResourceType> {
+    return this.stores.memory.updateResource({ resourceId, workingMemory, metadata });
+  }
 
-    return messages as T;
+  async getMessages(args: StorageGetMessagesArg & { format?: 'v1' }): Promise<MastraMessageV1[]>;
+  async getMessages(args: StorageGetMessagesArg & { format: 'v2' }): Promise<MastraMessageV2[]>;
+  async getMessages({
+    threadId,
+    resourceId,
+    selectBy,
+    format,
+  }: StorageGetMessagesArg & { format?: 'v1' | 'v2' }): Promise<MastraMessageV1[] | MastraMessageV2[]> {
+    return this.stores.memory.getMessages({ threadId, resourceId, selectBy, format }) as unknown as Promise<
+      MastraMessageV1[] | MastraMessageV2[]
+    >;
+  }
+
+  async getMessagesById({ messageIds, format }: { messageIds: string[]; format: 'v1' }): Promise<MastraMessageV1[]>;
+  async getMessagesById({ messageIds, format }: { messageIds: string[]; format?: 'v2' }): Promise<MastraMessageV2[]>;
+  async getMessagesById({
+    messageIds,
+    format,
+  }: {
+    messageIds: string[];
+    format?: 'v1' | 'v2';
+  }): Promise<MastraMessageV1[] | MastraMessageV2[]> {
+    return this.stores.memory.getMessagesById({ messageIds, format });
   }
 
   async saveMessages(args: { messages: MastraMessageV1[]; format?: undefined | 'v1' }): Promise<MastraMessageV1[]>;
@@ -118,16 +282,34 @@ export class MockStore extends MastraStorage {
   async saveMessages(
     args: { messages: MastraMessageV1[]; format?: undefined | 'v1' } | { messages: MastraMessageV2[]; format: 'v2' },
   ): Promise<MastraMessageV2[] | MastraMessageV1[]> {
-    const { messages, format = 'v1' } = args;
-    this.logger.debug(`MockStore: saveMessages called with ${messages.length} messages`);
-    for (const message of messages) {
-      const key = message.id;
-      this.data.mastra_messages[key] = message;
-    }
+    return this.stores.memory.saveMessages(args);
+  }
 
-    const list = new MessageList().add(messages, 'memory');
-    if (format === `v2`) return list.get.all.v2();
-    return list.get.all.v1();
+  async updateMessages(args: { messages: Partial<MastraMessageV2> & { id: string }[] }): Promise<MastraMessageV2[]> {
+    return this.stores.memory.updateMessages(args);
+  }
+
+  async deleteMessages(messageIds: string[]): Promise<void> {
+    return this.stores.memory.deleteMessages(messageIds);
+  }
+
+  async getThreadsByResourceIdPaginated(
+    args: {
+      resourceId: string;
+      page: number;
+      perPage: number;
+    } & ThreadSortOptions,
+  ): Promise<PaginationInfo & { threads: StorageThreadType[] }> {
+    return this.stores.memory.getThreadsByResourceIdPaginated(args);
+  }
+
+  async getMessagesPaginated({
+    threadId,
+    selectBy,
+  }: StorageGetMessagesArg & { format?: 'v1' | 'v2' }): Promise<
+    PaginationInfo & { messages: MastraMessageV1[] | MastraMessageV2[] }
+  > {
+    return this.stores.memory.getMessagesPaginated({ threadId, selectBy });
   }
 
   async getTraces({
@@ -149,45 +331,71 @@ export class MockStore extends MastraStorage {
     fromDate?: Date;
     toDate?: Date;
   }): Promise<any[]> {
-    this.logger.debug(`MockStore: getTraces called`);
-    // Mock implementation - basic filtering
-    let traces = Object.values(this.data.mastra_traces);
+    return this.stores.traces.getTraces({ name, scope, page, perPage, attributes, filters, fromDate, toDate });
+  }
 
-    if (name) traces = traces.filter((t: any) => t.name?.startsWith(name));
-    if (scope) traces = traces.filter((t: any) => t.scope === scope);
-    if (attributes) {
-      traces = traces.filter((t: any) =>
-        Object.entries(attributes).every(([key, value]) => t.attributes?.[key] === value),
-      );
-    }
-    if (filters) {
-      traces = traces.filter((t: any) => Object.entries(filters).every(([key, value]) => t[key] === value));
-    }
-    if (fromDate) traces = traces.filter((t: any) => new Date(t.createdAt) >= fromDate);
-    if (toDate) traces = traces.filter((t: any) => new Date(t.createdAt) <= toDate);
+  async getTracesPaginated(args: StorageGetTracesPaginatedArg): Promise<PaginationInfo & { traces: Trace[] }> {
+    return this.stores.traces.getTracesPaginated(args);
+  }
 
-    // Apply pagination and sort
-    traces.sort((a: any, b: any) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime());
-    const start = page * perPage;
-    const end = start + perPage;
-    return traces.slice(start, end);
+  async batchTraceInsert(args: { records: Record<string, any>[] }): Promise<void> {
+    return this.stores.traces.batchTraceInsert(args);
+  }
+
+  async getScoreById({ id }: { id: string }): Promise<ScoreRowData | null> {
+    return this.stores.scores.getScoreById({ id });
+  }
+
+  async saveScore(score: ScoreRowData): Promise<{ score: ScoreRowData }> {
+    return this.stores.scores.saveScore(score);
+  }
+
+  async getScoresByScorerId({
+    scorerId,
+    entityId,
+    entityType,
+    source,
+    pagination,
+  }: {
+    scorerId: string;
+    entityId?: string;
+    entityType?: string;
+    source?: ScoringSource;
+    pagination: StoragePagination;
+  }): Promise<{ pagination: PaginationInfo; scores: ScoreRowData[] }> {
+    return this.stores.scores.getScoresByScorerId({ scorerId, entityId, entityType, source, pagination });
+  }
+
+  async getScoresByRunId({
+    runId,
+    pagination,
+  }: {
+    runId: string;
+    pagination: StoragePagination;
+  }): Promise<{ pagination: PaginationInfo; scores: ScoreRowData[] }> {
+    return this.stores.scores.getScoresByRunId({ runId, pagination });
+  }
+
+  async getScoresByEntityId({
+    entityId,
+    entityType,
+    pagination,
+  }: {
+    entityId: string;
+    entityType: string;
+    pagination: StoragePagination;
+  }): Promise<{ pagination: PaginationInfo; scores: ScoreRowData[] }> {
+    return this.stores.scores.getScoresByEntityId({ entityId, entityType, pagination });
+  }
+
+  async getEvals(
+    options: { agentName?: string; type?: 'test' | 'live' } & PaginationArgs,
+  ): Promise<PaginationInfo & { evals: EvalRow[] }> {
+    return this.stores.legacyEvals.getEvals(options);
   }
 
   async getEvalsByAgentName(agentName: string, type?: 'test' | 'live'): Promise<EvalRow[]> {
-    this.logger.debug(`MockStore: getEvalsByAgentName called for ${agentName}`);
-    // Mock implementation - filter evals by agentName and type
-    let evals = Object.values(this.data.mastra_evals).filter((e: any) => e.agentName === agentName);
-
-    if (type === 'test') {
-      evals = evals.filter((e: any) => e.testInfo && e.testInfo.testPath);
-    } else if (type === 'live') {
-      evals = evals.filter((e: any) => !e.testInfo || !e.testInfo.testPath);
-    }
-
-    // Sort by createdAt
-    evals.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
-    return evals as EvalRow[];
+    return this.stores.legacyEvals.getEvalsByAgentName(agentName, type);
   }
 
   async getWorkflowRuns({
@@ -205,37 +413,7 @@ export class MockStore extends MastraStorage {
     offset?: number;
     resourceId?: string;
   } = {}): Promise<WorkflowRuns> {
-    this.logger.debug(`MockStore: getWorkflowRuns called`);
-    let runs = Object.values(this.data.mastra_workflow_snapshot || {});
-
-    if (workflowName) runs = runs.filter((run: any) => run.workflow_name === workflowName);
-    if (fromDate) runs = runs.filter((run: any) => new Date(run.createdAt) >= fromDate);
-    if (toDate) runs = runs.filter((run: any) => new Date(run.createdAt) <= toDate);
-    if (resourceId) runs = runs.filter((run: any) => run.resourceId === resourceId);
-
-    const total = runs.length;
-
-    // Sort by createdAt
-    runs.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
-    // Apply pagination
-    if (limit !== undefined && offset !== undefined) {
-      const start = offset;
-      const end = start + limit;
-      runs = runs.slice(start, end);
-    }
-
-    // Deserialize snapshot if it's a string
-    const parsedRuns = runs.map((run: any) => ({
-      ...run,
-      snapshot: typeof run.snapshot === 'string' ? JSON.parse(run.snapshot) : { ...run.snapshot },
-      createdAt: new Date(run.createdAt),
-      updatedAt: new Date(run.updatedAt),
-      runId: run.run_id,
-      workflowName: run.workflow_name,
-    }));
-
-    return { runs: parsedRuns as WorkflowRun[], total };
+    return this.stores.workflows.getWorkflowRuns({ workflowName, fromDate, toDate, limit, offset, resourceId });
   }
 
   async getWorkflowRunById({
@@ -245,25 +423,38 @@ export class MockStore extends MastraStorage {
     runId: string;
     workflowName?: string;
   }): Promise<WorkflowRun | null> {
-    this.logger.debug(`MockStore: getWorkflowRunById called for runId ${runId}`);
-    let run = Object.values(this.data.mastra_workflow_snapshot || {}).find((r: any) => r.run_id === runId);
+    return this.stores.workflows.getWorkflowRunById({ runId, workflowName });
+  }
 
-    if (run && workflowName && run.workflow_name !== workflowName) {
-      run = undefined; // Not found if workflowName doesn't match
-    }
+  async createAISpan(span: AISpanRecord): Promise<void> {
+    return this.stores.observability!.createAISpan(span);
+  }
 
-    if (!run) return null;
+  async updateAISpan(params: {
+    spanId: string;
+    traceId: string;
+    updates: Partial<Omit<AISpanRecord, 'spanId' | 'traceId'>>;
+  }): Promise<void> {
+    return this.stores.observability!.updateAISpan(params);
+  }
 
-    // Deserialize snapshot if it's a string
-    const parsedRun = {
-      ...run,
-      snapshot: typeof run.snapshot === 'string' ? JSON.parse(run.snapshot) : run.snapshot,
-      createdAt: new Date(run.createdAt),
-      updatedAt: new Date(run.updatedAt),
-      runId: run.run_id,
-      workflowName: run.workflow_name,
-    };
+  async getAITrace(traceId: string): Promise<AITraceRecord | null> {
+    return this.stores.observability!.getAITrace(traceId);
+  }
 
-    return parsedRun as WorkflowRun;
+  async batchCreateAISpans(args: { records: AISpanRecord[] }): Promise<void> {
+    return this.stores.observability!.batchCreateAISpans(args);
+  }
+
+  async batchUpdateAISpans(args: {
+    records: { traceId: string; spanId: string; updates: Partial<Omit<AISpanRecord, 'spanId' | 'traceId'>> }[];
+  }): Promise<void> {
+    return this.stores.observability!.batchUpdateAISpans(args);
+  }
+
+  async batchDeleteAITraces(args: { traceIds: string[] }): Promise<void> {
+    return this.stores.observability!.batchDeleteAITraces(args);
   }
 }
+
+export const MockStore = InMemoryStore;

@@ -8,6 +8,7 @@ import { Nav } from "./navbar";
 import { SearchWrapper } from "./search-wrapper";
 import { SubscribeForm } from "./subscribe-form";
 import { TabSwitcher } from "./tab-switcher";
+import { FeedbackTrigger } from "./feedback-trigger";
 
 const footer = <Footer />;
 
@@ -37,11 +38,12 @@ export const NextraLayout = ({
       toc={{
         title: <T id="_locale_.layout.toc">On This Page</T>,
         extraContent: (
-          <div className="flex flex-col">
+          <div className="flex gap-3 flex-col">
             <SubscribeForm
               className="pt-[1.5rem] mt-0 md:flex-col"
               placeholder="you@company.com"
             />
+            <FeedbackTrigger />
           </div>
         ),
       }}
@@ -52,16 +54,14 @@ export const NextraLayout = ({
       footer={footer}
       sidebar={{
         autoCollapse: true,
-        defaultMenuCollapseLevel: isReference ? 1 : 2,
+        defaultMenuCollapseLevel: isReference ? 1 : 3,
       }}
       i18n={[
         { locale: "en", name: "English" },
         { locale: "ja", name: "日本語" },
       ]}
       feedback={{
-        content: (
-          <T id="_locale_.layout.feedback">Question? Give us feedback</T>
-        ),
+        content: null,
       }}
       editLink={<T id="_locale_.layout.edit_link">Edit this page</T>}
 

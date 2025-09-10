@@ -31,3 +31,17 @@ memory.db-*
 # Test directories
 voice/**/test-outputs/
 voice/**/test-data/
+
+serviceAccount.json
+tsup.config.bundled_*
+CLAUDE.local.md
+.claude/settings.local.json
+
+# Generated source map files
+**/*.d.ts.map
+
+# User json files
+mastra-cli.json
+
+*storybook.log
+storybook-static
