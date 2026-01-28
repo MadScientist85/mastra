@@ -19,7 +19,7 @@
     "@mastra/pg": "0.15.1",
     "@mastra/rag": "0.10.3",
     "@mastra/server": "0.16.2",
-    "next": "15.4.7",
+    "next": "16.1.5",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "swr": "^2.3.3",
